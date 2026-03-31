@@ -14,6 +14,7 @@ from atom_ctx.server.auth import get_request_context
 from atom_ctx.server.dependencies import get_service
 from atom_ctx.server.identity import RequestContext
 from atom_ctx.server.local_input_guard import (
+    get_original_filename_for_temp,
     require_remote_resource_source,
     resolve_uploaded_temp_file_id,
 )
@@ -146,12 +147,18 @@ async def temp_upload(
         _cleanup_temp_files(temp_dir)
 
         # Save the uploaded file
-        file_ext = Path(file.filename).suffix if file.filename else ".tmp"
+        original_filename = file.filename or ""
+        file_ext = Path(original_filename).suffix if original_filename else ".tmp"
         temp_filename = f"upload_{uuid.uuid4().hex}{file_ext}"
         temp_file_path = temp_dir / temp_filename
 
         with open(temp_file_path, "wb") as f:
             f.write(await file.read())
+
+        # Persist original filename so downstream processors can use it
+        if original_filename:
+            meta_path = temp_dir / f"{temp_filename}.meta"
+            meta_path.write_text(original_filename, encoding="utf-8")
 
         return {"temp_file_id": temp_filename}
 
@@ -180,9 +187,13 @@ async def add_resource(
     upload_temp_dir = get_atom_ctx_config().storage.get_upload_temp_dir()
     path = request.path
     allow_local_path_resolution = False
+    original_filename = None
     if request.temp_file_id:
         path = resolve_uploaded_temp_file_id(request.temp_file_id, upload_temp_dir)
         allow_local_path_resolution = True
+        original_filename = get_original_filename_for_temp(
+            request.temp_file_id, upload_temp_dir
+        )
     elif path is not None:
         path = require_remote_resource_source(path)
     if path is None:
@@ -196,6 +207,11 @@ async def add_resource(
         "directly_upload_media": request.directly_upload_media,
         "watch_interval": request.watch_interval,
     }
+
+    # Propagate the original filename so parsers use it instead of the
+    # temp UUID-based name (e.g., "upload_abc123.md" → "README_CN").
+    if original_filename:
+        kwargs["resource_name"] = Path(original_filename).stem
     if request.preserve_structure is not None:
         kwargs["preserve_structure"] = request.preserve_structure
 

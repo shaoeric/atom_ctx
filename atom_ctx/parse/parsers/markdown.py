@@ -174,10 +174,11 @@ class MarkdownParser(BaseParser):
             await ctx_fs.mkdir(temp_uri)
             logger.debug(f"[MarkdownParser] Created temp directory: {temp_uri}")
 
-            # Get document title
-            doc_title = meta.get("frontmatter", {}).get(
-                "title", Path(source_path).stem if source_path else "Document"
-            )
+            # Prefer explicit resource_name (preserves original filename for
+            # temp-uploaded files whose path is a UUID placeholder).
+            resource_name = kwargs.get("resource_name")
+            default_stem = resource_name or (Path(source_path).stem if source_path else "Document")
+            doc_title = meta.get("frontmatter", {}).get("title", default_stem)
 
             # Create root directory
             root_dir = f"{temp_uri}/{self._sanitize_for_path(doc_title)}"
@@ -187,7 +188,9 @@ class MarkdownParser(BaseParser):
             logger.info(f"[MarkdownParser] Found {len(headings)} headings")
 
             # Parse and create directory structure
-            await self._parse_and_create_structure(content, headings, root_dir, source_path)
+            await self._parse_and_create_structure(
+                content, headings, root_dir, source_path, resource_name=resource_name
+            )
 
             parse_time = time.time() - start_time
             logger.info(f"[MarkdownParser] Parse completed in {parse_time:.2f}s")
@@ -365,6 +368,7 @@ class MarkdownParser(BaseParser):
         headings: List[Tuple[int, int, str, int]],
         root_dir: str,
         source_path: Optional[str] = None,
+        resource_name: Optional[str] = None,
     ) -> None:
         """
         Parse markdown and create directory structure directly in VikingFS.
@@ -381,6 +385,7 @@ class MarkdownParser(BaseParser):
             headings: List of (start, end, title, level) tuples
             root_dir: Root directory URI
             source_path: Source file path for naming
+            resource_name: Explicit resource name (overrides source_path stem)
         """
         ctx_fs = self._get_ctx_fs()
         max_size = self.config.max_section_size or self.DEFAULT_MAX_SECTION_SIZE
@@ -394,8 +399,9 @@ class MarkdownParser(BaseParser):
         # Create root directory
         await ctx_fs.mkdir(root_dir)
 
-        # Get document name
-        doc_name = self._sanitize_for_path(Path(source_path).stem if source_path else "content")
+        # Get document name: prefer explicit resource_name over source_path stem
+        default_stem = resource_name or (Path(source_path).stem if source_path else "content")
+        doc_name = self._sanitize_for_path(default_stem)
 
         # Small document: save as single file (check both token and char limits)
         if estimated_tokens <= max_size and len(content) <= max_chars:

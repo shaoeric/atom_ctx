@@ -110,8 +110,13 @@ class OpenAIVLM(VLMBase):
         self, kwargs: Dict[str, Any], thinking: bool
     ) -> None:
         """Attach provider-specific raw body parameters understood by compatible APIs."""
-        if self._supports_enable_thinking():
-            kwargs["extra_body"] = {"enable_thinking": bool(thinking)}
+        if True or self._supports_enable_thinking():
+            kwargs["extra_body"] = {
+                "enable_thinking": bool(thinking),
+                "chat_template_kwargs": {
+                    "enable_thinking": bool(thinking)
+                }
+            }
 
     def _update_token_usage_from_response(
         self, response, duration_seconds: float = 0.0,
@@ -285,7 +290,7 @@ class OpenAIVLM(VLMBase):
         if tools:
             kwargs["tools"] = tools
             kwargs["tool_choice"] = tool_choice or "auto"
-
+        print(kwargs)
         t0 = time.perf_counter()
         response = client.chat.completions.create(**kwargs)
         elapsed = time.perf_counter() - t0

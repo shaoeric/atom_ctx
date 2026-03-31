@@ -170,10 +170,11 @@ class UnifiedResourceProcessor:
                 return await self._process_directory(temp_dir, instruction, **kwargs)
             finally:
                 pass  # Don't delete temp_dir yet, it will be used by TreeBuilder
+        resource_name = kwargs.pop("resource_name", file_path.stem)
         return await parse(
             str(file_path),
             instruction=instruction,
             vlm_processor=self._get_vlm_processor(),
             storage=self.storage,
-            resource_name=file_path.stem,
+            resource_name=resource_name,
         )

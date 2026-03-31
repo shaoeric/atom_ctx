@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Optional
 
 from atom_ctx_cli.exceptions import PermissionDeniedError
 
@@ -89,3 +90,12 @@ def resolve_uploaded_temp_file_id(temp_file_id: str, upload_temp_dir: Path) -> s
         )
 
     return str(resolved_path)
+
+
+def get_original_filename_for_temp(temp_file_id: str, upload_temp_dir: Path) -> Optional[str]:
+    """Read the original filename saved by temp_upload, if available."""
+    meta_path = upload_temp_dir / f"{temp_file_id}.meta"
+    if meta_path.is_file():
+        name = meta_path.read_text(encoding="utf-8").strip()
+        return name or None
+    return None

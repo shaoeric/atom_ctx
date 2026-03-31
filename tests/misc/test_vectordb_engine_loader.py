@@ -187,11 +187,11 @@ def test_engine_loader_wraps_abi3_backend_with_python_api(monkeypatch):
         _bytes_row_deserialize=lambda handle, payload: calls.append(
             ("bytes_row_deserialize", handle, payload)
         )
-        or {"id": 42, "name": "viking"},
+        or {"id": 42, "name": "ctx"},
         _bytes_row_deserialize_field=lambda handle, payload, field_name: calls.append(
             ("bytes_row_deserialize_field", handle, payload, field_name)
         )
-        or (42 if field_name == "id" else "viking"),
+        or (42 if field_name == "id" else "ctx"),
         _new_index_engine=lambda config: calls.append(("new_index_engine", config))
         or engine_handle,
         _index_engine_add_data=lambda handle, items: calls.append(("add_data", handle, items)) or 3,
@@ -244,11 +244,11 @@ def test_engine_loader_wraps_abi3_backend_with_python_api(monkeypatch):
     )
     assert schema.get_total_byte_length() == 123
     row = module.BytesRow(schema)
-    blob = row.serialize({"id": 42, "name": "viking"})
+    blob = row.serialize({"id": 42, "name": "ctx"})
     assert blob == b"blob"
     assert row.serialize_batch([{"id": 1}, {"id": 2}]) == [b"blob-a", b"blob-b"]
     assert row.deserialize_field(blob, "id") == 42
-    assert row.deserialize(blob)["name"] == "viking"
+    assert row.deserialize(blob)["name"] == "ctx"
 
     module.init_logging("INFO", "stdout")
     index = module.IndexEngine("config-json")
@@ -305,4 +305,4 @@ def test_engine_loader_wraps_abi3_backend_with_python_api(monkeypatch):
     assert len(new_schema_calls) == 1
     assert ("schema_total", schema_handle) in calls
     assert ("new_bytes_row", schema_handle) in calls
-    assert ("bytes_row_serialize", bytes_row_handle, {"id": 42, "name": "viking"}) in calls
+    assert ("bytes_row_serialize", bytes_row_handle, {"id": 42, "name": "ctx"}) in calls

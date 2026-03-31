@@ -88,7 +88,7 @@ class AGFSManager:
     @property
     def ctxfs_path(self) -> Path:
         """AGFS LocalFS data directory."""
-        return self.data_path / "viking"
+        return self.data_path / "ctx"
 
     @property
     def binary_path(self) -> Path:
