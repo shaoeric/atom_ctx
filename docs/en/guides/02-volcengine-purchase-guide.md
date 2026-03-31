@@ -1,10 +1,10 @@
 # Volcengine Model Purchase Guide
 
-This guide introduces how to purchase and configure the model services required by OpenViking on Volcengine.
+This guide introduces how to purchase and configure the model services required by AtomCtx on Volcengine.
 
 ## Overview
 
-OpenViking requires the following model services:
+AtomCtx requires the following model services:
 
 | Model Type | Purpose | Recommended Model |
 |------------|---------|-------------------|
@@ -84,11 +84,11 @@ Visit: [Model Management Page](https://console.volcengine.com/ark/region:ark+cn-
 
 After activation, use the model ID: `doubao-embedding-vision-250615`
 
-## Configure OpenViking
+## Configure AtomCtx
 
 ### Configuration Template
 
-Create an `~/.openviking/ov.conf` file using the following template:
+Create an `~/.ctx/ctx.conf` file using the following template:
 
 ```json
 {
@@ -139,7 +139,7 @@ Create an `~/.openviking/ov.conf` file using the following template:
 
 ### Configuration Example
 
-Save the following content as `~/.openviking/ov.conf`:
+Save the following content as `~/.ctx/ctx.conf`:
 
 ```json
 {
@@ -171,11 +171,11 @@ Save the following content as `~/.openviking/ov.conf`:
 ### Test Connection
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 import asyncio
 
 async def test():
-    client = ov.AsyncOpenViking(path="./test_data")
+    client = ctx.AsyncAtomCtx(path="./test_data")
     await client.initialize()
 
     # Test adding a simple resource
@@ -212,7 +212,7 @@ In the Volcano Ark Console:
 Volcengine provides a free tier for new users:
 
 - Free Tokens upon first activation
-- Sufficient to complete the OpenViking trial experience
+- Sufficient to complete the AtomCtx trial experience
 - See details: [Volcano Ark Pricing](https://www.volcengine.com/docs/82379/1399514)
 
 ## Troubleshooting
@@ -257,12 +257,12 @@ Error: Connection timeout
 
 - [Volcengine Documentation Center](https://www.volcengine.com/docs)
 - [Volcano Ark API Documentation](https://www.volcengine.com/docs/82379)
-- [OpenViking GitHub Issues](https://github.com/volcengine/OpenViking/issues)
+- [AtomCtx GitHub Issues](https://github.com/volcengine/atom-ctx/issues)
 
 ## Related Documentation
 
 - [Configuration Guide](./01-configuration.md) - Complete configuration reference
-- [Quick Start](../getting-started/02-quickstart.md) - Start using OpenViking
+- [Quick Start](../getting-started/02-quickstart.md) - Start using AtomCtx
 
 ## Appendix
 

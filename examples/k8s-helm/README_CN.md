@@ -1,10 +1,10 @@
-# OpenViking Helm Chart
+# AtomCtx Helm Chart
 
-此 Helm Chart 用于在 Kubernetes 上部署 OpenViking，提供可扩展、生产就绪的 RAG（检索增强生成）和语义搜索服务。
+此 Helm Chart 用于在 Kubernetes 上部署 AtomCtx，提供可扩展、生产就绪的 RAG（检索增强生成）和语义搜索服务。
 
 ## 概述
 
-[OpenViking](https://github.com/volcengine/OpenViking) 是一个开源的 RAG 和语义搜索引擎，作为上下文数据库 MCP（Model Context Protocol）服务器运行。此 Helm Chart 支持在 Kubernetes 集群上轻松部署，兼容主流云服务商。
+[AtomCtx](https://github.com/volcengine/atom-ctx) 是一个开源的 RAG 和语义搜索引擎，作为上下文数据库 MCP（Model Context Protocol）服务器运行。此 Helm Chart 支持在 Kubernetes 集群上轻松部署，兼容主流云服务商。
 
 ## 前置条件
 
@@ -17,7 +17,7 @@
 ### 添加 Helm 仓库（发布后可用）
 
 ```bash
-helm repo add openviking https://volcengine.github.io/openviking
+helm repo add atom_ctx https://volcengine.github.io/atom_ctx
 helm repo update
 ```
 
@@ -25,28 +25,28 @@ helm repo update
 
 ```bash
 # 克隆仓库
-git clone https://github.com/volcengine/OpenViking.git
-cd OpenViking/deploy/helm
+git clone https://github.com/volcengine/atom-ctx.git
+cd AtomCtx/deploy/helm
 
 # 使用默认值安装
-helm install openviking ./openviking
+helm install atom_ctx ./atom_ctx
 
 # 使用自定义值安装
-helm install openviking ./openviking -f my-values.yaml
+helm install atom_ctx ./atom_ctx -f my-values.yaml
 ```
 
 ### 快速开始
 
 ```bash
 # GCP 部署
-helm install openviking ./openviking \
+helm install atom_ctx ./atom_ctx \
   --set cloudProvider=gcp \
-  --set openviking.config.embedding.dense.api_key=YOUR_API_KEY
+  --set atom_ctx.config.embedding.dense.api_key=YOUR_API_KEY
 
 # AWS 部署
-helm install openviking ./openviking \
+helm install atom_ctx ./atom_ctx \
   --set cloudProvider=aws \
-  --set openviking.config.embedding.dense.api_key=YOUR_API_KEY
+  --set atom_ctx.config.embedding.dense.api_key=YOUR_API_KEY
 ```
 
 ## 配置
@@ -71,19 +71,19 @@ helm install openviking ./openviking \
 | `image.tag` | 容器镜像标签 | `python3.12-bookworm` |
 | `service.type` | Kubernetes 服务类型 | `LoadBalancer` |
 | `service.port` | 服务端口 | `1933` |
-| `openviking.config.server.api_key` | 认证 API Key | `null` |
-| `openviking.config.embedding.dense.api_key` | 火山引擎 API Key | `null` |
+| `atom_ctx.config.server.api_key` | 认证 API Key | `null` |
+| `atom_ctx.config.embedding.dense.api_key` | 火山引擎 API Key | `null` |
 
-### OpenViking 配置
+### AtomCtx 配置
 
-`ov.conf` 中的所有 OpenViking 配置选项都在 `openviking.config` 下可用。完整默认配置请参见 `values.yaml`。
+`ctx.conf` 中的所有 AtomCtx 配置选项都在 `atom_ctx.config` 下可用。完整默认配置请参见 `values.yaml`。
 
 ### Embedding 配置
 
 Embedding 服务需要火山引擎 API Key：
 
 ```yaml
-openviking:
+atom_ctx:
   config:
     embedding:
       dense:
@@ -97,7 +97,7 @@ openviking:
 视觉语言模型支持：
 
 ```yaml
-openviking:
+atom_ctx:
   config:
     vlm:
       api_key: "your-api-key-here"
@@ -116,7 +116,7 @@ openviking:
 使用 PVC 启用持久化存储：
 
 ```yaml
-openviking:
+atom_ctx:
   dataVolume:
     enabled: true
     usePVC: true
@@ -130,10 +130,10 @@ openviking:
 
 ### API Key 认证
 
-启用 API Key 认证以保护 OpenViking 服务器：
+启用 API Key 认证以保护 AtomCtx 服务器：
 
 ```yaml
-openviking:
+atom_ctx:
   config:
     server:
       api_key: "your-secure-api-key"
@@ -147,12 +147,12 @@ openviking:
 
 ```bash
 # 从字面值创建 Secret
-kubectl create secret generic openviking-config \
-  --from-literal=ov.conf='{"server":{"api_key":"secret"}}'
+kubectl create secret generic atom_ctx-config \
+  --from-literal=ctx.conf='{"server":{"api_key":"secret"}}'
 
 # 或挂载现有 Secret
-helm install openviking ./openviking \
-  --set existingSecret=openviking-config
+helm install atom_ctx ./atom_ctx \
+  --set existingSecret=atom_ctx-config
 ```
 
 ## 自动扩缩容
@@ -190,30 +190,30 @@ resources:
 
 ```bash
 # 获取 LoadBalancer IP
-export OPENVIKING_IP=$(kubectl get svc openviking -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+export ATOM_CTX_IP=$(kubectl get svc atom_ctx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 # 创建 CLI 配置
-cat > ~/.openviking/ovcli.conf <<EOF
+cat > ~/.ctx/ctx-cli.conf <<EOF
 {
-  "url": "http://$OPENVIKING_IP:1933",
+  "url": "http://$ATOM_CTX_IP:1933",
   "api_key": null,
   "output": "table"
 }
 EOF
 
 # 测试连接
-openviking health
+atom_ctx health
 ```
 
 ### Python 客户端
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
 # 获取服务端点
-# kubectl get svc openviking
+# kubectl get svc atom_ctx
 
-client = ov.OpenViking(url="http://<load-balancer-ip>:1933", api_key="your-key")
+client = ctx.AtomCtx(url="http://<load-balancer-ip>:1933", api_key="your-key")
 client.initialize()
 
 # 添加资源
@@ -233,21 +233,21 @@ client.close()
 
 检查 Pod 日志：
 ```bash
-kubectl logs -l app.kubernetes.io/name=openviking
+kubectl logs -l app.kubernetes.io/name=atom_ctx
 ```
 
 ### 健康检查失败
 
 验证配置：
 ```bash
-kubectl get secret openviking-config -o jsonpath='{.data.ov\.conf}' | base64 -d
+kubectl get secret atom_ctx-config -o jsonpath='{.data.ov\.conf}' | base64 -d
 ```
 
 ### LoadBalancer 未获取 IP
 
 等待云服务商分配负载均衡器：
 ```bash
-kubectl get svc openviking -w
+kubectl get svc atom_ctx -w
 ```
 
 检查 `values.yaml` 中云服务商特定的注解。
@@ -255,18 +255,18 @@ kubectl get svc openviking -w
 ## 卸载
 
 ```bash
-helm uninstall openviking
+helm uninstall atom_ctx
 ```
 
 删除持久化数据（如果启用了 PVC）：
 ```bash
-kubectl delete pvc openviking-data
+kubectl delete pvc atom_ctx-data
 ```
 
 ## 贡献
 
-欢迎贡献！请参见 [OpenViking 仓库](https://github.com/volcengine/OpenViking) 的贡献指南。
+欢迎贡献！请参见 [AtomCtx 仓库](https://github.com/volcengine/atom-ctx) 的贡献指南。
 
 ## 许可证
 
-此 Helm Chart 采用 Apache License 2.0 许可证，与 OpenViking 项目许可证一致。
+此 Helm Chart 采用 Apache License 2.0 许可证，与 AtomCtx 项目许可证一致。

@@ -5,7 +5,7 @@ import os
 import sys
 import unittest
 
-from openviking.storage.vectordb.utils import validation
+from atom_ctx.storage.vectordb.utils import validation
 
 sys.path.append(os.getcwd())
 

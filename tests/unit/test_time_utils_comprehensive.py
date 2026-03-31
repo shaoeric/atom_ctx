@@ -5,7 +5,7 @@
 
 from datetime import datetime, timedelta, timezone
 
-from openviking.utils.time_utils import (
+from atom_ctx.utils.time_utils import (
     format_iso8601,
     format_simplified,
     get_current_timestamp,

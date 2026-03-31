@@ -1,6 +1,6 @@
 # Monitoring & Health Checks
 
-OpenViking Server provides endpoints for monitoring system health and component status.
+AtomCtx Server provides endpoints for monitoring system health and component status.
 
 ## Health Check
 
@@ -83,7 +83,7 @@ curl http://localhost:1933/api/v1/debug/health \
 Every API response includes an `X-Process-Time` header with the server-side processing time in seconds:
 
 ```bash
-curl -v http://localhost:1933/api/v1/fs/ls?uri=viking:// \
+curl -v http://localhost:1933/api/v1/fs/ls?uri=ctx:// \
   -H "X-API-Key: your-key" 2>&1 | grep X-Process-Time
 # < X-Process-Time: 0.0023
 ```

@@ -1,30 +1,30 @@
 # API Overview
 
-This page covers how to connect to OpenViking and the conventions shared across all API endpoints.
+This page covers how to connect to AtomCtx and the conventions shared across all API endpoints.
 
-## Connecting to OpenViking
+## Connecting to AtomCtx
 
-OpenViking supports three connection modes:
+AtomCtx supports three connection modes:
 
 | Mode | Use Case | Description |
 |------|----------|-------------|
 | **Embedded** | Local development, single process | Runs locally with local data storage |
-| **HTTP** | Connect to OpenViking Server | Connects to a remote server via HTTP API |
+| **HTTP** | Connect to AtomCtx Server | Connects to a remote server via HTTP API |
 | **CLI** | Shell scripting, agent tool-use | Connects to server via CLI commands |
 
 ### Embedded Mode
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.OpenViking(path="./data")
+client = ctx.AtomCtx(path="./data")
 client.initialize()
 ```
 
-Embedded mode uses `ov.conf` to configure embedding, vlm, storage, and other modules. Default path: `~/.openviking/ov.conf`. You can also specify the path via environment variable:
+Embedded mode uses `ctx.conf` to configure embedding, vlm, storage, and other modules. Default path: `~/.ctx/ctx.conf`. You can also specify the path via environment variable:
 
 ```bash
-export OPENVIKING_CONFIG_FILE=/path/to/ov.conf
+export CTX_CONFIG_FILE=/path/to/ctx.conf
 ```
 
 Minimal configuration example:
@@ -54,7 +54,7 @@ For full configuration options and provider-specific examples, see the [Configur
 ### HTTP Mode
 
 ```python
-client = ov.SyncHTTPClient(
+client = ctx.SyncHTTPClient(
     url="http://localhost:1933",
     api_key="your-key",
     agent_id="my-agent",
@@ -63,10 +63,10 @@ client = ov.SyncHTTPClient(
 client.initialize()
 ```
 
-When `url` is not explicitly provided, the HTTP client automatically loads connection info from `ovcli.conf`. This config file is shared between the HTTP client and CLI. Default path: `~/.openviking/ovcli.conf`. You can also specify the path via environment variable:
+When `url` is not explicitly provided, the HTTP client automatically loads connection info from `ctx-cli.conf`. This config file is shared between the HTTP client and CLI. Default path: `~/.ctx/ctx-cli.conf`. You can also specify the path via environment variable:
 
 ```bash
-export OPENVIKING_CLI_CONFIG_FILE=/path/to/ovcli.conf
+export CTX_CLI_CONFIG_FILE=/path/to/ctx-cli.conf
 ```
 
 ```json
@@ -101,18 +101,18 @@ See the [Configuration Guide](../guides/01-configuration.md#ovcliconf) for detai
 ### Direct HTTP (curl)
 
 ```bash
-curl http://localhost:1933/api/v1/fs/ls?uri=viking:// \
+curl http://localhost:1933/api/v1/fs/ls?uri=ctx:// \
   -H "X-API-Key: your-key"
 ```
 
 ### CLI Mode
 
-The CLI connects to an OpenViking server and exposes all operations as shell commands. The CLI also loads connection info from `ovcli.conf` (shared with the HTTP client).
+The CLI connects to an AtomCtx server and exposes all operations as shell commands. The CLI also loads connection info from `ctx-cli.conf` (shared with the HTTP client).
 
 **Basic Usage**
 
 ```bash
-openviking [global options] <command> [arguments] [command options]
+atom_ctx [global options] <command> [arguments] [command options]
 ```
 
 **Global Options** (must be placed before the command name)
@@ -125,7 +125,7 @@ openviking [global options] <command> [arguments] [command options]
 Example:
 
 ```bash
-openviking -o json ls viking://resources/
+atom_ctx -o json ls ctx://resources/
 ```
 
 ## Lifecycle
@@ -133,9 +133,9 @@ openviking -o json ls viking://resources/
 **Embedded Mode**
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.OpenViking(path="./data")
+client = ctx.AtomCtx(path="./data")
 client.initialize()
 
 # ... use client ...
@@ -146,9 +146,9 @@ client.close()
 **HTTP Mode**
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(url="http://localhost:1933")
+client = ctx.SyncHTTPClient(url="http://localhost:1933")
 client.initialize()
 
 # ... use client ...
@@ -186,7 +186,7 @@ All HTTP API responses follow a unified format:
   "status": "error",
   "error": {
     "code": "NOT_FOUND",
-    "message": "Resource not found: viking://resources/nonexistent/"
+    "message": "Resource not found: ctx://resources/nonexistent/"
   },
   "time": 0.01
 }
@@ -199,9 +199,9 @@ All HTTP API responses follow a unified format:
 List data is rendered as tables; non-list data falls back to formatted JSON:
 
 ```bash
-openviking ls viking://resources/
+atom_ctx ls ctx://resources/
 # name          size  mode  isDir  uri
-# .abstract.md  100   420   False  viking://resources/.abstract.md
+# .abstract.md  100   420   False  ctx://resources/.abstract.md
 ```
 
 ### JSON Mode (`--output json`)
@@ -209,11 +209,11 @@ openviking ls viking://resources/
 All commands output formatted JSON matching the API response `result` structure:
 
 ```bash
-openviking -o json ls viking://resources/
+atom_ctx -o json ls ctx://resources/
 # [{ "name": "...", "size": 100, ... }, ...]
 ```
 
-The default output format can be set in `ovcli.conf`:
+The default output format can be set in `ctx-cli.conf`:
 
 ```json
 {
@@ -258,7 +258,7 @@ Compact JSON with status wrapper (when `--compact` is true, which is the default
 |------|-------------|-------------|
 | `OK` | 200 | Success |
 | `INVALID_ARGUMENT` | 400 | Invalid parameter |
-| `INVALID_URI` | 400 | Invalid Viking URI format |
+| `INVALID_URI` | 400 | Invalid Ctx URI format |
 | `NOT_FOUND` | 404 | Resource not found |
 | `ALREADY_EXISTS` | 409 | Resource already exists |
 | `UNAUTHENTICATED` | 401 | Missing or invalid API key |
@@ -289,8 +289,8 @@ Compact JSON with status wrapper (when `--compact` is true, which is the default
 |--------|------|-------------|
 | POST | `/api/v1/resources` | Add resource |
 | POST | `/api/v1/skills` | Add skill |
-| POST | `/api/v1/pack/export` | Export .ovpack |
-| POST | `/api/v1/pack/import` | Import .ovpack |
+| POST | `/api/v1/pack/export` | Export .ctxpack |
+| POST | `/api/v1/pack/import` | Import .ctxpack |
 
 ### File System
 

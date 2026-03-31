@@ -6,7 +6,7 @@
 import httpx
 import pytest
 
-from openviking.models.embedder.base import EmbedResult
+from atom_ctx.models.embedder.base import EmbedResult
 
 
 @pytest.fixture(autouse=True)
@@ -15,7 +15,7 @@ def fake_query_embedder(service):
         def embed(self, text: str, is_query: bool = False) -> EmbedResult:
             return EmbedResult(dense_vector=[0.1, 0.2, 0.3])
 
-    service.viking_fs.query_embedder = FakeEmbedder()
+    service.ctx_fs.query_embedder = FakeEmbedder()
 
 
 async def test_find_basic(client_with_resource):

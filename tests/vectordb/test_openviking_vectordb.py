@@ -4,9 +4,9 @@
 import shutil
 import unittest
 
-from openviking.storage.vectordb.collection.local_collection import get_or_create_local_collection
+from atom_ctx.storage.vectordb.collection.local_collection import get_or_create_local_collection
 
-TEST_DB_PATH = "./test_data/db_test_openviking_vectordb/"
+TEST_DB_PATH = "./test_data/db_test_atom_ctx_vectordb/"
 
 
 def clean_dir(path: str) -> None:
@@ -24,7 +24,7 @@ def in_time_range(value: str, gte: str, lte: str) -> bool:
     return (gte is None or value >= gte) and (lte is None or value <= lte)
 
 
-class TestOpenVikingVectorDB(unittest.TestCase):
+class TestAtomCtxVectorDB(unittest.TestCase):
     def setUp(self):
         clean_dir(TEST_DB_PATH)
         self.collections = []
@@ -47,7 +47,7 @@ class TestOpenVikingVectorDB(unittest.TestCase):
     def _create_collection(self):
         vector_dim = 1024
         meta_data = {
-            "CollectionName": "test_openviking_vectordb",
+            "CollectionName": "test_atom_ctx_vectordb",
             "Description": "Unified context collection",
             "Fields": [
                 {"FieldName": "id", "FieldType": "string", "IsPrimaryKey": True},
@@ -75,7 +75,7 @@ class TestOpenVikingVectorDB(unittest.TestCase):
             {
                 "type": "file",
                 "context_type": "markdown",
-                "parent_uri": "viking://resources/demo/",
+                "parent_uri": "ctx://resources/demo/",
                 "ext": ".md",
                 "tags": "tag_a;tag_b",
                 "abstract": "quick brown",
@@ -84,7 +84,7 @@ class TestOpenVikingVectorDB(unittest.TestCase):
             {
                 "type": "file",
                 "context_type": "text",
-                "parent_uri": "viking://resources/docs/",
+                "parent_uri": "ctx://resources/docs/",
                 "ext": ".txt",
                 "tags": "tag_b",
                 "abstract": "lazy dog",
@@ -93,7 +93,7 @@ class TestOpenVikingVectorDB(unittest.TestCase):
             {
                 "type": "image",
                 "context_type": "image",
-                "parent_uri": "viking://resources/images/",
+                "parent_uri": "ctx://resources/images/",
                 "ext": ".png",
                 "tags": "tag_c",
                 "abstract": "fox",
@@ -208,17 +208,17 @@ class TestOpenVikingVectorDB(unittest.TestCase):
         self.assertEqual(
             self._search_ids(
                 collection,
-                {"op": "prefix", "field": "uri", "prefix": "viking://resources/demo/"},
+                {"op": "prefix", "field": "uri", "prefix": "ctx://resources/demo/"},
             ),
-            self._expected_ids(lambda item: item["uri"].startswith("viking://resources/demo/")),
+            self._expected_ids(lambda item: item["uri"].startswith("ctx://resources/demo/")),
         )
         self.assertEqual(
             self._search_ids(
                 collection,
-                {"op": "prefix", "field": "parent_uri", "prefix": "viking://resources/docs/"},
+                {"op": "prefix", "field": "parent_uri", "prefix": "ctx://resources/docs/"},
             ),
             self._expected_ids(
-                lambda item: item["parent_uri"].startswith("viking://resources/docs/")
+                lambda item: item["parent_uri"].startswith("ctx://resources/docs/")
             ),
         )
         self.assertEqual(
@@ -473,23 +473,23 @@ class TestOpenVikingVectorDB(unittest.TestCase):
         self.assertEqual(res_c_final.data[0].id, "C", "Should match ID C")
 
 
-class TestOpenVikingVectorDBIP(TestOpenVikingVectorDB):
+class TestAtomCtxVectorDBIP(TestAtomCtxVectorDB):
     def setUp(self):
         super().setUp()
         global TEST_DB_PATH
-        TEST_DB_PATH = "./test_data/db_test_openviking_vectordb_ip/"
+        TEST_DB_PATH = "./test_data/db_test_atom_ctx_vectordb_ip/"
         clean_dir(TEST_DB_PATH)
 
     def tearDown(self):
         super().tearDown()
         global TEST_DB_PATH
         clean_dir(TEST_DB_PATH)
-        TEST_DB_PATH = "./test_data/db_test_openviking_vectordb/"  # Reset
+        TEST_DB_PATH = "./test_data/db_test_atom_ctx_vectordb/"  # Reset
 
     def _create_collection(self):
         vector_dim = 1024
         meta_data = {
-            "CollectionName": "test_openviking_vectordb_ip",
+            "CollectionName": "test_atom_ctx_vectordb_ip",
             "Description": "Unified context collection IP",
             "Fields": [
                 {"FieldName": "id", "FieldType": "string", "IsPrimaryKey": True},

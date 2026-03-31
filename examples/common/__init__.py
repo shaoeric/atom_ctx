@@ -1,1 +1,1 @@
-"""Common utilities for OpenViking examples"""
+"""Common utilities for AtomCtx examples"""

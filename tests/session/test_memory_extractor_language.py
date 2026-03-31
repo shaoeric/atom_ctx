@@ -7,35 +7,35 @@ from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
 try:
-    from openviking.session.memory_extractor import MemoryExtractor
+    from atom_ctx.session.memory_extractor import MemoryExtractor
 except Exception:  # pragma: no cover - fallback for minimal local test env
     logger_stub = SimpleNamespace(
         info=lambda *a, **k: None, warning=lambda *a, **k: None, error=lambda *a, **k: None
     )
 
     modules = {
-        "openviking": ModuleType("openviking"),
-        "openviking.core": ModuleType("openviking.core"),
-        "openviking.core.context": ModuleType("openviking.core.context"),
-        "openviking.prompts": ModuleType("openviking.prompts"),
-        "openviking.session": ModuleType("openviking.session"),
-        "openviking.session.user_id": ModuleType("openviking.session.user_id"),
-        "openviking.storage": ModuleType("openviking.storage"),
-        "openviking.storage.viking_fs": ModuleType("openviking.storage.viking_fs"),
-        "openviking.utils": ModuleType("openviking.utils"),
-        "openviking.utils.config": ModuleType("openviking.utils.config"),
+        "atom_ctx": ModuleType("atom_ctx"),
+        "atom_ctx.core": ModuleType("atom_ctx.core"),
+        "atom_ctx.core.context": ModuleType("atom_ctx.core.context"),
+        "atom_ctx.prompts": ModuleType("atom_ctx.prompts"),
+        "atom_ctx.session": ModuleType("atom_ctx.session"),
+        "atom_ctx.session.user_id": ModuleType("atom_ctx.session.user_id"),
+        "atom_ctx.storage": ModuleType("atom_ctx.storage"),
+        "atom_ctx.storage.ctx_fs": ModuleType("atom_ctx.storage.ctx_fs"),
+        "atom_ctx.utils": ModuleType("atom_ctx.utils"),
+        "atom_ctx.utils.config": ModuleType("atom_ctx.utils.config"),
     }
 
-    modules["openviking.core.context"].Context = object
-    modules["openviking.core.context"].ContextType = SimpleNamespace(
+    modules["atom_ctx.core.context"].Context = object
+    modules["atom_ctx.core.context"].ContextType = SimpleNamespace(
         MEMORY=SimpleNamespace(value="memory")
     )
-    modules["openviking.core.context"].Vectorize = object
-    modules["openviking.prompts"].render_prompt = lambda *a, **k: ""
-    modules["openviking.session.user_id"].UserIdentifier = object
-    modules["openviking.storage.viking_fs"].get_viking_fs = lambda: None
-    modules["openviking.utils"].get_logger = lambda _name: logger_stub
-    modules["openviking.utils.config"].get_openviking_config = lambda: SimpleNamespace(
+    modules["atom_ctx.core.context"].Vectorize = object
+    modules["atom_ctx.prompts"].render_prompt = lambda *a, **k: ""
+    modules["atom_ctx.session.user_id"].UserIdentifier = object
+    modules["atom_ctx.storage.ctx_fs"].get_ctx_fs = lambda: None
+    modules["atom_ctx.utils"].get_logger = lambda _name: logger_stub
+    modules["atom_ctx.utils.config"].get_atom_ctx_config = lambda: SimpleNamespace(
         language_fallback="en", vlm=None
     )
 
@@ -43,10 +43,10 @@ except Exception:  # pragma: no cover - fallback for minimal local test env
         sys.modules.setdefault(name, module)
 
     module_path = (
-        Path(__file__).resolve().parents[2] / "openviking" / "session" / "memory_extractor.py"
+        Path(__file__).resolve().parents[2] / "atom_ctx" / "session" / "memory_extractor.py"
     )
     spec = importlib.util.spec_from_file_location(
-        "openviking.session.memory_extractor", module_path
+        "atom_ctx.session.memory_extractor", module_path
     )
     memory_extractor = importlib.util.module_from_spec(spec)
     assert spec and spec.loader

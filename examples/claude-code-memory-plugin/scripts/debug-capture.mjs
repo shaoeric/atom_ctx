@@ -49,7 +49,7 @@ function preview(text, maxLen) {
 // State directory for incremental tracking
 // ---------------------------------------------------------------------------
 
-const STATE_DIR = join(tmpdir(), "openviking-cc-capture-state");
+const STATE_DIR = join(tmpdir(), "atom_ctx-cc-capture-state");
 
 function stateFilePath(sessionId) {
   const safe = sessionId.replace(/[^a-zA-Z0-9_-]/g, "_");
@@ -195,7 +195,7 @@ async function fetchJSON(path, init = {}) {
   try {
     const headers = { "Content-Type": "application/json" };
     if (cfg.apiKey) headers["X-API-Key"] = cfg.apiKey;
-    if (cfg.agentId) headers["X-OpenViking-Agent"] = cfg.agentId;
+    if (cfg.agentId) headers["X-AtomCtx-Agent"] = cfg.agentId;
     const res = await fetch(url, { ...init, headers, signal: controller.signal });
     const body = await res.json();
     dim(`  ${init.method || "GET"} ${path} -> ${res.status}`);
@@ -215,10 +215,10 @@ async function fetchJSON(path, init = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// captureToOpenViking — verbose version showing each step
+// captureToAtomCtx — verbose version showing each step
 // ---------------------------------------------------------------------------
 
-async function captureToOpenViking(text) {
+async function captureToAtomCtx(text) {
   header("Session Pipeline");
 
   // Step 1: Create session
@@ -454,13 +454,13 @@ async function main() {
     process.exit(0);
   }
 
-  // ── Stage 5: Text sent to OpenViking ──
-  header("Text Sent to OpenViking");
+  // ── Stage 5: Text sent to AtomCtx ──
+  header("Text Sent to AtomCtx");
   console.log(preview(combinedDecision.text, 500));
   dim(`\n  (total length: ${combinedDecision.text.length} chars)`);
 
   // ── Stage 6 + 7: Session pipeline + extracted memories ──
-  const result = await captureToOpenViking(combinedDecision.text);
+  const result = await captureToAtomCtx(combinedDecision.text);
 
   // Update state
   if (!skipIncremental) {

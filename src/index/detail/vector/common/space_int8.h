@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cmath>
 
-#if defined(OV_SIMD_AVX)
+#if defined(CTX_SIMD_AVX)
 #include <immintrin.h>
 #endif
 
@@ -27,7 +27,7 @@ static int32_t inner_product_int8_scalar(const void* v1, const void* v2,
   return sum;
 }
 
-#if defined(OV_SIMD_AVX)
+#if defined(CTX_SIMD_AVX)
 static int32_t inner_product_int8_avx(const void* v1, const void* v2,
                                       const void* params) {
   const int8_t* pv1 = static_cast<const int8_t*>(v1);
@@ -79,7 +79,7 @@ static int32_t inner_product_int8_avx(const void* v1, const void* v2,
   __m128i sum128 = _mm_add_epi32(sum_lo, sum_hi);
 
   // Extract values
-  int32_t OV_ALIGN_32 temp[4];
+  int32_t CTX_ALIGN_32 temp[4];
   _mm_store_si128((__m128i*)temp, sum128);
   int32_t sum = temp[0] + temp[1] + temp[2] + temp[3];
 
@@ -108,7 +108,7 @@ static float inner_product_distance_int8(const void* v1, const void* v2,
   float scale2 = *scale2_ptr;
 
   int32_t ip;
-#if defined(OV_SIMD_AVX)
+#if defined(CTX_SIMD_AVX)
   if (dim >= 32) {
     ip = inner_product_int8_avx(v1, v2, params);
   } else {
@@ -140,7 +140,7 @@ static float l2_distance_int8(const void* v1, const void* v2,
   float norm_sq2 = meta2[1];
 
   int32_t ip;
-#if defined(OV_SIMD_AVX)
+#if defined(CTX_SIMD_AVX)
   if (dim >= 32) {
     ip = inner_product_int8_avx(v1, v2, params);
   } else {

@@ -8,20 +8,20 @@ import uuid
 
 import pytest
 
-from openviking.agfs_manager import AGFSManager
-from openviking.server.identity import RequestContext, Role
-from openviking.storage.collection_schemas import CollectionSchemas
-from openviking.storage.transaction.lock_manager import LockManager
-from openviking.storage.transaction.path_lock import LOCK_FILE_NAME, _make_fencing_token
-from openviking.storage.transaction.redo_log import RedoLog
-from openviking.storage.viking_vector_index_backend import VikingVectorIndexBackend
-from openviking.utils.agfs_utils import create_agfs_client
-from openviking_cli.session.user_id import UserIdentifier
-from openviking_cli.utils.config.agfs_config import AGFSConfig
-from openviking_cli.utils.config.vectordb_config import VectorDBBackendConfig
+from atom_ctx.agfs_manager import AGFSManager
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx.storage.collection_schemas import CollectionSchemas
+from atom_ctx.storage.transaction.lock_manager import LockManager
+from atom_ctx.storage.transaction.path_lock import LOCK_FILE_NAME, _make_fencing_token
+from atom_ctx.storage.transaction.redo_log import RedoLog
+from atom_ctx.storage.viking_vector_index_backend import VikingVectorIndexBackend
+from atom_ctx.utils.agfs_utils import create_agfs_client
+from atom_ctx_cli.session.user_id import UserIdentifier
+from atom_ctx_cli.utils.config.agfs_config import AGFSConfig
+from atom_ctx_cli.utils.config.vectordb_config import VectorDBBackendConfig
 
 AGFS_CONF = AGFSConfig(
-    path="/tmp/ov-tx-test", backend="local", port=1834, url="http://localhost:1834", timeout=10
+    path="/tmp/ctx-tx-test", backend="local", port=1834, url="http://localhost:1834", timeout=10
 )
 
 VECTOR_DIM = 4

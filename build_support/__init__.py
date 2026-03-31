@@ -1,1 +1,1 @@
-"""Build helpers for OpenViking native artifacts."""
+"""Build helpers for AtomCtx native artifacts."""

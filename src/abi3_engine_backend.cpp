@@ -21,10 +21,10 @@ namespace vdb = vectordb;
 
 namespace {
 
-constexpr const char* kIndexCapsuleName = "openviking.vectordb.IndexEngine";
-constexpr const char* kStoreCapsuleName = "openviking.vectordb.KVStore";
-constexpr const char* kSchemaCapsuleName = "openviking.vectordb.Schema";
-constexpr const char* kBytesRowCapsuleName = "openviking.vectordb.BytesRow";
+constexpr const char* kIndexCapsuleName = "atom_ctx.vectordb.IndexEngine";
+constexpr const char* kStoreCapsuleName = "atom_ctx.vectordb.KVStore";
+constexpr const char* kSchemaCapsuleName = "atom_ctx.vectordb.Schema";
+constexpr const char* kBytesRowCapsuleName = "atom_ctx.vectordb.BytesRow";
 
 struct SchemaHandle {
   std::shared_ptr<vdb::Schema> schema;
@@ -1516,21 +1516,21 @@ PyMethodDef kModuleMethods[] = {
 PyModuleDef kModuleDef = {
     PyModuleDef_HEAD_INIT,
     "_ov_engine_backend",
-    "OpenViking abi3 vectordb backend.",
+    "AtomCtx abi3 vectordb backend.",
     -1,
     kModuleMethods,
 };
 
 }  // namespace
 
-#ifndef OV_PY_MODULE_NAME
-#define OV_PY_MODULE_NAME _native
+#ifndef CTX_PY_MODULE_NAME
+#define CTX_PY_MODULE_NAME _native
 #endif
 
-#define OV_CONCAT_IMPL(a, b) a##b
-#define OV_CONCAT(a, b) OV_CONCAT_IMPL(a, b)
+#define CTX_CONCAT_IMPL(a, b) a##b
+#define CTX_CONCAT(a, b) CTX_CONCAT_IMPL(a, b)
 
-PyMODINIT_FUNC OV_CONCAT(PyInit_, OV_PY_MODULE_NAME)(void) {
+PyMODINIT_FUNC CTX_CONCAT(PyInit_, CTX_PY_MODULE_NAME)(void) {
   PyObject* module = PyModule_Create(&kModuleDef);
   if (module == nullptr) {
     return nullptr;

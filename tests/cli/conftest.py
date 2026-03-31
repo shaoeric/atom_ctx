@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Beijing Volcano Engine Technology Co., Ltd.
 # SPDX-License-Identifier: Apache-2.0
-"""CLI fixtures that run against a real OpenViking server process."""
+"""CLI fixtures that run against a real AtomCtx server process."""
 
 import json
 import os
@@ -36,17 +36,17 @@ def _wait_for_health(url: str, timeout_s: float = 20.0) -> None:
         except Exception as exc:  # noqa: BLE001
             last_error = exc
         time.sleep(0.25)
-    raise RuntimeError(f"OpenViking server failed to start: {last_error}")
+    raise RuntimeError(f"AtomCtx server failed to start: {last_error}")
 
 
 @pytest.fixture(scope="session")
-def openviking_server(tmp_path_factory: pytest.TempPathFactory) -> Generator[str, None, None]:
-    """Start a real OpenViking server for CLI tests."""
-    storage_dir = tmp_path_factory.mktemp("openviking_cli_data")
+def atom_ctx_server(tmp_path_factory: pytest.TempPathFactory) -> Generator[str, None, None]:
+    """Start a real AtomCtx server for CLI tests."""
+    storage_dir = tmp_path_factory.mktemp("atom_ctx_cli_data")
     port = _get_free_port()
 
     # Load the base example config and override storage path + server port
-    base_conf_path = Path("examples/ov.conf").resolve()
+    base_conf_path = Path("examples/ctx.conf").resolve()
     with open(base_conf_path) as f:
         conf_data = json.load(f)
 
@@ -61,18 +61,18 @@ def openviking_server(tmp_path_factory: pytest.TempPathFactory) -> Generator[str
     conf_data["storage"].setdefault("agfs", {})
     conf_data["storage"]["agfs"]["backend"] = "local"
 
-    # Write temporary ov.conf
-    tmp_conf = storage_dir / "ov.conf"
+    # Write temporary ctx.conf
+    tmp_conf = storage_dir / "ctx.conf"
     with open(tmp_conf, "w") as f:
         json.dump(conf_data, f)
 
     env = os.environ.copy()
-    env["OPENVIKING_CONFIG_FILE"] = str(tmp_conf)
+    env["CTX_CONFIG_FILE"] = str(tmp_conf)
 
     cmd = [
         sys.executable,
         "-m",
-        "openviking",
+        "atom_ctx",
         "serve",
         "--config",
         str(tmp_conf),
@@ -100,7 +100,7 @@ def openviking_server(tmp_path_factory: pytest.TempPathFactory) -> Generator[str
             proc.terminate()
             stdout, stderr = proc.communicate(timeout=10)
         raise RuntimeError(
-            f"OpenViking server failed to start.\nstdout:\n{stdout}\nstderr:\n{stderr}"
+            f"AtomCtx server failed to start.\nstdout:\n{stdout}\nstderr:\n{stderr}"
         )
     finally:
         if proc.poll() is None:

@@ -31,7 +31,7 @@ async def test_not_found_resource_returns_structured_error(
     """Accessing non-existent resource should return structured error."""
     resp = await client.get(
         "/api/v1/fs/stat",
-        params={"uri": "viking://does_not_exist"},
+        params={"uri": "ctx://does_not_exist"},
     )
     assert resp.status_code in (404, 500)
     body = resp.json()
@@ -79,11 +79,11 @@ async def test_invalid_uri_format(client: httpx.AsyncClient):
     """Invalid URI format triggers unhandled FileNotFoundError.
 
     BUG: The server should catch this and return a structured error response,
-    but currently FileNotFoundError is not mapped to OpenVikingError.
+    but currently FileNotFoundError is not mapped to AtomCtxError.
     """
     resp = await client.get(
         "/api/v1/fs/ls",
-        params={"uri": "viking://"},
+        params={"uri": "ctx://"},
     )
     # Valid URI should work
     assert resp.status_code == 200
@@ -99,7 +99,7 @@ async def test_export_nonexistent_uri(client: httpx.AsyncClient):
     # (actual export of nonexistent URI is a known unhandled error)
     resp = await client.post(
         "/api/v1/pack/export",
-        json={"uri": "viking://", "to": "/tmp/test_export.ovpack"},
+        json={"uri": "ctx://", "to": "/tmp/test_export.ctxpack"},
     )
     # Root URI export may succeed or fail, but should not crash
     assert resp.status_code in (200, 400, 404, 500)

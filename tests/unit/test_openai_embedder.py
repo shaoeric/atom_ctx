@@ -4,13 +4,13 @@
 
 from unittest.mock import MagicMock, patch
 
-from openviking.models.embedder import OpenAIDenseEmbedder
+from atom_ctx.models.embedder import OpenAIDenseEmbedder
 
 
 class TestOpenAIDenseEmbedder:
     """Test cases for OpenAIDenseEmbedder"""
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_embed_does_not_send_dimensions(self, mock_openai_class):
         """OpenAI embed should omit dimensions param"""
         mock_client = MagicMock()
@@ -34,7 +34,7 @@ class TestOpenAIDenseEmbedder:
         call_kwargs = mock_client.embeddings.create.call_args[1]
         assert "dimensions" not in call_kwargs
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_embed_batch_does_not_send_dimensions(self, mock_openai_class):
         """OpenAI embed_batch should omit dimensions param"""
         mock_client = MagicMock()
@@ -60,7 +60,7 @@ class TestOpenAIDenseEmbedder:
         call_kwargs = mock_client.embeddings.create.call_args[1]
         assert "dimensions" not in call_kwargs
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_embed_with_input_type_none(self, mock_openai_class):
         """OpenAI embed should not include extra_body when input_type is None"""
         mock_client = MagicMock()
@@ -83,7 +83,7 @@ class TestOpenAIDenseEmbedder:
         call_kwargs = mock_client.embeddings.create.call_args[1]
         assert "extra_body" not in call_kwargs
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_embed_with_context_query(self, mock_openai_class):
         """OpenAI embed should include extra_body with input_type='query' when is_query=True"""
         mock_client = MagicMock()
@@ -108,7 +108,7 @@ class TestOpenAIDenseEmbedder:
         assert "extra_body" in call_kwargs
         assert call_kwargs["extra_body"] == {"input_type": "query"}
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_embed_with_context_document(self, mock_openai_class):
         """OpenAI embed should include extra_body with input_type='passage' when is_query=False"""
         mock_client = MagicMock()
@@ -133,7 +133,7 @@ class TestOpenAIDenseEmbedder:
         assert "extra_body" in call_kwargs
         assert call_kwargs["extra_body"] == {"input_type": "passage"}
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_embed_batch_with_input_type_none(self, mock_openai_class):
         """OpenAI embed_batch should not include extra_body when input_type is None"""
         mock_client = MagicMock()
@@ -158,7 +158,7 @@ class TestOpenAIDenseEmbedder:
         call_kwargs = mock_client.embeddings.create.call_args[1]
         assert "extra_body" not in call_kwargs
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_embed_batch_with_context_query(self, mock_openai_class):
         """OpenAI embed_batch should include extra_body with input_type='query' when is_query=True"""
         mock_client = MagicMock()
@@ -185,7 +185,7 @@ class TestOpenAIDenseEmbedder:
         assert "extra_body" in call_kwargs
         assert call_kwargs["extra_body"] == {"input_type": "query"}
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_embed_batch_with_context_document(self, mock_openai_class):
         """OpenAI embed_batch should include extra_body with input_type='passage' when is_query=False"""
         mock_client = MagicMock()
@@ -212,7 +212,7 @@ class TestOpenAIDenseEmbedder:
         assert "extra_body" in call_kwargs
         assert call_kwargs["extra_body"] == {"input_type": "passage"}
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_telemetry_skipped_when_no_usage(self, mock_openai_class):
         """_update_telemetry_token_usage should no-op when response has no usage"""
         mock_client = MagicMock()
@@ -234,7 +234,7 @@ class TestOpenAIDenseEmbedder:
         result = embedder.embed("Hello world")
         assert result.dense_vector is not None
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_telemetry_skipped_when_module_missing(self, mock_openai_class):
         """_update_telemetry_token_usage should silently no-op when telemetry module is not available"""
         mock_client = MagicMock()
@@ -263,7 +263,7 @@ class TestOpenAIDenseEmbedder:
 
         assert result.dense_vector is not None
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_telemetry_called_when_module_available(self, mock_openai_class):
         """_update_telemetry_token_usage should call telemetry when module is available"""
         mock_client = MagicMock()
@@ -290,7 +290,7 @@ class TestOpenAIDenseEmbedder:
         mock_telemetry = MagicMock()
 
         with patch(
-            "openviking.models.embedder.openai_embedders.get_current_telemetry",
+            "atom_ctx.models.embedder.openai_embedders.get_current_telemetry",
             return_value=mock_telemetry,
         ):
             result = embedder.embed("Hello world")

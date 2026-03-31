@@ -84,7 +84,7 @@ jobs:
       run: uv run python setup.py build_ext --inplace
 
     # TODO: Once unit tests are fixed, switch this back to running the full test suite
-    # run: uv run pytest tests/ -v --cov=openviking --cov-report=term
+    # run: uv run pytest tests/ -v --cov=atom_ctx --cov-report=term
     - name: Run Lite Integration Test (Temporary Replacement)
       shell: bash
       run: |

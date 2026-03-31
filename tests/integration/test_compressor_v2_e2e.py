@@ -4,8 +4,8 @@
 """
 End-to-end test for SessionCompressorV2 (memory v2 templating system).
 
-Uses AsyncHTTPClient to connect to local openviking-server at 127.0.0.1:1933.
-No need to worry about ov.conf - server uses its own config.
+Uses AsyncHTTPClient to connect to local ctx-server at 127.0.0.1:1933.
+No need to worry about ctx.conf - server uses its own config.
 """
 
 from dataclasses import asdict
@@ -13,13 +13,13 @@ from datetime import datetime
 import pytest
 import pytest_asyncio
 
-from openviking.message import TextPart
-from openviking_cli.client.http import AsyncHTTPClient
-from openviking_cli.utils import get_logger
+from atom_ctx.message import TextPart
+from atom_ctx_cli.client.http import AsyncHTTPClient
+from atom_ctx_cli.utils import get_logger
 
 logger = get_logger(__name__)
 
-# Server URL - user starts openviking-server separately
+# Server URL - user starts ctx-server separately
 SERVER_URL = "http://127.0.0.1:1933"
 
 
@@ -55,7 +55,7 @@ def create_test_conversation_messages():
 
         # ===== Agent/项目相关记忆 =====
         ("assistant", "听起来很棒！对了，你们现在在做什么项目？"),
-        ("user", "我们团队正在做OpenViking项目，这是一个Agent原生的上下文数据库。"),
+        ("user", "我们团队正在做AtomCtx项目，这是一个Agent原生的上下文数据库。"),
         ("assistant", "听起来很有意思！能详细说说吗？"),
         ("user", "好的，这个项目主要是帮助Agent更好地管理和记忆上下文信息，支持长期记忆的提取和存储。有两种主要的记忆类型：卡片（cards）用于知识笔记，采用Zettelkasten笔记法；事件（events）用于记录重要的决策和时间线。"),
         ("assistant", "明白了！那技术架构是怎样的？"),
@@ -138,7 +138,7 @@ class TestCompressorV2EndToEnd:
 
         # 5. Try to find memories via search
         print("\nSearching for memories...")
-        find_result = await client.find(query="OpenViking memory cards events")
+        find_result = await client.find(query="AtomCtx memory cards events")
         print(f"Find result: total={find_result.total}")
         print(f"  Memories found: {len(getattr(find_result, 'memories', []))}")
         print(f"  Resources found: {len(getattr(find_result, 'resources', []))}")
@@ -166,23 +166,23 @@ class TestCompressorV2EndToEnd:
 
         try:
             # Try to list agent memories
-            agent_memories = await client.ls(f"viking://agent/{agent_space}/memories", recursive=True)
+            agent_memories = await client.ls(f"ctx://agent/{agent_space}/memories", recursive=True)
             print(f"Agent memories entries: {len(agent_memories)}")
             for entry in agent_memories[:20]:  # Show first 20
                 print(f"  - {entry['name']} ({'dir' if entry['isDir'] else 'file'})")
             # Read and print memory files
-            await print_memory_files(f"viking://agent/{agent_space}/memories", agent_memories)
+            await print_memory_files(f"ctx://agent/{agent_space}/memories", agent_memories)
         except Exception as e:
             print(f"Could not list agent memories: {e}")
 
         try:
             # Try to list user memories
-            user_memories = await client.ls(f"viking://user/{user_space}/memories", recursive=True)
+            user_memories = await client.ls(f"ctx://user/{user_space}/memories", recursive=True)
             print(f"\nUser memories entries: {len(user_memories)}")
             for entry in user_memories[:20]:  # Show first 20
                 print(f"  - {entry['name']} ({'dir' if entry['isDir'] else 'file'})")
             # Read and print memory files
-            await print_memory_files(f"viking://user/{user_space}/memories", user_memories)
+            await print_memory_files(f"ctx://user/{user_space}/memories", user_memories)
         except Exception as e:
             print(f"Could not list user memories: {e}")
 
@@ -191,8 +191,8 @@ class TestCompressorV2EndToEnd:
         print("=" * 80)
         print(f"\nConnected to server: {SERVER_URL}")
         print(f"Session ID: {session_id}")
-        print("Server uses its own ov.conf configuration")
-        print("Note: Data cleanup is handled by test_restart_openviking_server.sh")
+        print("Server uses its own ctx.conf configuration")
+        print("Note: Data cleanup is handled by test_restart_atom_ctx_server.sh")
 
         # The test passes if it doesn't throw an exception
         # Memory extraction happens in background, v2 writes directly to storage

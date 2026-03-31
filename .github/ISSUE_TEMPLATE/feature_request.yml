@@ -36,7 +36,7 @@ body:
     id: area
     attributes:
       label: Feature Area
-      description: Which area of OpenViking does this feature relate to?
+      description: Which area of AtomCtx does this feature relate to?
       options:
         - Core (Client/Engine)
         - Filesystem Operations

@@ -4,7 +4,7 @@
 
 import pytest
 
-from openviking.models.vlm.base import _THINK_TAG_RE, VLMBase
+from atom_ctx.models.vlm.base import _THINK_TAG_RE, VLMBase
 
 
 class TestStripThinkTags:

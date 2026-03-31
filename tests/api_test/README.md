@@ -1,6 +1,6 @@
-# OpenViking API 自动化测试
+# AtomCtx API 自动化测试
 
-本目录包含 OpenViking 的 API 集成测试套件。
+本目录包含 AtomCtx 的 API 集成测试套件。
 
 ## 目录结构
 
@@ -27,7 +27,7 @@ tests/api_test/
 ### 前置条件
 
 1. Python 3.10+
-2. OpenViking Server 已启动（默认端口 1933）
+2. AtomCtx Server 已启动（默认端口 1933）
 
 ### 安装依赖
 
@@ -49,9 +49,9 @@ cd tests/api_test
 
 这个脚本会自动：
 1. 检查 Python 版本
-2. 安装 OpenViking
+2. 安装 AtomCtx
 3. 安装测试依赖
-4. 启动 OpenViking Server（自动找可用端口）
+4. 启动 AtomCtx Server（自动找可用端口）
 5. 运行所有 API 测试
 6. 停止服务并清理
 
@@ -79,9 +79,9 @@ python -m pytest . -v --html=api-test-report.html --self-contained-html
 
 | 环境变量 | 说明 | 默认值 |
 |---------|------|--------|
-| `SERVER_HOST` | OpenViking Server 主机 | 127.0.0.1 |
-| `SERVER_PORT` | OpenViking Server 端口 | 1933 |
-| `OPENVIKING_API_KEY` | API 密钥 | test-root-api-key |
+| `SERVER_HOST` | AtomCtx Server 主机 | 127.0.0.1 |
+| `SERVER_PORT` | AtomCtx Server 端口 | 1933 |
+| `ATOM_CTX_API_KEY` | API 密钥 | test-root-api-key |
 | `VLM_API_KEY` | VLM 模型密钥（可选） | - |
 | `EMBEDDING_API_KEY` | Embedding 模型密钥（可选） | - |
 
@@ -136,11 +136,11 @@ python -m pytest retrieval/ -v
 
 ## 注意事项
 
-1. **不要提交敏感信息**：`.env` 和 `ov.conf` 已在 `.gitignore` 中
+1. **不要提交敏感信息**：`.env` 和 `ctx.conf` 已在 `.gitignore` 中
 2. **检索测试需要密钥**：`retrieval/` 和部分 `scenarios/` 测试需要 VLM 和 Embedding API 密钥
 3. **CI 与本地一致**：CI 流水线使用与本地相同的测试框架和配置
 
 ## 相关文档
 
-- OpenViking API 文档：`docs/zh/api/`
+- AtomCtx API 文档：`docs/zh/api/`
 - CI/CD 配置：`.github/workflows/api_test.yml`

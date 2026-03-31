@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Unit tests for retrieval statistics and observer."""
 
-from openviking.retrieve.retrieval_stats import RetrievalStats, RetrievalStatsCollector
-from openviking.storage.observers.retrieval_observer import RetrievalObserver
+from atom_ctx.retrieve.retrieval_stats import RetrievalStats, RetrievalStatsCollector
+from atom_ctx.storage.observers.retrieval_observer import RetrievalObserver
 
 
 class TestRetrievalStats:
@@ -114,7 +114,7 @@ class TestRetrievalStatsCollector:
 class TestRetrievalObserver:
     def _setup_collector(self):
         """Replace the global collector with a fresh one for testing."""
-        import openviking.retrieve.retrieval_stats as mod
+        import atom_ctx.retrieve.retrieval_stats as mod
 
         collector = RetrievalStatsCollector()
         mod._collector = collector

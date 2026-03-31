@@ -1,10 +1,10 @@
-# 基础使用示例：OpenViking Python SDK 快速入门
+# 基础使用示例：AtomCtx Python SDK 快速入门
 
-本示例演示如何使用 Python SDK 操作 OpenViking 的核心功能，涵盖构建 AI 智能体应用所需的基本操作。
+本示例演示如何使用 Python SDK 操作 AtomCtx 的核心功能，涵盖构建 AI 智能体应用所需的基本操作。
 
 ## 你将学到什么
 
-- **初始化 OpenViking**：嵌入式模式与 HTTP 客户端模式
+- **初始化 AtomCtx**：嵌入式模式与 HTTP 客户端模式
 - **添加资源**：URL、文件和目录
 - **浏览虚拟文件系统**：使用 `ls`、`tree`、`glob`
 - **语义搜索**：使用 `find` 和 `search` 查找相关上下文
@@ -14,11 +14,11 @@
 ## 前置条件
 
 1. **Python 3.10+**
-2. **安装 OpenViking**：
+2. **安装 AtomCtx**：
    ```bash
-   pip install openviking --upgrade
+   pip install atom-ctx --upgrade
    ```
-3. **配置文件** 位于 `~/.openviking/ov.conf`（见下方[配置说明](#配置说明)）
+3. **配置文件** 位于 `~/.ctx/ctx.conf`（见下方[配置说明](#配置说明)）
 
 ## 快速开始
 
@@ -26,8 +26,8 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/volcengine/OpenViking.git
-cd OpenViking/examples/basic-usage
+git clone https://github.com/volcengine/atom-ctx.git
+cd AtomCtx/examples/basic-usage
 
 # 运行基础使用示例
 python basic_usage.py
@@ -36,37 +36,37 @@ python basic_usage.py
 ### 2. 预期输出
 
 ```
-=== OpenViking 基础使用示例 ===
+=== AtomCtx 基础使用示例 ===
 
-1. 初始化 OpenViking...
+1. 初始化 AtomCtx...
    状态: healthy
 
 2. 添加资源 (URL)...
-   根 URI: viking://resources/raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md
+   根 URI: ctx://resources/raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md
    已索引文件: 1
 
 3. 浏览虚拟文件系统...
-   viking://resources/raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/
+   ctx://resources/raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/
    └── README.md
 
 4. 等待语义处理...
 
 5. 分层上下文加载:
-   L0 (摘要): OpenViking 是专为 AI 智能体设计的开源上下文数据库...
+   L0 (摘要): AtomCtx 是专为 AI 智能体设计的开源上下文数据库...
 
    L1 (概览):
    [包含核心要点和使用场景]
 
 6. 语义搜索:
-   查询: "what is openviking"
+   查询: "what is atom_ctx"
    结果:
-   - viking://resources/.../README.md (得分: 0.8523)
+   - ctx://resources/.../README.md (得分: 0.8523)
 
 7. 内容搜索 (grep):
    模式: "Agent"
    找到 15 处匹配
 
-8. 关闭 OpenViking...
+8. 关闭 AtomCtx...
    完成!
 ```
 
@@ -74,26 +74,26 @@ python basic_usage.py
 
 ### 初始化
 
-OpenViking 支持两种模式：
+AtomCtx 支持两种模式：
 
 **嵌入式模式**（本地开发默认）：
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.OpenViking(path="./data")
+client = ctx.AtomCtx(path="./data")
 client.initialize()
 ```
 
 **HTTP 客户端模式**（连接远程服务器）：
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(url="http://localhost:1933")
+client = ctx.SyncHTTPClient(url="http://localhost:1933")
 ```
 
 > **多租户认证**：如果服务端启用了认证，请使用 `user_key`（推荐）：
 > ```python
-> client = ov.SyncHTTPClient(url="http://localhost:1933", api_key="<user-key>")
+> client = ctx.SyncHTTPClient(url="http://localhost:1933", api_key="<user-key>")
 > ```
 > `root_key` 不能直接用于 `add_resource`、`find` 等租户级 API，必须同时传入 `account` 和 `user`。详见 [认证文档](../../docs/zh/guides/04-authentication.md) 和 [快速开始：服务端模式](../../docs/zh/getting-started/03-quickstart-server.md)。
 
@@ -122,17 +122,17 @@ result = client.add_resource(
 
 ### 浏览文件系统
 
-OpenViking 使用 `viking://` URI 的虚拟文件系统范式：
+AtomCtx 使用 `ctx://` URI 的虚拟文件系统范式：
 
 ```python
 # 列出目录内容
-files = client.ls("viking://resources/")
+files = client.ls("ctx://resources/")
 
 # 显示目录树
-tree = client.tree("viking://resources/my-project", level_limit=3)
+tree = client.tree("ctx://resources/my-project", level_limit=3)
 
 # 按模式查找文件
-matches = client.glob("**/*.md", uri="viking://resources/my-project")
+matches = client.glob("**/*.md", uri="ctx://resources/my-project")
 ```
 
 ### 语义搜索
@@ -143,24 +143,24 @@ matches = client.glob("**/*.md", uri="viking://resources/my-project")
 # 快速语义搜索
 results = client.find(
     query="如何处理 API 认证",
-    target_uri="viking://resources/my-project",
+    target_uri="ctx://resources/my-project",
     limit=5
 )
 
 # 高级搜索（带意图分析）
 results = client.search(
     query="数据库连接配置和错误处理",
-    target_uri="viking://resources/",
+    target_uri="ctx://resources/",
     limit=10
 )
 ```
 
 ### 分层上下文加载
 
-OpenViking 将内容处理为三个层次，实现高效检索：
+AtomCtx 将内容处理为三个层次，实现高效检索：
 
 ```python
-uri = "viking://resources/my-project/docs/api.md"
+uri = "ctx://resources/my-project/docs/api.md"
 
 # L0: 快速摘要（约 100 tokens）
 abstract = client.abstract(uri)
@@ -191,18 +191,18 @@ client.commit_session(session_id)
 # 之后召回相关记忆
 memories = client.find(
     query="用户编程偏好",
-    target_uri="viking://user/memories/"
+    target_uri="ctx://user/memories/"
 )
 ```
 
 ## 配置说明
 
-创建 `~/.openviking/ov.conf` 配置文件：
+创建 `~/.ctx/ctx.conf` 配置文件：
 
 ```json
 {
   "storage": {
-    "workspace": "~/.openviking/data"
+    "workspace": "~/.ctx/data"
   },
   "embedding": {
     "dense": {
@@ -227,11 +227,11 @@ memories = client.find(
 ### 构建文档感知智能体
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
 class DocumentationAgent:
     def __init__(self):
-        self.ov = ov.OpenViking(path="./data")
+        self.ov = ctx.AtomCtx(path="./data")
         self.ov.initialize()
     
     def ingest_docs(self, doc_path: str):
@@ -259,11 +259,11 @@ agent.ingest_docs("/path/to/your/project/docs")
 ### 创建记忆感知助手
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
 class MemoryAssistant:
     def __init__(self, user_id: str):
-        self.ov = ov.SyncHTTPClient(url="http://localhost:1933")
+        self.ov = ctx.SyncHTTPClient(url="http://localhost:1933")
         self.user_id = user_id
         self.session_id = None
     
@@ -279,7 +279,7 @@ class MemoryAssistant:
     
     def recall(self, query: str) -> list:
         """召回相关记忆"""
-        return self.ov.find(query, target_uri="viking://user/memories/")
+        return self.ov.find(query, target_uri="ctx://user/memories/")
     
     def end_conversation(self):
         """从会话中提取长期记忆"""
@@ -298,8 +298,8 @@ class MemoryAssistant:
 | 问题 | 解决方案 |
 |------|---------|
 | `ImportError: pyagfs not found` | 从源码运行：`pip install -e third_party/agfs/agfs-sdk/python` |
-| `Connection refused` | 确保 OpenViking 服务器正在运行：`openviking-server` |
-| `API key error` | 检查 `~/.openviking/ov.conf` 配置 |
+| `Connection refused` | 确保 AtomCtx 服务器正在运行：`ctx-server` |
+| `API key error` | 检查 `~/.ctx/ctx.conf` 配置 |
 | `语义处理缓慢` | 等待 `wait_processed()` 或使用 `add_resource(..., wait=True)` |
 
 ## 许可证

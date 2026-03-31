@@ -1,6 +1,6 @@
-# OpenViking Helm Chart
+# AtomCtx Helm Chart
 
-Deploy OpenViking on Kubernetes using Helm.
+Deploy AtomCtx on Kubernetes using Helm.
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ Deploy OpenViking on Kubernetes using Helm.
 ### Quick Start
 
 ```bash
-helm install openviking ./deploy/helm/openviking \
+helm install atom_ctx ./deploy/helm/atom_ctx \
   --set config.server.root_api_key="YOUR_ROOT_API_KEY" \
   --set config.embedding.dense.api_key="YOUR_VOLCENGINE_API_KEY" \
   --set config.vlm.api_key="YOUR_VOLCENGINE_API_KEY"
@@ -40,7 +40,7 @@ persistence:
 
 config:
   storage:
-    workspace: /app/data/openviking_workspace
+    workspace: /app/data/atom_ctx_workspace
   log:
     level: INFO
     output: stdout
@@ -72,7 +72,7 @@ config:
 Then install:
 
 ```bash
-helm install openviking ./deploy/helm/openviking -f my-values.yaml
+helm install atom_ctx ./deploy/helm/atom_ctx -f my-values.yaml
 ```
 
 ### Using Secrets for API Keys
@@ -82,7 +82,7 @@ Kubernetes secrets instead:
 
 ```bash
 # Create a secret
-kubectl create secret generic openviking-api-keys \
+kubectl create secret generic atom_ctx-api-keys \
   --from-literal=embedding-api-key="YOUR_KEY" \
   --from-literal=vlm-api-key="YOUR_KEY"
 ```
@@ -94,12 +94,12 @@ extraEnv:
   - name: EMBEDDING_API_KEY
     valueFrom:
       secretKeyRef:
-        name: openviking-api-keys
+        name: atom_ctx-api-keys
         key: embedding-api-key
   - name: VLM_API_KEY
     valueFrom:
       secretKeyRef:
-        name: openviking-api-keys
+        name: atom_ctx-api-keys
         key: vlm-api-key
 ```
 
@@ -108,7 +108,7 @@ extraEnv:
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `replicaCount` | Number of replicas | `1` |
-| `image.repository` | Container image repository | `ghcr.io/volcengine/openviking` |
+| `image.repository` | Container image repository | `ghcr.io/volcengine/atom_ctx` |
 | `image.tag` | Container image tag | Chart appVersion |
 | `image.pullPolicy` | Image pull policy | `IfNotPresent` |
 | `service.type` | Kubernetes service type | `ClusterIP` |
@@ -123,13 +123,13 @@ extraEnv:
 | `resources.requests.memory` | Memory request | `1Gi` |
 | `ingress.enabled` | Enable ingress | `false` |
 | `config.server.root_api_key` | API key required when server binds to 0.0.0.0 | `""` |
-| `config` | Full ov.conf configuration object | See `values.yaml` |
+| `config` | Full ctx.conf configuration object | See `values.yaml` |
 | `extraEnv` | Additional environment variables | `[]` |
 
 ## Upgrading
 
 ```bash
-helm upgrade openviking ./deploy/helm/openviking -f my-values.yaml
+helm upgrade atom_ctx ./deploy/helm/atom_ctx -f my-values.yaml
 ```
 
 The deployment uses a `Recreate` strategy to avoid data corruption from
@@ -138,12 +138,12 @@ multiple pods accessing the same RocksDB volume simultaneously.
 ## Uninstalling
 
 ```bash
-helm uninstall openviking
+helm uninstall atom_ctx
 ```
 
 Note: The PersistentVolumeClaim is not deleted automatically. To remove stored
 data:
 
 ```bash
-kubectl delete pvc openviking-data
+kubectl delete pvc atom_ctx-data
 ```

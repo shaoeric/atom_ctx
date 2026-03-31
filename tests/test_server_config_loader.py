@@ -5,11 +5,11 @@ import json
 
 import pytest
 
-from openviking.server.config import load_server_config
+from atom_ctx.server.config import load_server_config
 
 
 def test_load_server_config_rejects_unknown_field(tmp_path):
-    config_path = tmp_path / "ov.conf"
+    config_path = tmp_path / "ctx.conf"
     config_path.write_text(json.dumps({"server": {"host": "0.0.0.0", "prt": 9999}}))
 
     with pytest.raises(
@@ -20,7 +20,7 @@ def test_load_server_config_rejects_unknown_field(tmp_path):
 
 
 def test_load_server_config_rejects_unknown_nested_field(tmp_path):
-    config_path = tmp_path / "ov.conf"
+    config_path = tmp_path / "ctx.conf"
     config_path.write_text(json.dumps({"server": {"telemetry": {"prometheus": {"enabld": True}}}}))
 
     with pytest.raises(
@@ -31,7 +31,7 @@ def test_load_server_config_rejects_unknown_nested_field(tmp_path):
 
 
 def test_load_server_config_reports_invalid_value_path(tmp_path):
-    config_path = tmp_path / "ov.conf"
+    config_path = tmp_path / "ctx.conf"
     config_path.write_text(json.dumps({"server": {"port": "abc"}}))
 
     with pytest.raises(ValueError, match=r"Invalid value for 'server\.port'"):
@@ -39,7 +39,7 @@ def test_load_server_config_reports_invalid_value_path(tmp_path):
 
 
 def test_load_server_config_preserves_supported_fields(tmp_path):
-    config_path = tmp_path / "ov.conf"
+    config_path = tmp_path / "ctx.conf"
     config_path.write_text(
         json.dumps(
             {

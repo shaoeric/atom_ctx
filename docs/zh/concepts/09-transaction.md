@@ -1,10 +1,10 @@
 # 路径锁与崩溃恢复
 
-OpenViking 通过**路径锁**和**Redo Log** 两个简单原语保护核心写操作（`rm`、`mv`、`add_resource`、`session.commit`）的一致性，确保 VikingFS、VectorDB、QueueManager 三个子系统在故障时不会出现数据不一致。
+AtomCtx 通过**路径锁**和**Redo Log** 两个简单原语保护核心写操作（`rm`、`mv`、`add_resource`、`session.commit`）的一致性，确保 VikingFS、VectorDB、QueueManager 三个子系统在故障时不会出现数据不一致。
 
 ## 设计哲学
 
-OpenViking 是上下文数据库，FS 是源数据，VectorDB 是派生索引。索引丢了可从源数据重建，源数据丢失不可恢复。因此：
+AtomCtx 是上下文数据库，FS 是源数据，VectorDB 是派生索引。索引丢了可从源数据重建，源数据丢失不可恢复。因此：
 
 > **宁可搜不到，不要搜到坏结果。**
 
@@ -60,7 +60,7 @@ class LockHandle:
 **LockContext** 是异步上下文管理器，封装加锁/解锁生命周期：
 
 ```python
-from openviking.storage.transaction import LockContext, get_lock_manager
+from atom_ctx.storage.transaction import LockContext, get_lock_manager
 
 async with LockContext(get_lock_manager(), [path], lock_mode="point") as handle:
     # 在锁保护下执行操作
@@ -199,7 +199,7 @@ Phase 2 — 记忆提取 + 写入（RedoLog）：
 `LockContext` 是**异步**上下文管理器，封装锁的获取和释放：
 
 ```python
-from openviking.storage.transaction import LockContext, get_lock_manager
+from atom_ctx.storage.transaction import LockContext, get_lock_manager
 
 lock_manager = get_lock_manager()
 

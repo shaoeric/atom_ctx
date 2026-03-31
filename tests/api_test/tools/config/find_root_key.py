@@ -1,42 +1,42 @@
 import os
 import subprocess
 
-import openviking
+import atom_ctx
 
-print("Searching for root_api_key in OpenViking code...")
+print("Searching for root_api_key in AtomCtx code...")
 
-# Find where openviking is installed
+# Find where atom_ctx is installed
 
-openviking_path = os.path.dirname(openviking.__file__)
-print(f"OpenViking path: {openviking_path}")
+atom_ctx_path = os.path.dirname(atom_ctx.__file__)
+print(f"AtomCtx path: {atom_ctx_path}")
 
 # Search for root_api_key in the code
-print("\nSearching in openviking package...")
+print("\nSearching in atom_ctx package...")
 try:
     result = subprocess.run(
-        ["grep", "-r", "root_api_key", openviking_path], capture_output=True, text=True
+        ["grep", "-r", "root_api_key", atom_ctx_path], capture_output=True, text=True
     )
     if result.stdout:
         print(result.stdout)
     else:
-        print("No matches in openviking package")
+        print("No matches in atom_ctx package")
 except Exception as e:
     print(f"Error searching: {e}")
 
-# Also check openviking_cli
+# Also check atom_ctx_cli
 try:
-    import openviking_cli
+    import atom_ctx_cli
 
-    cli_path = os.path.dirname(openviking_cli.__file__)
-    print(f"\nOpenViking CLI path: {cli_path}")
-    print("\nSearching in openviking_cli package...")
+    cli_path = os.path.dirname(atom_ctx_cli.__file__)
+    print(f"\nAtomCtx CLI path: {cli_path}")
+    print("\nSearching in atom_ctx_cli package...")
     result = subprocess.run(
         ["grep", "-r", "root_api_key", cli_path], capture_output=True, text=True
     )
     if result.stdout:
         print(result.stdout)
     else:
-        print("No matches in openviking_cli package")
+        print("No matches in atom_ctx_cli package")
 except Exception as e:
     print(f"Error searching CLI: {e}")
 
@@ -45,7 +45,7 @@ print("\n" + "=" * 80)
 print("Searching for error message...")
 try:
     result = subprocess.run(
-        ["grep", "-r", "Admin API requires", openviking_path], capture_output=True, text=True
+        ["grep", "-r", "Admin API requires", atom_ctx_path], capture_output=True, text=True
     )
     if result.stdout:
         print(result.stdout)

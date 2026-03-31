@@ -23,15 +23,26 @@ if str(SETUP_DIR) not in sys.path:
 get_host_engine_build_config = importlib.import_module(
     "build_support.x86_profiles"
 ).get_host_engine_build_config
-resolve_openviking_version = importlib.import_module(
+resolve_atom_ctx_version = importlib.import_module(
     "build_support.versioning"
-).resolve_openviking_version
+).resolve_atom_ctx_version
 
 CMAKE_PATH = shutil.which("cmake") or "cmake"
 C_COMPILER_PATH = shutil.which("gcc") or "gcc"
 CXX_COMPILER_PATH = shutil.which("g++") or "g++"
 ENGINE_SOURCE_DIR = "src/"
 ENGINE_BUILD_CONFIG = get_host_engine_build_config(platform.machine())
+
+
+def _apply_default_build_network_env(env):
+    """Set mirror defaults for Go/Rust dependency downloads when unset."""
+    if not env.get("GOPROXY"):
+        env["GOPROXY"] = "https://goproxy.cn,direct"
+    if not env.get("GOSUMDB"):
+        env["GOSUMDB"] = "sum.golang.google.cn"
+    if not env.get("CARGO_REGISTRIES_CRATES_IO_PROTOCOL"):
+        env["CARGO_REGISTRIES_CRATES_IO_PROTOCOL"] = "sparse"
+    return env
 
 
 def _get_windows_python_sabi_library() -> Path:
@@ -69,12 +80,12 @@ def _get_windows_python_sabi_library() -> Path:
     )
 
 
-class OpenVikingBuildExt(build_ext):
-    """Build OpenViking runtime artifacts and Python native extensions."""
+class AtomCtxBuildExt(build_ext):
+    """Build AtomCtx runtime artifacts and Python native extensions."""
 
     def run(self):
         self.build_agfs_artifacts()
-        self.build_ov_cli_artifact()
+        self.build_ctx_cli_artifact()
         self.cmake_executable = CMAKE_PATH
 
         for ext in self.extensions:
@@ -91,7 +102,7 @@ class OpenVikingBuildExt(build_ext):
     def _copy_artifacts_to_build_lib(self, target_binary=None, target_lib=None):
         """Copy built artifacts into build_lib so wheel packaging can include them."""
         if self.build_lib:
-            build_pkg_dir = Path(self.build_lib) / "openviking"
+            build_pkg_dir = Path(self.build_lib) / "atom_ctx"
             if target_binary and target_binary.exists():
                 self._copy_artifact(target_binary, build_pkg_dir / "bin" / target_binary.name)
             if target_lib and target_lib.exists():
@@ -150,8 +161,8 @@ class OpenVikingBuildExt(build_ext):
             lib_name = "libagfsbinding.so"
 
         agfs_server_dir = Path("third_party/agfs/agfs-server").resolve()
-        agfs_bin_dir = Path("openviking/bin").resolve()
-        agfs_lib_dir = Path("openviking/lib").resolve()
+        agfs_bin_dir = Path("atom_ctx/bin").resolve()
+        agfs_lib_dir = Path("atom_ctx/lib").resolve()
         agfs_target_binary = agfs_bin_dir / binary_name
         agfs_target_lib = agfs_lib_dir / lib_name
 
@@ -178,7 +189,7 @@ class OpenVikingBuildExt(build_ext):
     ):
         """Implement AGFS artifact building without final artifact checks."""
 
-        prebuilt_dir = os.environ.get("OV_PREBUILT_BIN_DIR")
+        prebuilt_dir = os.environ.get("CTX_PREBUILT_BIN_DIR")
         if prebuilt_dir:
             prebuilt_path = Path(prebuilt_dir).resolve()
             print(f"Checking for pre-built AGFS artifacts in {prebuilt_path}...")
@@ -194,18 +205,18 @@ class OpenVikingBuildExt(build_ext):
                 print(f"[OK] Used pre-built AGFS artifacts from {prebuilt_dir}")
                 return
 
-        if os.environ.get("OV_SKIP_AGFS_BUILD") == "1":
+        if os.environ.get("CTX_SKIP_AGFS_BUILD") == "1":
             if agfs_target_binary.exists() and agfs_target_lib.exists():
                 print("[OK] Skipping AGFS build, using existing artifacts")
                 return
-            print("[Warning] OV_SKIP_AGFS_BUILD=1 but artifacts are missing. Will try to build.")
+            print("[Warning] CTX_SKIP_AGFS_BUILD=1 but artifacts are missing. Will try to build.")
 
         if agfs_server_dir.exists() and shutil.which("go"):
             print("Building AGFS artifacts from source...")
 
             try:
                 print(f"Building AGFS server: {binary_name}")
-                env = os.environ.copy()
+                env = _apply_default_build_network_env(os.environ.copy())
                 if "GOOS" in env or "GOARCH" in env:
                     print(f"Cross-compiling with GOOS={env.get('GOOS')} GOARCH={env.get('GOARCH')}")
 
@@ -248,7 +259,7 @@ class OpenVikingBuildExt(build_ext):
 
             try:
                 print(f"Building AGFS binding library: {lib_name}")
-                env = os.environ.copy()
+                env = _apply_default_build_network_env(os.environ.copy())
                 env["CGO_ENABLED"] = "1"
 
                 result = subprocess.run(
@@ -289,40 +300,40 @@ class OpenVikingBuildExt(build_ext):
             else:
                 print("[Warning] Go compiler not found. Cannot build AGFS from source.")
 
-    def build_ov_cli_artifact(self):
-        """Build or reuse the ov Rust CLI binary."""
-        binary_name = "ov.exe" if sys.platform == "win32" else "ov"
-        ov_cli_dir = Path("crates/ov_cli").resolve()
-        ov_target_binary = Path("openviking/bin").resolve() / binary_name
+    def build_ctx_cli_artifact(self):
+        """Build or reuse the ctx Rust CLI binary."""
+        binary_name = "ctx.exe" if sys.platform == "win32" else "ctx"
+        ctx_cli_dir = Path("crates/ctx_cli").resolve()
+        ctx_target_binary = Path("atom_ctx/bin").resolve() / binary_name
 
         self._run_stage_with_artifact_checks(
-            "ov CLI build",
-            lambda: self._build_ov_cli_artifact_impl(ov_cli_dir, binary_name, ov_target_binary),
-            [(ov_target_binary, binary_name)],
-            on_success=lambda: self._copy_artifacts_to_build_lib(ov_target_binary, None),
+            "ctx CLI build",
+            lambda: self._build_ctx_cli_artifact_impl(ctx_cli_dir, binary_name, ctx_target_binary),
+            [(ctx_target_binary, binary_name)],
+            on_success=lambda: self._copy_artifacts_to_build_lib(ctx_target_binary, None),
         )
 
-    def _build_ov_cli_artifact_impl(self, ov_cli_dir, binary_name, ov_target_binary):
-        """Implement ov CLI building without final artifact checks."""
+    def _build_ctx_cli_artifact_impl(self, ctx_cli_dir, binary_name, ctx_target_binary):
+        """Implement ctx CLI building without final artifact checks."""
 
-        prebuilt_dir = os.environ.get("OV_PREBUILT_BIN_DIR")
+        prebuilt_dir = os.environ.get("CTX_PREBUILT_BIN_DIR")
         if prebuilt_dir:
             src_bin = Path(prebuilt_dir).resolve() / binary_name
             if src_bin.exists():
-                self._copy_artifact(src_bin, ov_target_binary)
+                self._copy_artifact(src_bin, ctx_target_binary)
                 return
 
-        if os.environ.get("OV_SKIP_OV_BUILD") == "1":
-            if ov_target_binary.exists():
-                print("[OK] Skipping ov CLI build, using existing binary")
+        if os.environ.get("CTX_SKIP_CLI_BUILD") == "1":
+            if ctx_target_binary.exists():
+                print("[OK] Skipping ctx CLI build, using existing binary")
                 return
-            print("[Warning] OV_SKIP_OV_BUILD=1 but binary is missing. Will try to build.")
+            print("[Warning] CTX_SKIP_CLI_BUILD=1 but binary is missing. Will try to build.")
 
-        if ov_cli_dir.exists() and shutil.which("cargo"):
-            print("Building ov CLI from source...")
+        if ctx_cli_dir.exists() and shutil.which("cargo"):
+            print("Building ctx CLI from source...")
             try:
-                env = os.environ.copy()
-                env["OPENVIKING_VERSION"] = resolve_openviking_version(
+                env = _apply_default_build_network_env(os.environ.copy())
+                env["CTX_VERSION"] = resolve_atom_ctx_version(
                     env=env, project_root=SETUP_DIR
                 )
                 build_args = ["cargo", "build", "--release"]
@@ -333,7 +344,7 @@ class OpenVikingBuildExt(build_ext):
 
                 result = subprocess.run(
                     build_args,
-                    cwd=str(ov_cli_dir),
+                    cwd=str(ctx_cli_dir),
                     env=env,
                     check=True,
                     stdout=subprocess.PIPE,
@@ -344,17 +355,17 @@ class OpenVikingBuildExt(build_ext):
                 if result.stderr:
                     print(f"Build stderr: {result.stderr.decode('utf-8', errors='replace')}")
 
-                cargo_target_dir = self._resolve_cargo_target_dir(ov_cli_dir, env)
+                cargo_target_dir = self._resolve_cargo_target_dir(ctx_cli_dir, env)
                 if target:
                     built_bin = cargo_target_dir / target / "release" / binary_name
                 else:
                     built_bin = cargo_target_dir / "release" / binary_name
 
-                self._require_artifact(built_bin, binary_name, "ov CLI build")
-                self._copy_artifact(built_bin, ov_target_binary)
-                print("[OK] ov CLI built successfully from source")
+                self._require_artifact(built_bin, binary_name, "ctx CLI build")
+                self._copy_artifact(built_bin, ctx_target_binary)
+                print("[OK] ctx CLI built successfully from source")
             except Exception as exc:
-                error_msg = f"Failed to build ov CLI from source: {exc}"
+                error_msg = f"Failed to build ctx CLI from source: {exc}"
                 if isinstance(exc, subprocess.CalledProcessError):
                     if exc.stdout:
                         error_msg += (
@@ -367,12 +378,12 @@ class OpenVikingBuildExt(build_ext):
                 print(f"[Error] {error_msg}")
                 raise RuntimeError(error_msg)
         else:
-            if ov_target_binary.exists():
-                print("[Info] ov CLI binary already exists locally. Skipping source build.")
-            elif not ov_cli_dir.exists():
-                print(f"[Warning] ov CLI source directory not found at {ov_cli_dir}")
+            if ctx_target_binary.exists():
+                print("[Info] ctx CLI binary already exists locally. Skipping source build.")
+            elif not ctx_cli_dir.exists():
+                print(f"[Warning] ctx CLI source directory not found at {ctx_cli_dir}")
             else:
-                print("[Warning] Cargo not found. Cannot build ov CLI from source.")
+                print("[Warning] Cargo not found. Cannot build ctx CLI from source.")
 
     def build_extension(self, ext):
         """Build a single Python native extension artifact using CMake."""
@@ -394,7 +405,7 @@ class OpenVikingBuildExt(build_ext):
 
     def _clean_stale_engine_artifacts(self, ext_dir: Path):
         """Remove stale non-abi3 engine binaries from wheel build output directories."""
-        source_engine_dir = (SETUP_DIR / "openviking" / "storage" / "vectordb" / "engine").resolve()
+        source_engine_dir = (SETUP_DIR / "atom_ctx" / "storage" / "vectordb" / "engine").resolve()
         if ext_dir == source_engine_dir:
             return
 
@@ -414,9 +425,9 @@ class OpenVikingBuildExt(build_ext):
             f"-S{Path(ENGINE_SOURCE_DIR).resolve()}",
             f"-B{build_dir}",
             "-DCMAKE_BUILD_TYPE=Release",
-            f"-DOV_PY_OUTPUT_DIR={ext_dir}",
-            f"-DOV_PY_EXT_SUFFIX={py_ext_suffix}",
-            f"-DOV_X86_BUILD_VARIANTS={';'.join(ENGINE_BUILD_CONFIG.cmake_variants)}",
+            f"-DCTX_PY_OUTPUT_DIR={ext_dir}",
+            f"-DCTX_PY_EXT_SUFFIX={py_ext_suffix}",
+            f"-DCTX_X86_BUILD_VARIANTS={';'.join(ENGINE_BUILD_CONFIG.cmake_variants)}",
             "-DCMAKE_VERBOSE_MAKEFILE=ON",
             "-DCMAKE_INSTALL_RPATH=$ORIGIN",
             f"-DPython3_EXECUTABLE={sys.executable}",
@@ -433,7 +444,7 @@ class OpenVikingBuildExt(build_ext):
                 cmake_args.append(f"-DCMAKE_OSX_ARCHITECTURES={target_arch}")
         elif sys.platform == "win32":
             windows_python_sabi_library = _get_windows_python_sabi_library()
-            cmake_args.append(f"-DOV_PYTHON_SABI_LIBRARY={windows_python_sabi_library}")
+            cmake_args.append(f"-DCTX_PYTHON_SABI_LIBRARY={windows_python_sabi_library}")
             cmake_args.extend(["-G", "MinGW Makefiles"])
 
         self.spawn([self.cmake_executable] + cmake_args)
@@ -444,19 +455,19 @@ class OpenVikingBuildExt(build_ext):
 
 if bdist_wheel is not None:
 
-    class OpenVikingBdistWheel(bdist_wheel):
+    class AtomCtxBdistWheel(bdist_wheel):
         def finalize_options(self):
             super().finalize_options()
             self.py_limited_api = "cp310"
 else:
-    OpenVikingBdistWheel = None
+    AtomCtxBdistWheel = None
 
 
 cmdclass = {
-    "build_ext": OpenVikingBuildExt,
+    "build_ext": AtomCtxBuildExt,
 }
-if OpenVikingBdistWheel is not None:
-    cmdclass["bdist_wheel"] = OpenVikingBdistWheel
+if AtomCtxBdistWheel is not None:
+    cmdclass["bdist_wheel"] = AtomCtxBdistWheel
 
 
 setup(
@@ -472,14 +483,14 @@ setup(
     ],
     cmdclass=cmdclass,
     package_data={
-        "openviking": [
+        "atom_ctx": [
             "bin/agfs-server",
             "bin/agfs-server.exe",
             "lib/libagfsbinding.so",
             "lib/libagfsbinding.dylib",
             "lib/libagfsbinding.dll",
-            "bin/ov",
-            "bin/ov.exe",
+            "bin/ctx",
+            "bin/ctx.exe",
             "storage/vectordb/engine/*.abi3.so",
             "storage/vectordb/engine/*.pyd",
         ],

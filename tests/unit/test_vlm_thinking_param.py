@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for LiteLLM thinking parameter scoping to DashScope providers."""
 
-from openviking.models.vlm.backends.litellm_vlm import LiteLLMVLMProvider
+from atom_ctx.models.vlm.backends.litellm_vlm import LiteLLMVLMProvider
 
 
 class TestLiteLLMThinkingParam:

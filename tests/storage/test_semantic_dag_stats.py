@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from openviking.server.identity import RequestContext, Role
-from openviking.storage.queuefs.semantic_dag import DagStats, SemanticDagExecutor
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx.storage.queuefs.semantic_dag import DagStats, SemanticDagExecutor
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 class _FakeVikingFS:
@@ -23,7 +23,7 @@ class _FakeVikingFS:
         self.writes.append((path, content))
 
     def _uri_to_path(self, uri, ctx=None):
-        return uri.replace("viking://", "/local/acc1/")
+        return uri.replace("ctx://", "/local/acc1/")
 
 
 class _FakeProcessor:
@@ -71,7 +71,7 @@ class _DummyTracker:
 
 @pytest.mark.asyncio
 async def test_semantic_dag_stats_collects_nodes(monkeypatch):
-    root_uri = "viking://resources/root"
+    root_uri = "ctx://resources/root"
     tree = {
         root_uri: [
             {"name": "a.txt", "isDir": False},
@@ -83,24 +83,24 @@ async def test_semantic_dag_stats_collects_nodes(monkeypatch):
         ],
     }
     fake_fs = _FakeVikingFS(tree)
-    monkeypatch.setattr("openviking.storage.queuefs.semantic_dag.get_viking_fs", lambda: fake_fs)
+    monkeypatch.setattr("atom_ctx.storage.queuefs.semantic_dag.get_ctx_fs", lambda: fake_fs)
     monkeypatch.setattr(
-        "openviking.storage.queuefs.embedding_tracker.EmbeddingTaskTracker.get_instance",
+        "atom_ctx.storage.queuefs.embedding_tracker.EmbeddingTaskTracker.get_instance",
         lambda: _DummyTracker(),
     )
 
     # Mock lock layer: LockContext as no-op passthrough
     mock_handle = MagicMock()
     monkeypatch.setattr(
-        "openviking.storage.transaction.lock_context.LockContext.__aenter__",
+        "atom_ctx.storage.transaction.lock_context.LockContext.__aenter__",
         AsyncMock(return_value=mock_handle),
     )
     monkeypatch.setattr(
-        "openviking.storage.transaction.lock_context.LockContext.__aexit__",
+        "atom_ctx.storage.transaction.lock_context.LockContext.__aexit__",
         AsyncMock(return_value=False),
     )
     monkeypatch.setattr(
-        "openviking.storage.transaction.get_lock_manager",
+        "atom_ctx.storage.transaction.get_lock_manager",
         lambda: MagicMock(),
     )
 

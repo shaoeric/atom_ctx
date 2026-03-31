@@ -8,7 +8,7 @@ import pytest
 import pytest_asyncio
 from fastapi import FastAPI, HTTPException, Request
 
-import openviking.server.routers.bot as bot_router_module
+import atom_ctx.server.routers.bot as bot_router_module
 
 
 def make_request(headers: dict[str, str]) -> Request:

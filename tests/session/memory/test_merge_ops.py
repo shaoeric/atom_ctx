@@ -10,11 +10,11 @@ from pathlib import Path
 import pytest
 import yaml
 
-from openviking.session.memory.dataclass import (
+from atom_ctx.session.memory.dataclass import (
     MemoryField,
     MemoryTypeSchema,
 )
-from openviking.session.memory.merge_op import (
+from atom_ctx.session.memory.merge_op import (
     MergeOp,
     MergeOpBase,
     MergeOpFactory,
@@ -25,13 +25,13 @@ from openviking.session.memory.merge_op import (
     StrPatch,
     apply_str_patch,
 )
-from openviking.session.memory.merge_op.base import FieldType
-from openviking.session.memory.schema_model_generator import (
+from atom_ctx.session.memory.merge_op.base import FieldType
+from atom_ctx.session.memory.schema_model_generator import (
     SchemaModelGenerator,
     SchemaPromptGenerator,
     to_pascal_case,
 )
-from openviking.session.memory.memory_type_registry import (
+from atom_ctx.session.memory.memory_type_registry import (
     MemoryTypeRegistry,
     create_default_registry,
 )

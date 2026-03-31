@@ -1,6 +1,6 @@
 import logging
 
-from openviking_cli.utils import get_logger
+from atom_ctx_cli.utils import get_logger
 
 print("Testing logger...")
 print("=" * 80)
@@ -18,7 +18,7 @@ logger.warning("Warning message")
 logger.error("Error message")
 
 print("\n" + "=" * 80)
-print("Checking openviking.server.app logger...")
+print("Checking atom_ctx.server.app logger...")
 
-app_logger = get_logger("openviking.server.app")
+app_logger = get_logger("atom_ctx.server.app")
 print(f"App logger level: {app_logger.level}")

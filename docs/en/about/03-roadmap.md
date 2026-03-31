@@ -1,12 +1,12 @@
 # Roadmap
 
-This document outlines the development roadmap for OpenViking.
+This document outlines the development roadmap for AtomCtx.
 
 ## Completed Features
 
 ### Core Infrastructure
 - Three-layer information model (L0/L1/L2)
-- Viking URI addressing system
+- Ctx URI addressing system
 - Dual-layer storage (AGFS + Vector Index)
 - Async/Sync client support
 

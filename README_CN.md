@@ -1,15 +1,15 @@
 <div align="center">
-<a href="https://openviking.ai/" target="_blank">
+<a href="https://atom-ctx.ai/" target="_blank">
   <picture>
-    <img alt="OpenViking" src="docs/images/ov-logo.png" width="200px" height="auto">
+    <img alt="AtomCtx" src="docs/images/ctx-logo.png" width="200px" height="auto">
   </picture>
 </a>
 
-### OpenViking：AI 智能体的上下文数据库
+### AtomCtx：AI 智能体的上下文数据库
 
 [English](README.md) / 中文 / [日本語](README_JA.md)
 
-<a href="https://www.openviking.ai">官网</a> · <a href="https://github.com/volcengine/OpenViking">GitHub</a> · <a href="https://github.com/volcengine/OpenViking/issues">问题反馈</a> · <a href="https://www.openviking.ai/docs">文档</a>
+<a href="https://www.ctx.ai">官网</a> · <a href="https://github.com/volcengine/atom-ctx">GitHub</a> · <a href="https://github.com/volcengine/atom-ctx/issues">问题反馈</a> · <a href="https://www.ctx.ai/docs">文档</a>
 
 [![][release-shield]][release-link]
 [![][github-stars-shield]][github-stars-link]
@@ -21,7 +21,7 @@
 
 👋 加入我们的社区
 
-📱 <a href="./docs/en/about/01-about-us.md#lark-group">飞书群</a> · <a href="./docs/en/about/01-about-us.md#wechat-group">微信群</a> · <a href="https://discord.com/invite/eHvx8E9XF3">Discord</a> · <a href="https://x.com/openvikingai">X</a>
+📱 <a href="./docs/en/about/01-about-us.md#lark-group">飞书群</a> · <a href="./docs/en/about/01-about-us.md#wechat-group">微信群</a> · <a href="https://discord.com/invite/eHvx8E9XF3">Discord</a> · <a href="https://x.com/atom_ctxai">X</a>
 
 </div>
 
@@ -39,13 +39,13 @@
 - **上下文不可观察**：传统 RAG 的隐式检索链像黑盒，出错时难以调试。
 - **记忆迭代有限**：当前记忆只是用户交互的记录，缺乏智能体相关的任务记忆。
 
-### OpenViking 解决方案
+### AtomCtx 解决方案
 
-**OpenViking** 是专为 AI 智能体设计的开源**上下文数据库**。
+**AtomCtx** 是专为 AI 智能体设计的开源**上下文数据库**。
 
-我们的目标是为智能体定义一个极简的上下文交互范式，让开发者完全告别上下文管理的烦恼。OpenViking 抛弃了传统 RAG 的碎片化向量存储模型，创新性地采用 **"文件系统范式"** 来统一组织智能体所需的记忆、资源和技能。
+我们的目标是为智能体定义一个极简的上下文交互范式，让开发者完全告别上下文管理的烦恼。AtomCtx 抛弃了传统 RAG 的碎片化向量存储模型，创新性地采用 **"文件系统范式"** 来统一组织智能体所需的记忆、资源和技能。
 
-使用 OpenViking，开发者可以像管理本地文件一样构建智能体的大脑：
+使用 AtomCtx，开发者可以像管理本地文件一样构建智能体的大脑：
 
 - **文件系统管理范式** → **解决碎片化**：基于文件系统范式统一管理记忆、资源和技能。
 - **分层上下文加载** → **降低 Token 消耗**：L0/L1/L2 三层结构，按需加载，显著节省成本。
@@ -59,7 +59,7 @@
 
 ### 前置条件
 
-在开始使用 OpenViking 之前，请确保您的环境满足以下要求：
+在开始使用 AtomCtx 之前，请确保您的环境满足以下要求：
 
 - **Python 版本**：3.10 或更高版本
 - **Go 版本**：1.22 或更高（从源码构建 AGFS 组件需要）
@@ -72,34 +72,34 @@
 #### Python 包
 
 ```bash
-pip install openviking --upgrade --force-reinstall
+pip install atom-ctx --upgrade --force-reinstall
 ```
 
 #### Rust CLI（可选）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/volcengine/OpenViking/main/crates/ov_cli/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/volcengine/AtomCtx/main/crates/ctx_cli/install.sh | bash
 ```
 
 或从源码构建：
 
 ```bash
-cargo install --git https://github.com/volcengine/OpenViking ov_cli
+cargo install --git https://github.com/volcengine/atom-ctx ctx_cli
 ```
 
 ### 2. 模型准备
 
-OpenViking 需要以下模型能力：
+AtomCtx 需要以下模型能力：
 - **VLM 模型**：用于图像和内容理解
 - **Embedding 模型**：用于向量化和语义检索
 
 #### 支持的 VLM 提供商
 
-OpenViking 支持三种 VLM 提供商：
+AtomCtx 支持三种 VLM 提供商：
 
 | 提供商 | 描述 | 获取 API Key |
 |----------|-------------|-------------|
-| `volcengine` | 火山引擎豆包模型 | [Volcengine 控制台](https://console.volcengine.com/ark/region:ark+cn-beijing/overview?briefPage=0&briefType=introduce&type=new&utm_content=OpenViking&utm_medium=devrel&utm_source=OWO&utm_term=OpenViking) |
+| `volcengine` | 火山引擎豆包模型 | [Volcengine 控制台](https://console.volcengine.com/ark/region:ark+cn-beijing/overview?briefPage=0&briefType=introduce&type=new&utm_content=AtomCtx&utm_medium=devrel&utm_source=OWO&utm_term=AtomCtx) |
 | `openai` | OpenAI 官方 API | [OpenAI 平台](https://platform.openai.com) |
 | `azure` | Azure OpenAI 服务 | [Azure OpenAI 服务](https://portal.azure.com) |
 | `litellm` | 统一调用多种第三方模型 (Anthropic, DeepSeek, Gemini, vLLM, Ollama 等) | 参见 [LiteLLM 提供商](https://docs.litellm.ai/docs/providers) |
@@ -269,12 +269,12 @@ ollama serve
 
 #### 服务器配置模板
 
-创建配置文件 `~/.openviking/ov.conf`，复制前请删除注释：
+创建配置文件 `~/.ctx/ctx.conf`，复制前请删除注释：
 
 ```json
 {
   "storage": {
-    "workspace": "/home/your-name/openviking_workspace"
+    "workspace": "/home/your-name/atom_ctx_workspace"
   },
   "log": {
     "level": "INFO",
@@ -314,7 +314,7 @@ ollama serve
 ```json
 {
   "storage": {
-    "workspace": "/home/your-name/openviking_workspace"
+    "workspace": "/home/your-name/atom_ctx_workspace"
   },
   "log": {
     "level": "INFO",
@@ -348,7 +348,7 @@ ollama serve
 ```json
 {
   "storage": {
-    "workspace": "/home/your-name/openviking_workspace"
+    "workspace": "/home/your-name/atom_ctx_workspace"
   },
   "log": {
     "level": "INFO",
@@ -382,7 +382,7 @@ ollama serve
 ```json
 {
   "storage": {
-    "workspace": "/home/your-name/openviking_workspace"
+    "workspace": "/home/your-name/atom_ctx_workspace"
   },
   "log": {
     "level": "INFO",
@@ -422,7 +422,7 @@ ollama serve
 创建配置文件后，设置环境变量指向它（Linux/macOS）：
 
 ```bash
-export OPENVIKING_CONFIG_FILE=~/.openviking/ov.conf # 默认值
+export CTX_CONFIG_FILE=~/.ctx/ctx.conf # 默认值
 ```
 
 在 Windows 上，使用以下任一方式：
@@ -430,13 +430,13 @@ export OPENVIKING_CONFIG_FILE=~/.openviking/ov.conf # 默认值
 PowerShell：
 
 ```powershell
-$env:OPENVIKING_CONFIG_FILE = "$HOME/.openviking/ov.conf"
+$env:CTX_CONFIG_FILE = "$HOME/.ctx/ctx.conf"
 ```
 
 命令提示符 (cmd.exe)：
 
 ```bat
-set "OPENVIKING_CONFIG_FILE=%USERPROFILE%\.openviking\ov.conf"
+set "CTX_CONFIG_FILE=%USERPROFILE%\.ctx\ctx.conf"
 ```
 
 > 💡 **提示**：您也可以将配置文件放在其他位置，只需在环境变量中指定正确路径。
@@ -445,7 +445,7 @@ set "OPENVIKING_CONFIG_FILE=%USERPROFILE%\.openviking\ov.conf"
 
 👇 展开查看您的 CLI/客户端的配置示例：
 
-示例：用于访问本地服务器的 ovcli.conf
+示例：用于访问本地服务器的 ctx-cli.conf
 
 ```json
 {
@@ -458,7 +458,7 @@ set "OPENVIKING_CONFIG_FILE=%USERPROFILE%\.openviking\ov.conf"
 创建配置文件后，设置环境变量指向它（Linux/macOS）：
 
 ```bash
-export OPENVIKING_CLI_CONFIG_FILE=~/.openviking/ovcli.conf # 默认值
+export CTX_CLI_CONFIG_FILE=~/.ctx/ctx-cli.conf # 默认值
 ```
 
 在 Windows 上，使用以下任一方式：
@@ -466,72 +466,72 @@ export OPENVIKING_CLI_CONFIG_FILE=~/.openviking/ovcli.conf # 默认值
 PowerShell：
 
 ```powershell
-$env:OPENVIKING_CLI_CONFIG_FILE = "$HOME/.openviking/ovcli.conf"
+$env:CTX_CLI_CONFIG_FILE = "$HOME/.ctx/ctx-cli.conf"
 ```
 
 命令提示符 (cmd.exe)：
 
 ```bat
-set "OPENVIKING_CLI_CONFIG_FILE=%USERPROFILE%\.openviking\ovcli.conf"
+set "CTX_CLI_CONFIG_FILE=%USERPROFILE%\.ctx\ctx-cli.conf"
 ```
 
 ### 4. 运行您的第一个示例
 
-> 📝 **前置条件**：确保您已完成上一步的配置（ov.conf 和 ovcli.conf）。
+> 📝 **前置条件**：确保您已完成上一步的配置（ctx.conf 和 ctx-cli.conf）。
 
-现在让我们运行一个完整的示例，体验 OpenViking 的核心功能。
+现在让我们运行一个完整的示例，体验 AtomCtx 的核心功能。
 
 #### 启动服务器
 
 ```bash
-openviking-server
+ctx-server
 ```
 
 或者您可以在后台运行
 
 ```bash
-nohup openviking-server > /data/log/openviking.log 2>&1 &
+nohup ctx-server > /data/log/ctx-server.log 2>&1 &
 ```
 
 #### 运行 CLI
 
 ```bash
-ov status
-ov add-resource https://github.com/volcengine/OpenViking # --wait
-ov ls viking://resources/
-ov tree viking://resources/volcengine -L 2
+ctx status
+ctx add-resource https://github.com/volcengine/atom-ctx # --wait
+ctx ls ctx://resources/
+ctx tree ctx://resources/volcengine -L 2
 # 如果没有使用 --wait，等待一段时间以进行语义处理
-ov find "what is openviking"
-ov grep "openviking" --uri viking://resources/volcengine/OpenViking/docs/zh
+ctx find "what is atom_ctx"
+ctx grep "atom_ctx" --uri ctx://resources/volcengine/AtomCtx/docs/zh
 ```
 
-恭喜！您已成功运行 OpenViking 🎉
+恭喜！您已成功运行 AtomCtx 🎉
 
 ### VikingBot 快速开始
 
-VikingBot 是构建在 OpenViking 之上的 AI 智能体框架。以下是快速开始指南：
+VikingBot 是构建在 AtomCtx 之上的 AI 智能体框架。以下是快速开始指南：
 
 ```bash
 # 选项 1：从 PyPI 安装 VikingBot（推荐大多数用户使用）
-pip install "openviking[bot]"
+pip install "atom-ctx[bot]"
 
 # 选项 2：从源码安装 VikingBot（用于开发）
 uv pip install -e ".[bot]"
 
-# 启动 OpenViking 服务器（同时启动 Bot）
-openviking-server --with-bot
+# 启动 AtomCtx 服务器（同时启动 Bot）
+ctx-server --with-bot
 
 # 在另一个终端启动交互式聊天
-ov chat
+ctx chat
 ```
 
 ---
 
 ## 服务器部署详情
 
-对于生产环境，我们建议将 OpenViking 作为独立的 HTTP 服务运行，为您的 AI 智能体提供持久、高性能的上下文支持。
+对于生产环境，我们建议将 AtomCtx 作为独立的 HTTP 服务运行，为您的 AI 智能体提供持久、高性能的上下文支持。
 
-🚀 **在云端部署 OpenViking**：
+🚀 **在云端部署 AtomCtx**：
 为确保最佳的存储性能和数据安全，我们建议在 **火山引擎弹性计算服务 (ECS)** 上使用 **veLinux** 操作系统进行部署。我们准备了详细的分步指南，帮助您快速上手。
 
 👉 **[查看：服务器部署与 ECS 设置指南](./docs/zh/getting-started/03-quickstart-server.md)**
@@ -540,8 +540,8 @@ ov chat
 ## OpenClaw 上下文插件详情
 
 * 测试集：基于 LoCoMo10(https://github.com/snap-research/locomo) 的长程对话进行效果测试（去除无真值的 category5 后，共 1540 条 case）
-* 实验组：因用户在使用 OpenViking 时可能不关闭 OpenClaw 原生记忆，所以增加是否开关原生记忆的实验组
-* OpenViking 版本：0.1.18
+* 实验组：因用户在使用 AtomCtx 时可能不关闭 OpenClaw 原生记忆，所以增加是否开关原生记忆的实验组
+* AtomCtx 版本：0.1.18
 * 模型：seed-2.0-code
 * 评测脚本：https://github.com/ZaynJarvis/openclaw-eval/tree/main
 
@@ -549,11 +549,11 @@ ov chat
 |----------|------------------|------------------|
 | OpenClaw(memory-core) |	35.65% |	24,611,530 |
 | OpenClaw + LanceDB (-memory-core) |	44.55% |	51,574,530 |
-| OpenClaw + OpenViking Plugin (-memory-core)	| 52.08% |	4,264,396 |
-| OpenClaw + OpenViking Plugin (+memory-core)	| 51.23% |	2,099,622 |
+| OpenClaw + AtomCtx Plugin (-memory-core)	| 52.08% |	4,264,396 |
+| OpenClaw + AtomCtx Plugin (+memory-core)	| 51.23% |	2,099,622 |
 
 * 实验结论：
-结合 OpenViking 后，若仍开启原生记忆，效果在原 OpenClaw 上提升 43%，输入 token 成本降低 91%；在 LanceDB 上效果提升 15%，输入 token 降低 96%。若关闭原生记忆，效果在原 OpenClaw 上提升 49%，输入 token 成本降低 83%；在 LanceDB 上效果提升 17%，输入 token 降低 92%。
+结合 AtomCtx 后，若仍开启原生记忆，效果在原 OpenClaw 上提升 43%，输入 token 成本降低 91%；在 LanceDB 上效果提升 15%，输入 token 降低 96%。若关闭原生记忆，效果在原 OpenClaw 上提升 49%，输入 token 成本降低 83%；在 LanceDB 上效果提升 17%，输入 token 降低 92%。
 
 👉 **[查看：OpenClaw 上下文插件](examples/openclaw-plugin/README_CN.md)**
 
@@ -561,7 +561,7 @@ ov chat
 
 ## VikingBot 部署详情
 
-OpenViking 有一个类似 nanobot 的机器人用于交互工作，现已可用。
+AtomCtx 有一个类似 nanobot 的机器人用于交互工作，现已可用。
 
 👉 **[查看：使用 VikingBot 部署服务器](bot/README_CN.md)**
 
@@ -569,16 +569,16 @@ OpenViking 有一个类似 nanobot 的机器人用于交互工作，现已可用
 
 ## 核心概念
 
-运行第一个示例后，让我们深入了解 OpenViking 的设计理念。这五个核心概念与前面提到的解决方案一一对应，共同构建了一个完整的上下文管理系统：
+运行第一个示例后，让我们深入了解 AtomCtx 的设计理念。这五个核心概念与前面提到的解决方案一一对应，共同构建了一个完整的上下文管理系统：
 
 ### 1. 文件系统管理范式 → 解决碎片化
 
-我们不再将上下文视为扁平的文本切片，而是将它们统一到一个抽象的虚拟文件系统中。无论是记忆、资源还是能力，都映射到 `viking://` 协议下的虚拟目录中，每个都有唯一的 URI。
+我们不再将上下文视为扁平的文本切片，而是将它们统一到一个抽象的虚拟文件系统中。无论是记忆、资源还是能力，都映射到 `ctx://` 协议下的虚拟目录中，每个都有唯一的 URI。
 
-这种范式赋予智能体前所未有的上下文操作能力，使它们能够像开发者一样，通过 `ls` 和 `find` 等标准命令精确、确定地定位、浏览和操作信息。这将上下文管理从模糊的语义匹配转变为直观、可追踪的"文件操作"。了解更多：[Viking URI](./docs/zh/concepts/04-viking-uri.md) | [上下文类型](./docs/zh/concepts/02-context-types.md)
+这种范式赋予智能体前所未有的上下文操作能力，使它们能够像开发者一样，通过 `ls` 和 `find` 等标准命令精确、确定地定位、浏览和操作信息。这将上下文管理从模糊的语义匹配转变为直观、可追踪的"文件操作"。了解更多：[Ctx URI](./docs/zh/concepts/04-ctx-uri.md) | [上下文类型](./docs/zh/concepts/02-context-types.md)
 
 ```
-viking://
+ctx://
 ├── resources/              # 资源：项目文档、代码库、网页等
 │   ├── my_project/
 │   │   ├── docs/
@@ -603,7 +603,7 @@ viking://
 
 ### 2. 分层上下文加载 → 降低 Token 消耗
 
-一次性将大量上下文塞入提示不仅昂贵，而且容易超出模型窗口并引入噪声。OpenViking 在写入时自动将上下文处理为三个级别：
+一次性将大量上下文塞入提示不仅昂贵，而且容易超出模型窗口并引入噪声。AtomCtx 在写入时自动将上下文处理为三个级别：
 - **L0 (摘要)**：一句话摘要，用于快速检索和识别。
 - **L1 (概览)**：包含核心信息和使用场景，用于智能体在规划阶段的决策。
 - **L2 (详情)**：完整的原始数据，供智能体在绝对必要时深度阅读。
@@ -611,7 +611,7 @@ viking://
 了解更多：[上下文分层](./docs/zh/concepts/03-context-layers.md)
 
 ```
-viking://resources/my_project/
+ctx://resources/my_project/
 ├── .abstract               # L0 层：摘要（~100 tokens）- 快速相关性检查
 ├── .overview               # L1 层：概览（~2k tokens）- 理解结构和关键点
 ├── docs/
@@ -629,7 +629,7 @@ viking://resources/my_project/
 
 ### 3. 目录递归检索 → 提升检索效果
 
-单一向量检索难以应对复杂的查询意图。OpenViking 设计了创新的**目录递归检索策略**，深度集成多种检索方法：
+单一向量检索难以应对复杂的查询意图。AtomCtx 设计了创新的**目录递归检索策略**，深度集成多种检索方法：
 
 1. **意图分析**：通过意图分析生成多个检索条件。
 2. **初始定位**：使用向量检索快速定位初始切片所在的高分目录。
@@ -641,13 +641,13 @@ viking://resources/my_project/
 
 ### 4. 可视化检索轨迹 → 可观察上下文
 
-OpenViking 的组织采用分层虚拟文件系统结构。所有上下文以统一格式集成，每个条目对应一个唯一的 URI（如 `viking://` 路径），打破了传统的扁平黑盒管理模式，具有清晰易懂的层次结构。
+AtomCtx 的组织采用分层虚拟文件系统结构。所有上下文以统一格式集成，每个条目对应一个唯一的 URI（如 `ctx://` 路径），打破了传统的扁平黑盒管理模式，具有清晰易懂的层次结构。
 
 检索过程采用目录递归策略。每次检索的目录浏览和文件定位轨迹被完整保留，让用户能够清晰观察问题的根源，指导检索逻辑的优化。了解更多：[检索机制](./docs/zh/concepts/07-retrieval.md)
 
 ### 5. 自动会话管理 → 上下文自迭代
 
-OpenViking 内置了记忆自迭代循环。在每个会话结束时，开发者可以主动触发记忆提取机制。系统将异步分析任务执行结果和用户反馈，并自动更新到用户和智能体记忆目录。
+AtomCtx 内置了记忆自迭代循环。在每个会话结束时，开发者可以主动触发记忆提取机制。系统将异步分析任务执行结果和用户反馈，并自动更新到用户和智能体记忆目录。
 
 - **用户记忆更新**：更新与用户偏好相关的记忆，使智能体响应更好地适应用户需求。
 - **智能体经验积累**：从任务执行经验中提取操作技巧和工具使用经验等核心内容，辅助后续任务的高效决策。
@@ -668,22 +668,22 @@ OpenViking 内置了记忆自迭代循环。在每个会话结束时，开发者
 
 ### 加入社区
 
-OpenViking 仍处于早期阶段，有许多改进和探索的空间。我们真诚邀请每一位对 AI 智能体技术充满热情的开发者：
+AtomCtx 仍处于早期阶段，有许多改进和探索的空间。我们真诚邀请每一位对 AI 智能体技术充满热情的开发者：
 
 - 为我们点亮一颗珍贵的 **Star**，给我们前进的动力。
-- 访问我们的[**官网**](https://www.openviking.ai)了解我们传达的理念，并通过[**文档**](https://www.openviking.ai/docs)在您的项目中使用它。感受它带来的变化，并给我们最真实的体验反馈。
+- 访问我们的[**官网**](https://www.ctx.ai)了解我们传达的理念，并通过[**文档**](https://www.ctx.ai/docs)在您的项目中使用它。感受它带来的变化，并给我们最真实的体验反馈。
 - 加入我们的社区，分享您的见解，帮助回答他人的问题，共同创造开放互助的技术氛围：
   - 📱 **飞书群**：扫码加入 → [查看二维码](./docs/en/about/01-about-us.md#lark-group)
   - 💬 **微信群**：扫码添加助手 → [查看二维码](./docs/en/about/01-about-us.md#wechat-group)
   - 🎮 **Discord**：[加入 Discord 服务器](https://discord.com/invite/eHvx8E9XF3)
-  - 🐦 **X (Twitter)**：[关注我们](https://x.com/openvikingai)
-- 成为**贡献者**，无论是提交错误修复还是贡献新功能，您的每一行代码都将是 OpenViking 成长的重要基石。
+  - 🐦 **X (Twitter)**：[关注我们](https://x.com/atom_ctxai)
+- 成为**贡献者**，无论是提交错误修复还是贡献新功能，您的每一行代码都将是 AtomCtx 成长的重要基石。
 
 让我们共同努力，定义和构建 AI 智能体上下文管理的未来。旅程已经开始，期待您的参与！
 
 ### Star 趋势
 
-[![Star History Chart](https://api.star-history.com/svg?repos=volcengine/OpenViking&type=timeline&legend=top-left)](https://www.star-history.com/#volcengine/OpenViking&type=timeline&legend=top-left)
+[![Star History Chart](https://api.star-history.com/svg?repos=volcengine/AtomCtx&type=timeline&legend=top-left)](https://www.star-history.com/#volcengine/AtomCtx&type=timeline&legend=top-left)
 
 ## 许可证
 
@@ -692,15 +692,15 @@ OpenViking 仍处于早期阶段，有许多改进和探索的空间。我们真
 
 <!-- Link Definitions -->
 
-[release-shield]: https://img.shields.io/github/v/release/volcengine/OpenViking?color=369eff&labelColor=black&logo=github&style=flat-square
-[release-link]: https://github.com/volcengine/OpenViking/releases
+[release-shield]: https://img.shields.io/github/v/release/volcengine/AtomCtx?color=369eff&labelColor=black&logo=github&style=flat-square
+[release-link]: https://github.com/volcengine/atom-ctx/releases
 [license-shield]: https://img.shields.io/badge/license-apache%202.0-white?labelColor=black&style=flat-square
-[license-shield-link]: https://github.com/volcengine/OpenViking/blob/main/LICENSE
-[last-commit-shield]: https://img.shields.io/github/last-commit/volcengine/OpenViking?color=c4f042&labelColor=black&style=flat-square
-[last-commit-shield-link]: https://github.com/volcengine/OpenViking/commcommits/main
-[github-stars-shield]: https://img.shields.io/github/stars/volcengine/OpenViking?labelColor&style=flat-square&color=ffcb47
-[github-stars-link]: https://github.com/volcengine/OpenViking
-[github-issues-shield]: https://img.shields.io/github/issues/volcengine/OpenViking?labelColor=black&style=flat-square&color=ff80eb
-[github-issues-shield-link]: https://github.com/volcengine/OpenViking/issues
-[github-contributors-shield]: https://img.shields.io/github/contributors/volcengine/OpenViking?color=c4f042&labelColor=black&style=flat-square
-[github-contributors-link]: https://github.com/volcengine/OpenViking/graphs/contributors
+[license-shield-link]: https://github.com/volcengine/atom-ctx/blob/main/LICENSE
+[last-commit-shield]: https://img.shields.io/github/last-commit/volcengine/AtomCtx?color=c4f042&labelColor=black&style=flat-square
+[last-commit-shield-link]: https://github.com/volcengine/atom-ctx/commcommits/main
+[github-stars-shield]: https://img.shields.io/github/stars/volcengine/AtomCtx?labelColor&style=flat-square&color=ffcb47
+[github-stars-link]: https://github.com/volcengine/atom-ctx
+[github-issues-shield]: https://img.shields.io/github/issues/volcengine/AtomCtx?labelColor=black&style=flat-square&color=ff80eb
+[github-issues-shield-link]: https://github.com/volcengine/atom-ctx/issues
+[github-contributors-shield]: https://img.shields.io/github/contributors/volcengine/AtomCtx?color=c4f042&labelColor=black&style=flat-square
+[github-contributors-link]: https://github.com/volcengine/atom-ctx/graphs/contributors

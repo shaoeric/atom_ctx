@@ -7,14 +7,14 @@ import unittest
 from dataclasses import dataclass, field
 from typing import List
 
-from openviking.storage.vectordb import engine
-from openviking.storage.vectordb.store.bytes_row import (
+from atom_ctx.storage.vectordb import engine
+from atom_ctx.storage.vectordb.store.bytes_row import (
     FieldType,
     _PyBytesRow,
     _PyFieldType,
     _PySchema,
 )
-from openviking.storage.vectordb.store.serializable import serializable
+from atom_ctx.storage.vectordb.store.serializable import serializable
 
 
 # Define a complex data structure for testing consistency

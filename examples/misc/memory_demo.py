@@ -1,10 +1,10 @@
-"""Memory skill test demo covering T1-T10 with real OpenViking pipeline.
+"""Memory skill test demo covering T1-T10 with real AtomCtx pipeline.
 
-This script runs real memory extraction/dedup/merge against OpenViking, prints
+This script runs real memory extraction/dedup/merge against AtomCtx, prints
 human-readable traces, and outputs pass/fail for each test case.
 
 Usage:
-  export OPENVIKING_CONFIG_FILE=ov.conf
+  export CTX_CONFIG_FILE=ctx.conf
   python examples/memory_test_demo.py --verbose
 """
 
@@ -19,9 +19,9 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple
 
-from openviking.message.part import TextPart
-from openviking.session.memory_deduplicator import MemoryDeduplicator
-from openviking.sync_client import SyncOpenViking
+from atom_ctx.message.part import TextPart
+from atom_ctx.session.memory_deduplicator import MemoryDeduplicator
+from atom_ctx.sync_client import SyncAtomCtx
 
 
 @dataclass
@@ -156,10 +156,10 @@ def _hash_text(text: str) -> str:
     return hashlib.sha1(text.encode("utf-8", errors="ignore")).hexdigest()
 
 
-def _collect_memory_snapshot(client: SyncOpenViking) -> Dict[str, str]:
+def _collect_memory_snapshot(client: SyncAtomCtx) -> Dict[str, str]:
     """Snapshot all memory files as uri -> content hash."""
     snapshot: Dict[str, str] = {}
-    for root in ["viking://user/memories", "viking://agent/memories"]:
+    for root in ["ctx://user/memories", "ctx://agent/memories"]:
         try:
             entries = client.ls(root, recursive=True, simple=False)
         except Exception:
@@ -191,10 +191,10 @@ def _snapshot_diff(
     return created, deleted, changed
 
 
-def _search_hits(client: SyncOpenViking, query: str, limit: int) -> List[Hit]:
+def _search_hits(client: SyncAtomCtx, query: str, limit: int) -> List[Hit]:
     """Search both user/agent memory roots and merge hits by uri."""
     merged: Dict[str, Hit] = {}
-    for target_uri in ["viking://user/memories", "viking://agent/memories"]:
+    for target_uri in ["ctx://user/memories", "ctx://agent/memories"]:
         try:
             result = client.find(query, target_uri=target_uri, limit=limit)
         except Exception:
@@ -539,7 +539,7 @@ def _build_cases() -> List[CaseSpec]:
 
 
 def _get_or_create_session(
-    client: SyncOpenViking,
+    client: SyncAtomCtx,
     cache: Dict[str, Any],
     key: str,
 ) -> Any:
@@ -636,10 +636,10 @@ def _decision_coverage(records: List[DedupRecord]) -> Dict[str, bool]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="OpenViking memory skill T1-T10 test demo")
+    parser = argparse.ArgumentParser(description="AtomCtx memory skill T1-T10 test demo")
     parser.add_argument(
         "--path",
-        default="./ov_data_memory_test_demo",
+        default="./ctx_data_memory_test_demo",
         help="Demo storage path. This script clears it at startup.",
     )
     parser.add_argument(
@@ -662,11 +662,11 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if not os.environ.get("OPENVIKING_CONFIG_FILE"):
+    if not os.environ.get("CTX_CONFIG_FILE"):
         repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        cfg = os.path.join(repo_root, "ov.conf")
+        cfg = os.path.join(repo_root, "ctx.conf")
         if os.path.exists(cfg):
-            os.environ["OPENVIKING_CONFIG_FILE"] = cfg
+            os.environ["CTX_CONFIG_FILE"] = cfg
 
     data_path = Path(args.path)
     if data_path.exists():
@@ -676,7 +676,7 @@ def main() -> int:
     recorder = DedupRecorder()
     recorder.install()
 
-    client = SyncOpenViking(path=str(data_path))
+    client = SyncAtomCtx(path=str(data_path))
     client.initialize()
 
     cases = _build_cases()

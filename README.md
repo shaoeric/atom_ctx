@@ -1,16 +1,16 @@
 <div align="center">
 
-<a href="https://openviking.ai/" target="_blank">
+<a href="https://atom-ctx.ai/" target="_blank">
   <picture>
-    <img alt="OpenViking" src="docs/images/ov-logo.png" width="200px" height="auto">
+    <img alt="AtomCtx" src="docs/images/ctx-logo.png" width="200px" height="auto">
   </picture>
 </a>
 
-### OpenViking: The Context Database for AI Agents
+### AtomCtx: The Context Database for AI Agents
 
 English / [中文](README_CN.md) / [日本語](README_JA.md)
 
-<a href="https://www.openviking.ai">Website</a> · <a href="https://github.com/volcengine/OpenViking">GitHub</a> · <a href="https://github.com/volcengine/OpenViking/issues">Issues</a> · <a href="https://www.openviking.ai/docs">Docs</a>
+<a href="https://www.ctx.ai">Website</a> · <a href="https://github.com/volcengine/atom-ctx">GitHub</a> · <a href="https://github.com/volcengine/atom-ctx/issues">Issues</a> · <a href="https://www.ctx.ai/docs">Docs</a>
 
 [![][release-shield]][release-link]
 [![][github-stars-shield]][github-stars-link]
@@ -21,9 +21,9 @@ English / [中文](README_CN.md) / [日本語](README_JA.md)
 
 👋 Join our Community
 
-📱 <a href="./docs/en/about/01-about-us.md#lark-group">Lark Group</a> · <a href="./docs/en/about/01-about-us.md#wechat-group">WeChat</a> · <a href="https://discord.com/invite/eHvx8E9XF3">Discord</a> · <a href="https://x.com/openvikingai">X</a>
+📱 <a href="./docs/en/about/01-about-us.md#lark-group">Lark Group</a> · <a href="./docs/en/about/01-about-us.md#wechat-group">WeChat</a> · <a href="https://discord.com/invite/eHvx8E9XF3">Discord</a> · <a href="https://x.com/atom_ctxai">X</a>
 
-<a href="https://trendshift.io/repositories/19668" target="_blank"><img src="https://trendshift.io/api/badge/repositories/19668" alt="volcengine%2FOpenViking | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+<a href="https://trendshift.io/repositories/19668" target="_blank"><img src="https://trendshift.io/api/badge/repositories/19668" alt="volcengine%2FAtomCtx | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
 </div>
 
@@ -41,13 +41,13 @@ In the AI era, data is abundant, but high-quality context is hard to come by. Wh
 - **Unobservable Context**: The implicit retrieval chain of traditional RAG is like a black box, making it hard to debug when errors occur.
 - **Limited Memory Iteration**: Current memory is just a record of user interactions, lacking Agent-related task memory.
 
-### The OpenViking Solution
+### The AtomCtx Solution
 
-**OpenViking** is an open-source **Context Database** designed specifically for AI Agents.
+**AtomCtx** is an open-source **Context Database** designed specifically for AI Agents.
 
-We aim to define a minimalist context interaction paradigm for Agents, allowing developers to completely say goodbye to the hassle of context management. OpenViking abandons the fragmented vector storage model of traditional RAG and innovatively adopts a **"file system paradigm"** to unify the structured organization of memories, resources, and skills needed by Agents.
+We aim to define a minimalist context interaction paradigm for Agents, allowing developers to completely say goodbye to the hassle of context management. AtomCtx abandons the fragmented vector storage model of traditional RAG and innovatively adopts a **"file system paradigm"** to unify the structured organization of memories, resources, and skills needed by Agents.
 
-With OpenViking, developers can build an Agent's brain just like managing local files:
+With AtomCtx, developers can build an Agent's brain just like managing local files:
 
 - **Filesystem Management Paradigm** → **Solves Fragmentation**: Unified context management of memories, resources, and skills based on a filesystem paradigm.
 - **Tiered Context Loading** → **Reduces Token Consumption**: L0/L1/L2 three-tier structure, loaded on demand, significantly saving costs.
@@ -61,7 +61,7 @@ With OpenViking, developers can build an Agent's brain just like managing local 
 
 ### Prerequisites
 
-Before starting with OpenViking, please ensure your environment meets the following requirements:
+Before starting with AtomCtx, please ensure your environment meets the following requirements:
 
 - **Python Version**: 3.10 or higher
 - **Go Version**: 1.22 or higher (Required for building AGFS components)
@@ -74,34 +74,34 @@ Before starting with OpenViking, please ensure your environment meets the follow
 #### Python Package
 
 ```bash
-pip install openviking --upgrade --force-reinstall
+pip install atom-ctx --upgrade --force-reinstall
 ```
 
 #### Rust CLI (Optional)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/volcengine/OpenViking/main/crates/ov_cli/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/volcengine/AtomCtx/main/crates/ctx_cli/install.sh | bash
 ```
 
 Or build from source:
 
 ```bash
-cargo install --git https://github.com/volcengine/OpenViking ov_cli
+cargo install --git https://github.com/volcengine/atom-ctx ctx_cli
 ```
 
 ### 2. Model Preparation
 
-OpenViking requires the following model capabilities:
+AtomCtx requires the following model capabilities:
 - **VLM Model**: For image and content understanding
 - **Embedding Model**: For vectorization and semantic retrieval
 
 #### Supported VLM Providers
 
-OpenViking supports three VLM providers:
+AtomCtx supports three VLM providers:
 
 | Provider | Description | Get API Key |
 |----------|-------------|-------------|
-| `volcengine` | Volcengine Doubao Models | [Volcengine Console](https://console.volcengine.com/ark/region:ark+cn-beijing/overview?briefPage=0&briefType=introduce&type=new&utm_content=OpenViking&utm_medium=devrel&utm_source=OWO&utm_term=OpenViking) |
+| `volcengine` | Volcengine Doubao Models | [Volcengine Console](https://console.volcengine.com/ark/region:ark+cn-beijing/overview?briefPage=0&briefType=introduce&type=new&utm_content=AtomCtx&utm_medium=devrel&utm_source=OWO&utm_term=AtomCtx) |
 | `openai` | OpenAI Official API | [OpenAI Platform](https://platform.openai.com) |
 | `litellm` | Unified access to various third-party models (Anthropic, DeepSeek, Gemini, vLLM, Ollama, etc.) | See [LiteLLM Providers](https://docs.litellm.ai/docs/providers) |
 
@@ -127,7 +127,7 @@ Volcengine supports both model names and endpoint IDs. Using model names is reco
 }
 ```
 
-You can also use endpoint IDs (found in [Volcengine ARK Console](https://console.volcengine.com/ark/region:ark+cn-beijing/overview?briefPage=0&briefType=introduce&type=new&utm_content=OpenViking&utm_medium=devrel&utm_source=OWO&utm_term=OpenViking):
+You can also use endpoint IDs (found in [Volcengine ARK Console](https://console.volcengine.com/ark/region:ark+cn-beijing/overview?briefPage=0&briefType=introduce&type=new&utm_content=AtomCtx&utm_medium=devrel&utm_source=OWO&utm_term=AtomCtx):
 
 ```json
 {
@@ -246,12 +246,12 @@ For complete model support, see [LiteLLM Providers Documentation](https://docs.l
 
 #### Server Configuration Template
 
-Create a configuration file `~/.openviking/ov.conf`, remove the comments before copy:
+Create a configuration file `~/.ctx/ctx.conf`, remove the comments before copy:
 
 ```json
 {
   "storage": {
-    "workspace": "/home/your-name/openviking_workspace"
+    "workspace": "/home/your-name/atom_ctx_workspace"
   },
   "log": {
     "level": "INFO",
@@ -289,7 +289,7 @@ Create a configuration file `~/.openviking/ov.conf`, remove the comments before 
 ```json
 {
   "storage": {
-    "workspace": "/home/your-name/openviking_workspace"
+    "workspace": "/home/your-name/atom_ctx_workspace"
   },
   "log": {
     "level": "INFO",
@@ -323,7 +323,7 @@ Create a configuration file `~/.openviking/ov.conf`, remove the comments before 
 ```json
 {
   "storage": {
-    "workspace": "/home/your-name/openviking_workspace"
+    "workspace": "/home/your-name/atom_ctx_workspace"
   },
   "log": {
     "level": "INFO",
@@ -363,7 +363,7 @@ pip install "google-genai>=1.0.0"
 ```json
 {
   "storage": {
-    "workspace": "/home/your-name/openviking_workspace"
+    "workspace": "/home/your-name/atom_ctx_workspace"
   },
   "embedding": {
     "dense": {
@@ -393,7 +393,7 @@ Get your Google API key at https://aistudio.google.com/apikey
 After creating the configuration file, set the environment variable to point to it (Linux/macOS):
 
 ```bash
-export OPENVIKING_CONFIG_FILE=~/.openviking/ov.conf # by default
+export CTX_CONFIG_FILE=~/.ctx/ctx.conf # by default
 ```
 
 On Windows, use one of the following:
@@ -401,13 +401,13 @@ On Windows, use one of the following:
 PowerShell:
 
 ```powershell
-$env:OPENVIKING_CONFIG_FILE = "$HOME/.openviking/ov.conf"
+$env:CTX_CONFIG_FILE = "$HOME/.ctx/ctx.conf"
 ```
 
 Command Prompt (cmd.exe):
 
 ```bat
-set "OPENVIKING_CONFIG_FILE=%USERPROFILE%\.openviking\ov.conf"
+set "CTX_CONFIG_FILE=%USERPROFILE%\.ctx\ctx.conf"
 ```
 
 > 💡 **Tip**: You can also place the configuration file in other locations, just specify the correct path in the environment variable.
@@ -416,7 +416,7 @@ set "OPENVIKING_CONFIG_FILE=%USERPROFILE%\.openviking\ov.conf"
 
 👇 Expand to see the configuration example for your CLI/Client:
 
-Example: ovcli.conf for visiting localhost server
+Example: ctx-cli.conf for visiting localhost server
 
 ```json
 {
@@ -429,7 +429,7 @@ Example: ovcli.conf for visiting localhost server
 After creating the configuration file, set the environment variable to point to it (Linux/macOS):
 
 ```bash
-export OPENVIKING_CLI_CONFIG_FILE=~/.openviking/ovcli.conf # by default
+export CTX_CLI_CONFIG_FILE=~/.ctx/ctx-cli.conf # by default
 ```
 
 On Windows, use one of the following:
@@ -437,72 +437,72 @@ On Windows, use one of the following:
 PowerShell:
 
 ```powershell
-$env:OPENVIKING_CLI_CONFIG_FILE = "$HOME/.openviking/ovcli.conf"
+$env:CTX_CLI_CONFIG_FILE = "$HOME/.ctx/ctx-cli.conf"
 ```
 
 Command Prompt (cmd.exe):
 
 ```bat
-set "OPENVIKING_CLI_CONFIG_FILE=%USERPROFILE%\.openviking\ovcli.conf"
+set "CTX_CLI_CONFIG_FILE=%USERPROFILE%\.ctx\ctx-cli.conf"
 ```
 
 ### 4. Run Your First Example
 
-> 📝 **Prerequisite**: Ensure you have completed the configuration (ov.conf and ovcli.conf) in the previous step.
+> 📝 **Prerequisite**: Ensure you have completed the configuration (ctx.conf and ctx-cli.conf) in the previous step.
 
-Now let's run a complete example to experience the core features of OpenViking.
+Now let's run a complete example to experience the core features of AtomCtx.
 
 #### Launch Server
 
 ```bash
-openviking-server
+ctx-server
 ```
 
 or you can run in background
 
 ```bash
-nohup openviking-server > /data/log/openviking.log 2>&1 &
+nohup ctx-server > /data/log/ctx-server.log 2>&1 &
 ```
 
 #### Run the CLI
 
 ```bash
-ov status
-ov add-resource https://github.com/volcengine/OpenViking # --wait
-ov ls viking://resources/
-ov tree viking://resources/volcengine -L 2
+ctx status
+ctx add-resource https://github.com/volcengine/atom-ctx # --wait
+ctx ls ctx://resources/
+ctx tree ctx://resources/volcengine -L 2
 # wait some time for semantic processing if not --wait
-ov find "what is openviking"
-ov grep "openviking" --uri viking://resources/volcengine/OpenViking/docs/zh
+ctx find "what is atom_ctx"
+ctx grep "atom_ctx" --uri ctx://resources/volcengine/AtomCtx/docs/zh
 ```
 
-Congratulations! You have successfully run OpenViking 🎉
+Congratulations! You have successfully run AtomCtx 🎉
 
 ### VikingBot Quick Start
 
-VikingBot is an AI agent framework built on top of OpenViking. Here's how to get started:
+VikingBot is an AI agent framework built on top of AtomCtx. Here's how to get started:
 
 ```bash
 # Option 1: Install VikingBot from PyPI (recommended for most users)
-pip install "openviking[bot]"
+pip install "atom-ctx[bot]"
 
 # Option 2: Install VikingBot from source (for development)
 uv pip install -e ".[bot]"
 
-# Start OpenViking server with Bot enabled
-openviking-server --with-bot
+# Start AtomCtx server with Bot enabled
+ctx-server --with-bot
 
 # In another terminal, start interactive chat
-ov chat
+ctx chat
 ```
 
 ---
 
 ## Server Deployment Details
 
-For production environments, we recommend running OpenViking as a standalone HTTP service to provide persistent, high-performance context support for your AI Agents.
+For production environments, we recommend running AtomCtx as a standalone HTTP service to provide persistent, high-performance context support for your AI Agents.
 
-🚀 **Deploy OpenViking on Cloud**:
+🚀 **Deploy AtomCtx on Cloud**:
 To ensure optimal storage performance and data security, we recommend deploying on **Volcengine Elastic Compute Service (ECS)** using the **veLinux** operating system. We have prepared a detailed step-by-step guide to get you started quickly.
 
 👉 **[View: Server Deployment & ECS Setup Guide](./docs/en/getting-started/03-quickstart-server.md)**
@@ -511,8 +511,8 @@ To ensure optimal storage performance and data security, we recommend deploying 
 ## OpenClaw Context Plugin Details
 
 * Test Dataset: Effect testing based on LoCoMo10 (https://github.com/snap-research/locomo) long-range dialogues (1,540 cases in total after removing category5 without ground truth)
-* Experimental Groups: Since users may not disable OpenClaw's native memory when using OpenViking, we added experimental groups with native memory enabled or disabled
-* OpenViking Version: 0.1.18
+* Experimental Groups: Since users may not disable OpenClaw's native memory when using AtomCtx, we added experimental groups with native memory enabled or disabled
+* AtomCtx Version: 0.1.18
 * Model: seed-2.0-code
 * Evaluation Script: https://github.com/ZaynJarvis/openclaw-eval/tree/main
 
@@ -520,11 +520,11 @@ To ensure optimal storage performance and data security, we recommend deploying 
 |----------|------------------|------------------|
 | OpenClaw(memory-core) |	35.65% |	24,611,530 |
 | OpenClaw + LanceDB (-memory-core) |	44.55% |	51,574,530 |
-| OpenClaw + OpenViking Plugin (-memory-core) |	52.08% |	4,264,396 |
-| OpenClaw + OpenViking Plugin (+memory-core) |	51.23% |	2,099,622 |
+| OpenClaw + AtomCtx Plugin (-memory-core) |	52.08% |	4,264,396 |
+| OpenClaw + AtomCtx Plugin (+memory-core) |	51.23% |	2,099,622 |
 
 * Experimental Conclusions:
-After integrating OpenViking:
+After integrating AtomCtx:
 - With native memory enabled: 43% improvement over original OpenClaw with 91% reduction in input token cost; 15% improvement over LanceDB with 96% reduction in input token cost.
 - With native memory disabled: 49% improvement over original OpenClaw with 83% reduction in input token cost; 17% improvement over LanceDB with 92% reduction in input token cost.
 
@@ -536,16 +536,16 @@ After integrating OpenViking:
 
 ## Core Concepts
 
-After running the first example, let's dive into the design philosophy of OpenViking. These five core concepts correspond one-to-one with the solutions mentioned earlier, together building a complete context management system:
+After running the first example, let's dive into the design philosophy of AtomCtx. These five core concepts correspond one-to-one with the solutions mentioned earlier, together building a complete context management system:
 
 ### 1. Filesystem Management Paradigm → Solves Fragmentation
 
-We no longer view context as flat text slices but unify them into an abstract virtual filesystem. Whether it's memories, resources, or capabilities, they are mapped to virtual directories under the `viking://` protocol, each with a unique URI.
+We no longer view context as flat text slices but unify them into an abstract virtual filesystem. Whether it's memories, resources, or capabilities, they are mapped to virtual directories under the `ctx://` protocol, each with a unique URI.
 
-This paradigm gives Agents unprecedented context manipulation capabilities, enabling them to locate, browse, and manipulate information precisely and deterministically through standard commands like `ls` and `find`, just like a developer. This transforms context management from vague semantic matching into intuitive, traceable "file operations". Learn more: [Viking URI](./docs/en/concepts/04-viking-uri.md) | [Context Types](./docs/en/concepts/02-context-types.md)
+This paradigm gives Agents unprecedented context manipulation capabilities, enabling them to locate, browse, and manipulate information precisely and deterministically through standard commands like `ls` and `find`, just like a developer. This transforms context management from vague semantic matching into intuitive, traceable "file operations". Learn more: [Ctx URI](./docs/en/concepts/04-ctx-uri.md) | [Context Types](./docs/en/concepts/02-context-types.md)
 
 ```
-viking://
+ctx://
 ├── resources/              # Resources: project docs, repos, web pages, etc.
 │   ├── my_project/
 │   │   ├── docs/
@@ -570,7 +570,7 @@ viking://
 
 ### 2. Tiered Context Loading → Reduces Token Consumption
 
-Stuffing massive amounts of context into a prompt all at once is not only expensive but also prone to exceeding model windows and introducing noise. OpenViking automatically processes context into three levels upon writing:
+Stuffing massive amounts of context into a prompt all at once is not only expensive but also prone to exceeding model windows and introducing noise. AtomCtx automatically processes context into three levels upon writing:
 - **L0 (Abstract)**: A one-sentence summary for quick retrieval and identification.
 - **L1 (Overview)**: Contains core information and usage scenarios for Agent decision-making during the planning phase.
 - **L2 (Details)**: The full original data, for deep reading by the Agent when absolutely necessary.
@@ -578,7 +578,7 @@ Stuffing massive amounts of context into a prompt all at once is not only expens
 Learn more: [Context Layers](./docs/en/concepts/03-context-layers.md)
 
 ```
-viking://resources/my_project/
+ctx://resources/my_project/
 ├── .abstract               # L0 Layer: Abstract (~100 tokens) - Quick relevance check
 ├── .overview               # L1 Layer: Overview (~2k tokens) - Understand structure and key points
 ├── docs/
@@ -596,7 +596,7 @@ viking://resources/my_project/
 
 ### 3. Directory Recursive Retrieval → Improves Retrieval Effect
 
-Single vector retrieval struggles with complex query intents. OpenViking has designed an innovative **Directory Recursive Retrieval Strategy** that deeply integrates multiple retrieval methods:
+Single vector retrieval struggles with complex query intents. AtomCtx has designed an innovative **Directory Recursive Retrieval Strategy** that deeply integrates multiple retrieval methods:
 
 1. **Intent Analysis**: Generate multiple retrieval conditions through intent analysis.
 2. **Initial Positioning**: Use vector retrieval to quickly locate the high-score directory where the initial slice is located.
@@ -608,13 +608,13 @@ This "lock high-score directory first, then refine content exploration" strategy
 
 ### 4. Visualized Retrieval Trajectory → Observable Context
 
-OpenViking's organization uses a hierarchical virtual filesystem structure. All context is integrated in a unified format, and each entry corresponds to a unique URI (like a `viking://` path), breaking the traditional flat black-box management mode with a clear hierarchy that is easy to understand.
+AtomCtx's organization uses a hierarchical virtual filesystem structure. All context is integrated in a unified format, and each entry corresponds to a unique URI (like a `ctx://` path), breaking the traditional flat black-box management mode with a clear hierarchy that is easy to understand.
 
 The retrieval process adopts a directory recursive strategy. The trajectory of directory browsing and file positioning for each retrieval is fully preserved, allowing users to clearly observe the root cause of problems and guide the optimization of retrieval logic. Learn more: [Retrieval Mechanism](./docs/en/concepts/07-retrieval.md)
 
 ### 5. Automatic Session Management → Context Self-Iteration
 
-OpenViking has a built-in memory self-iteration loop. At the end of each session, developers can actively trigger the memory extraction mechanism. The system will asynchronously analyze task execution results and user feedback, and automatically update them to the User and Agent memory directories.
+AtomCtx has a built-in memory self-iteration loop. At the end of each session, developers can actively trigger the memory extraction mechanism. The system will asynchronously analyze task execution results and user feedback, and automatically update them to the User and Agent memory directories.
 
 - **User Memory Update**: Update memories related to user preferences, making Agent responses better fit user needs.
 - **Agent Experience Accumulation**: Extract core content such as operational tips and tool usage experience from task execution experience, aiding efficient decision-making in subsequent tasks.
@@ -635,22 +635,22 @@ For more details, please see: **[About Us](./docs/en/about/01-about-us.md)**
 
 ### Join the Community
 
-OpenViking is still in its early stages, and there are many areas for improvement and exploration. We sincerely invite every developer passionate about AI Agent technology:
+AtomCtx is still in its early stages, and there are many areas for improvement and exploration. We sincerely invite every developer passionate about AI Agent technology:
 
 - Light up a precious **Star** for us to give us the motivation to move forward.
-- Visit our [**Website**](https://www.openviking.ai) to understand the philosophy we convey, and use it in your projects via the [**Documentation**](https://www.openviking.ai/docs). Feel the change it brings and give us feedback on your truest experience.
+- Visit our [**Website**](https://www.ctx.ai) to understand the philosophy we convey, and use it in your projects via the [**Documentation**](https://www.ctx.ai/docs). Feel the change it brings and give us feedback on your truest experience.
 - Join our community to share your insights, help answer others' questions, and jointly create an open and mutually helpful technical atmosphere:
   - 📱 **Lark Group**: Scan the QR code to join → [View QR Code](./docs/en/about/01-about-us.md#lark-group)
   - 💬 **WeChat Group**: Scan the QR code to add assistant → [View QR Code](./docs/en/about/01-about-us.md#wechat-group)
   - 🎮 **Discord**: [Join Discord Server](https://discord.com/invite/eHvx8E9XF3)
-  - 🐦 **X (Twitter)**：[Follow us](https://x.com/openvikingai)
-- Become a **Contributor**, whether submitting a bug fix or contributing a new feature, every line of your code will be an important cornerstone of OpenViking's growth.
+  - 🐦 **X (Twitter)**：[Follow us](https://x.com/atom_ctxai)
+- Become a **Contributor**, whether submitting a bug fix or contributing a new feature, every line of your code will be an important cornerstone of AtomCtx's growth.
 
 Let's work together to define and build the future of AI Agent context management. The journey has begun, looking forward to your participation!
 
 ### Star Trend
 
-[![Star History Chart](https://api.star-history.com/svg?repos=volcengine/OpenViking&type=timeline&legend=top-left)](https://www.star-history.com/#volcengine/OpenViking&type=timeline&legend=top-left)
+[![Star History Chart](https://api.star-history.com/svg?repos=volcengine/AtomCtx&type=timeline&legend=top-left)](https://www.star-history.com/#volcengine/AtomCtx&type=timeline&legend=top-left)
 
 ## License
 
@@ -659,15 +659,15 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](./LICE
 
 <!-- Link Definitions -->
 
-[release-shield]: https://img.shields.io/github/v/release/volcengine/OpenViking?color=369eff&labelColor=black&logo=github&style=flat-square
-[release-link]: https://github.com/volcengine/OpenViking/releases
+[release-shield]: https://img.shields.io/github/v/release/volcengine/AtomCtx?color=369eff&labelColor=black&logo=github&style=flat-square
+[release-link]: https://github.com/volcengine/atom-ctx/releases
 [license-shield]: https://img.shields.io/badge/license-apache%202.0-white?labelColor=black&style=flat-square
-[license-shield-link]: https://github.com/volcengine/OpenViking/blob/main/LICENSE
-[last-commit-shield]: https://img.shields.io/github/last-commit/volcengine/OpenViking?color=c4f042&labelColor=black&style=flat-square
-[last-commit-shield-link]: https://github.com/volcengine/OpenViking/commits/main
-[github-stars-shield]: https://img.shields.io/github/stars/volcengine/OpenViking?labelColor&style=flat-square&color=ffcb47
-[github-stars-link]: https://github.com/volcengine/OpenViking
-[github-issues-shield]: https://img.shields.io/github/issues/volcengine/OpenViking?labelColor=black&style=flat-square&color=ff80eb
-[github-issues-shield-link]: https://github.com/volcengine/OpenViking/issues
-[github-contributors-shield]: https://img.shields.io/github/contributors/volcengine/OpenViking?color=c4f042&labelColor=black&style=flat-square
-[github-contributors-link]: https://github.com/volcengine/OpenViking/graphs/contributors
+[license-shield-link]: https://github.com/volcengine/atom-ctx/blob/main/LICENSE
+[last-commit-shield]: https://img.shields.io/github/last-commit/volcengine/AtomCtx?color=c4f042&labelColor=black&style=flat-square
+[last-commit-shield-link]: https://github.com/volcengine/atom-ctx/commits/main
+[github-stars-shield]: https://img.shields.io/github/stars/volcengine/AtomCtx?labelColor&style=flat-square&color=ffcb47
+[github-stars-link]: https://github.com/volcengine/atom-ctx
+[github-issues-shield]: https://img.shields.io/github/issues/volcengine/AtomCtx?labelColor=black&style=flat-square&color=ff80eb
+[github-issues-shield-link]: https://github.com/volcengine/atom-ctx/issues
+[github-contributors-shield]: https://img.shields.io/github/contributors/volcengine/AtomCtx?color=c4f042&labelColor=black&style=flat-square
+[github-contributors-link]: https://github.com/volcengine/atom-ctx/graphs/contributors

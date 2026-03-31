@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-RAG Pipeline - Retrieval-Augmented Generation using OpenViking + LLM
+RAG Pipeline - Retrieval-Augmented Generation using AtomCtx + LLM
 Focused on querying and answer generation, not resource management
 """
 
@@ -10,8 +10,8 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
-import openviking as ov
-from openviking_cli.utils.config.open_viking_config import OpenVikingConfig
+import atom_ctx as ctx
+from atom_ctx_cli.utils.config.ctx_config import AtomCtxConfig
 
 
 class Recipe:
@@ -19,18 +19,18 @@ class Recipe:
     Recipe (Boring name is RAG Pipeline)
 
     Combines semantic search with LLM generation:
-    1. Search OpenViking database for relevant context
+    1. Search AtomCtx database for relevant context
     2. Send context + query to LLM
     3. Return generated answer with sources
     """
 
-    def __init__(self, config_path: str = "./ov.conf", data_path: str = "./data"):
+    def __init__(self, config_path: str = "./ctx.conf", data_path: str = "./data"):
         """
         Initialize RAG pipeline
 
         Args:
             config_path: Path to config file with LLM settings
-            data_path: Path to OpenViking data directory
+            data_path: Path to AtomCtx data directory
         """
         # Load configuration
         with open(config_path, "r") as f:
@@ -42,9 +42,9 @@ class Recipe:
         self.api_key = self.vlm_config.get("api_key")
         self.model = self.vlm_config.get("model")
 
-        # Initialize OpenViking client
-        config = OpenVikingConfig.from_dict(self.config_dict)
-        self.client = ov.SyncOpenViking(path=data_path, config=config)
+        # Initialize AtomCtx client
+        config = AtomCtxConfig.from_dict(self.config_dict)
+        self.client = ctx.SyncAtomCtx(path=data_path, config=config)
         self.client.initialize()
 
     def search(

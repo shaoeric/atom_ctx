@@ -1,6 +1,6 @@
-# 为 OpenCode 安装 OpenViking Memory Plugin
+# 为 OpenCode 安装 AtomCtx Memory Plugin
 
-这个示例把 OpenViking 暴露为 OpenCode 可直接调用的记忆工具，并自动把当前对话同步到 OpenViking Session 中。
+这个示例把 AtomCtx 暴露为 OpenCode 可直接调用的记忆工具，并自动把当前对话同步到 AtomCtx Session 中。
 
 安装完成后，你可以在 OpenCode 中使用这些工具：
 
@@ -13,13 +13,13 @@
 
 ## 机制说明
 
-这个示例使用的是 OpenCode 的 tool 机制，把 OpenViking 能力显式暴露成 Agent 可调用的工具。
+这个示例使用的是 OpenCode 的 tool 机制，把 AtomCtx 能力显式暴露成 Agent 可调用的工具。
 
 更具体一点：
 
 - Agent 会看到 `memsearch`、`memread`、`membrowse`、`memcommit` 这些显式工具
-- 只有在 Agent 主动调用这些工具时，OpenViking 的内容才会被读取回来
-- 插件还会在后台把 OpenCode session 映射到 OpenViking session，并在合适的时候触发记忆提取
+- 只有在 Agent 主动调用这些工具时，AtomCtx 的内容才会被读取回来
+- 插件还会在后台把 OpenCode session 映射到 AtomCtx session，并在合适的时候触发记忆提取
 
 这个示例的重点是显式 memory 访问、类文件系统浏览，以及会话到长期记忆的自动同步。
 
@@ -30,13 +30,13 @@
 你需要先准备：
 
 - 已安装 OpenCode
-- 已启动 OpenViking HTTP Server
-- 可用的 OpenViking API Key（如果服务端启用了认证）
+- 已启动 AtomCtx HTTP Server
+- 可用的 AtomCtx API Key（如果服务端启用了认证）
 
-建议先确认 OpenViking 服务正常运行：
+建议先确认 AtomCtx 服务正常运行：
 
 ```bash
-openviking-server --config ~/.openviking/ov.conf
+ctx-server --config ~/.ctx/ctx.conf
 ```
 
 如果你已经在后台启动了服务，也可以直接检查健康状态：
@@ -63,11 +63,11 @@ mkdir -p ~/.config/opencode/plugins
 
 ### Step 2: 复制示例文件
 
-在 OpenViking 仓库根目录执行：
+在 AtomCtx 仓库根目录执行：
 
 ```bash
-cp examples/opencode-memory-plugin/openviking-memory.ts ~/.config/opencode/plugins/openviking-memory.ts
-cp examples/opencode-memory-plugin/openviking-config.example.json ~/.config/opencode/plugins/openviking-config.json
+cp examples/opencode-memory-plugin/atom_ctx-memory.ts ~/.config/opencode/plugins/atom_ctx-memory.ts
+cp examples/opencode-memory-plugin/atom_ctx-config.example.json ~/.config/opencode/plugins/atom_ctx-config.json
 cp examples/opencode-memory-plugin/.gitignore ~/.config/opencode/plugins/.gitignore
 ```
 
@@ -76,8 +76,8 @@ cp examples/opencode-memory-plugin/.gitignore ~/.config/opencode/plugins/.gitign
 ```text
 ~/.config/opencode/plugins/
 ├── .gitignore
-├── openviking-config.json
-└── openviking-memory.ts
+├── atom_ctx-config.json
+└── atom_ctx-memory.ts
 ```
 
 ### Step 3: 配置插件
@@ -85,7 +85,7 @@ cp examples/opencode-memory-plugin/.gitignore ~/.config/opencode/plugins/.gitign
 编辑：
 
 ```bash
-~/.config/opencode/plugins/openviking-config.json
+~/.config/opencode/plugins/atom_ctx-config.json
 ```
 
 示例配置：
@@ -105,7 +105,7 @@ cp examples/opencode-memory-plugin/.gitignore ~/.config/opencode/plugins/.gitign
 
 字段说明：
 
-- `endpoint`: OpenViking 服务地址
+- `endpoint`: AtomCtx 服务地址
 - `apiKey`: 可留空，推荐用环境变量提供
 - `enabled`: 是否启用插件
 - `timeoutMs`: 普通请求超时时间
@@ -115,20 +115,20 @@ cp examples/opencode-memory-plugin/.gitignore ~/.config/opencode/plugins/.gitign
 
 这个插件不需要额外写进 `~/.config/opencode/opencode.json`。
 
-原因是 OpenCode 会自动扫描 `~/.config/opencode/plugins/` 下面的一级 `*.ts` / `*.js` 文件，`openviking-memory.ts` 放在这个目录顶层即可被发现。
+原因是 OpenCode 会自动扫描 `~/.config/opencode/plugins/` 下面的一级 `*.ts` / `*.js` 文件，`atom_ctx-memory.ts` 放在这个目录顶层即可被发现。
 
 ### Step 4: 配置 API Key
 
 推荐使用环境变量，不要把真实 key 写进配置文件：
 
 ```bash
-export OPENVIKING_API_KEY="your-api-key-here"
+export ATOM_CTX_API_KEY="your-api-key-here"
 ```
 
 如果你使用 `zsh`，可以把它写进 `~/.zshrc`：
 
 ```bash
-echo 'export OPENVIKING_API_KEY="your-api-key-here"' >> ~/.zshrc
+echo 'export ATOM_CTX_API_KEY="your-api-key-here"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
@@ -140,9 +140,9 @@ source ~/.zshrc
 
 插件初始化后会：
 
-- 对 OpenViking 做一次 health check
-- 为每个 OpenCode session 自动建立对应的 OpenViking session
-- 自动把用户消息和 assistant 消息写入 OpenViking
+- 对 AtomCtx 做一次 health check
+- 为每个 OpenCode session 自动建立对应的 AtomCtx session
+- 自动把用户消息和 assistant 消息写入 AtomCtx
 - 按周期触发后台 `commit`
 
 你可以在会话里尝试：
@@ -163,13 +163,13 @@ source ~/.zshrc
 
 插件运行后，会在插件目录里生成这些本地文件：
 
-- `~/.config/opencode/plugins/openviking-config.json`
-- `~/.config/opencode/plugins/openviking-memory.log`
-- `~/.config/opencode/plugins/openviking-session-map.json`
+- `~/.config/opencode/plugins/atom_ctx-config.json`
+- `~/.config/opencode/plugins/atom_ctx-memory.log`
+- `~/.config/opencode/plugins/atom_ctx-session-map.json`
 
 这些文件都是运行时产物，不建议提交到版本库。示例里的 `.gitignore` 已经帮你排除了它们。
 
-如果你明确希望按工作区隔离插件，也可以把这三个文件和 `openviking-memory.ts` 一起放在工作区本地插件目录里。当前实现会把配置和运行时文件统一保存在“插件文件所在目录”。
+如果你明确希望按工作区隔离插件，也可以把这三个文件和 `atom_ctx-memory.ts` 一起放在工作区本地插件目录里。当前实现会把配置和运行时文件统一保存在“插件文件所在目录”。
 
 ---
 
@@ -185,20 +185,20 @@ ls ~/.config/opencode/plugins/
 
 至少要能看到：
 
-- `openviking-memory.ts`
-- `openviking-config.json`
+- `atom_ctx-memory.ts`
+- `atom_ctx-config.json`
 
 ### 2. `Authentication failed`
 
 通常是 API Key 配置不对。优先检查：
 
-- `OPENVIKING_API_KEY` 是否已设置
+- `ATOM_CTX_API_KEY` 是否已设置
 - 服务端是否启用了认证
-- `endpoint` 是否连到了正确的 OpenViking 服务
+- `endpoint` 是否连到了正确的 AtomCtx 服务
 
 ### 3. `Service unavailable`
 
-说明插件连不上 OpenViking 服务。检查：
+说明插件连不上 AtomCtx 服务。检查：
 
 ```bash
 curl http://localhost:1933/health
@@ -207,7 +207,7 @@ curl http://localhost:1933/health
 如果失败，先启动：
 
 ```bash
-openviking-server --config ~/.openviking/ov.conf
+ctx-server --config ~/.ctx/ctx.conf
 ```
 
 ### 4. `memcommit` 很慢或经常超时
@@ -216,15 +216,15 @@ openviking-server --config ~/.openviking/ov.conf
 
 如果你仍然觉得慢，优先检查的是：
 
-- OpenViking 服务端的模型配置
+- AtomCtx 服务端的模型配置
 - 服务端所在机器的资源是否吃满
-- `openviking-memory.log` 里是否有持续的 task failure
+- `atom_ctx-memory.log` 里是否有持续的 task failure
 
 ### 5. 没有抽出任何 memory
 
 通常不是插件没工作，而是服务端提取条件不满足。优先检查：
 
-- OpenViking 的 `vlm` 和 `embedding` 是否已正确配置
+- AtomCtx 的 `vlm` 和 `embedding` 是否已正确配置
 - 当前对话里是否真的有适合沉淀为 memory 的内容
 
 ---
@@ -232,5 +232,5 @@ openviking-server --config ~/.openviking/ov.conf
 ## 相关文件
 
 - [README.md](./README.md): English overview
-- [openviking-memory.ts](./openviking-memory.ts): plugin implementation
-- [openviking-config.example.json](./openviking-config.example.json): config template
+- [atom_ctx-memory.ts](./atom_ctx-memory.ts): plugin implementation
+- [atom_ctx-config.example.json](./atom_ctx-config.example.json): config template

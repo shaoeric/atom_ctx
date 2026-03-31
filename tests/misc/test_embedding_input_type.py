@@ -9,7 +9,7 @@ Tests EmbeddingConfig's ability to create context-specific embedders:
 
 from unittest.mock import MagicMock, patch
 
-from openviking_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
+from atom_ctx_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
 
 
 class TestEmbeddingModelConfigContextFields:
@@ -77,7 +77,7 @@ class TestEmbeddingModelConfigContextFields:
 class TestEmbeddingConfigContextualEmbedders:
     """Test EmbeddingConfig passes query_param and document_param correctly."""
 
-    @patch("openviking.models.embedder.OpenAIDenseEmbedder")
+    @patch("atom_ctx.models.embedder.OpenAIDenseEmbedder")
     def test_get_embedder_openai_passes_params(self, mock_embedder_class):
         """get_embedder should pass query_param and document_param to OpenAIDenseEmbedder."""
         mock_embedder_class.return_value = MagicMock()
@@ -98,7 +98,7 @@ class TestEmbeddingConfigContextualEmbedders:
         assert call_kwargs.get("query_param") == "search_query"
         assert call_kwargs.get("document_param") == "search_document"
 
-    @patch("openviking.models.embedder.JinaDenseEmbedder")
+    @patch("atom_ctx.models.embedder.JinaDenseEmbedder")
     def test_get_embedder_jina_passes_params(self, mock_embedder_class):
         """get_embedder should pass query_param and document_param to JinaDenseEmbedder."""
         mock_embedder_class.return_value = MagicMock()
@@ -119,7 +119,7 @@ class TestEmbeddingConfigContextualEmbedders:
         assert call_kwargs.get("query_param") == "retrieval.query"
         assert call_kwargs.get("document_param") == "retrieval.passage"
 
-    @patch("openviking.models.embedder.OpenAIDenseEmbedder")
+    @patch("atom_ctx.models.embedder.OpenAIDenseEmbedder")
     def test_get_embedder_openai_no_params_when_not_set(self, mock_embedder_class):
         """get_embedder should not pass query_param and document_param when not set."""
         mock_embedder_class.return_value = MagicMock()
@@ -138,7 +138,7 @@ class TestEmbeddingConfigContextualEmbedders:
         assert "query_param" not in call_kwargs
         assert "document_param" not in call_kwargs
 
-    @patch("openviking.models.embedder.JinaDenseEmbedder")
+    @patch("atom_ctx.models.embedder.JinaDenseEmbedder")
     def test_get_embedder_jina_no_params_when_not_set(self, mock_embedder_class):
         """get_embedder should not pass query_param and document_param when not set."""
         mock_embedder_class.return_value = MagicMock()
@@ -164,7 +164,7 @@ class TestOpenAIDenseEmbedderInputType:
     @patch("openai.OpenAI")
     def test_embed_passes_input_type_in_extra_body(self, mock_openai_class):
         """embed should pass input_type in extra_body when provided."""
-        from openviking.models.embedder import OpenAIDenseEmbedder
+        from atom_ctx.models.embedder import OpenAIDenseEmbedder
 
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -188,7 +188,7 @@ class TestOpenAIDenseEmbedderInputType:
     @patch("openai.OpenAI")
     def test_embed_batch_passes_input_type_in_extra_body(self, mock_openai_class):
         """embed_batch should pass input_type in extra_body when provided."""
-        from openviking.models.embedder import OpenAIDenseEmbedder
+        from atom_ctx.models.embedder import OpenAIDenseEmbedder
 
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -212,7 +212,7 @@ class TestOpenAIDenseEmbedderInputType:
     @patch("openai.OpenAI")
     def test_embed_no_extra_body_when_input_type_not_set(self, mock_openai_class):
         """embed should not set extra_body when input_type is None."""
-        from openviking.models.embedder import OpenAIDenseEmbedder
+        from atom_ctx.models.embedder import OpenAIDenseEmbedder
 
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -239,7 +239,7 @@ class TestJinaDenseEmbedderTask:
     @patch("openai.OpenAI")
     def test_embed_passes_task_in_extra_body(self, mock_openai_class):
         """embed should pass task in extra_body when provided."""
-        from openviking.models.embedder import JinaDenseEmbedder
+        from atom_ctx.models.embedder import JinaDenseEmbedder
 
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -262,7 +262,7 @@ class TestJinaDenseEmbedderTask:
     @patch("openai.OpenAI")
     def test_embed_batch_passes_task_in_extra_body(self, mock_openai_class):
         """embed_batch should pass task in extra_body when provided."""
-        from openviking.models.embedder import JinaDenseEmbedder
+        from atom_ctx.models.embedder import JinaDenseEmbedder
 
         mock_client = MagicMock()
         mock_response = MagicMock()

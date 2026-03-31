@@ -11,12 +11,12 @@ class MockLocalAGFS:
 
     def __init__(self, config=None, root_path=None):
         self.config = config
-        self.root = Path(root_path) if root_path else Path("/tmp/viking_data")
+        self.root = Path(root_path) if root_path else Path("/tmp/ctx_data")
         self.root.mkdir(parents=True, exist_ok=True)
 
     def _resolve(self, path):
-        if str(path).startswith("viking://"):
-            path = str(path).replace("viking://", "")
+        if str(path).startswith("ctx://"):
+            path = str(path).replace("ctx://", "")
         if str(path).startswith("/"):
             path = str(path)[1:]
         return self.root / path
@@ -40,7 +40,7 @@ class MockLocalAGFS:
                     "type": "directory" if item.is_dir() else "file",
                     "size": item.stat().st_size if item.is_file() else 0,
                     "mtime": item.stat().st_mtime,
-                    "uri": f"viking://{path}/{item.name}".replace("//", "/"),
+                    "uri": f"ctx://{path}/{item.name}".replace("//", "/"),
                 }
             )
         return res

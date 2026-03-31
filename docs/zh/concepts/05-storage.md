@@ -1,6 +1,6 @@
 # 存储架构
 
-OpenViking 采用双层存储架构，分离内容存储和索引存储。
+AtomCtx 采用双层存储架构，分离内容存储和索引存储。
 
 ## 概览
 
@@ -38,9 +38,9 @@ VikingFS 是统一的 URI 抽象层，屏蔽底层存储细节。
 ### URI 映射
 
 ```
-viking://resources/docs/auth  →  /local/resources/docs/auth
-viking://user/memories        →  /local/user/memories
-viking://agent/skills         →  /local/agent/skills
+ctx://resources/docs/auth  →  /local/resources/docs/auth
+ctx://user/memories        →  /local/user/memories
+ctx://agent/skills         →  /local/agent/skills
 ```
 
 ### 核心 API
@@ -63,14 +63,14 @@ VikingFS 通过 `.relations.json` 管理资源间的关联：
 
 ```python
 # 创建关联
-viking_fs.link(
-    from_uri="viking://resources/docs/auth",
-    uris=["viking://resources/docs/security"],
+ctx_fs.link(
+    from_uri="ctx://resources/docs/auth",
+    uris=["ctx://resources/docs/security"],
     reason="相关安全文档"
 )
 
 # 获取关联
-relations = viking_fs.relations("viking://resources/docs/auth")
+relations = ctx_fs.relations("ctx://resources/docs/auth")
 ```
 
 ## AGFS 底层存储
@@ -90,7 +90,7 @@ AGFS 提供 POSIX 风格的文件操作，支持多种后端。
 每个上下文目录遵循统一结构：
 
 ```
-viking://resources/docs/auth/
+ctx://resources/docs/auth/
 ├── .abstract.md          # L0 摘要
 ├── .overview.md          # L1 概览
 ├── .relations.json       # 关联
@@ -143,16 +143,16 @@ VikingFS 自动维护向量库与 AGFS 的一致性。
 ### 删除同步
 
 ```python
-viking_fs.rm("viking://resources/docs/auth", recursive=True)
+ctx_fs.rm("ctx://resources/docs/auth", recursive=True)
 # 自动递归删除向量库中所有 uri 以此开头的记录
 ```
 
 ### 移动同步
 
 ```python
-viking_fs.mv(
-    "viking://resources/docs/auth",
-    "viking://resources/docs/authentication"
+ctx_fs.mv(
+    "ctx://resources/docs/auth",
+    "ctx://resources/docs/authentication"
 )
 # 自动更新向量库中的 uri 和 parent_uri 字段
 ```
@@ -161,5 +161,5 @@ viking_fs.mv(
 
 - [架构概述](./01-architecture.md) - 系统整体架构
 - [上下文层级](./03-context-layers.md) - L0/L1/L2 模型
-- [Viking URI](./04-viking-uri.md) - URI 规范
+- [Ctx URI](./04-ctx-uri.md) - URI 规范
 - [检索机制](./07-retrieval.md) - 检索流程详解

@@ -35,7 +35,7 @@ session.add_message(
     "assistant",
     [
         TextPart("Here's how..."),
-        ContextPart(uri="viking://user/memories/profile.md"),
+        ContextPart(uri="ctx://user/memories/profile.md"),
     ]
 )
 ```
@@ -44,11 +44,11 @@ session.add_message(
 
 ```python
 # Record used contexts
-session.used(contexts=["viking://user/memories/profile.md"])
+session.used(contexts=["ctx://user/memories/profile.md"])
 
 # Record used skill
 session.used(skill={
-    "uri": "viking://agent/skills/code-search",
+    "uri": "ctx://agent/skills/code-search",
     "input": "search config",
     "output": "found 3 files",
     "success": True
@@ -62,7 +62,7 @@ result = session.commit()
 # {
 #   "status": "accepted",
 #   "task_id": "uuid-xxx",
-#   "archive_uri": "viking://session/.../history/archive_001",
+#   "archive_uri": "ctx://session/.../history/archive_001",
 #   "archived": True
 # }
 
@@ -168,7 +168,7 @@ Write to AGFS → Vectorize
 ## Storage Structure
 
 ```
-viking://session/{session_id}/
+ctx://session/{session_id}/
 ├── messages.jsonl            # Current messages
 ├── .abstract.md              # Current abstract
 ├── .overview.md              # Current overview
@@ -182,13 +182,13 @@ viking://session/{session_id}/
 └── tools/
     └── {tool_id}/tool.json
 
-viking://user/memories/
+ctx://user/memories/
 ├── profile.md                # Append-only user profile
 ├── preferences/
 ├── entities/
 └── events/
 
-viking://agent/memories/
+ctx://agent/memories/
 ├── cases/
 └── patterns/
 ```

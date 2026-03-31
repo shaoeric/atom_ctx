@@ -3,8 +3,8 @@
 
 """Message management tests"""
 
-from openviking.message import ContextPart, TextPart, ToolPart
-from openviking.session import Session
+from atom_ctx.message import ContextPart, TextPart, ToolPart
+from atom_ctx.session import Session
 
 
 class TestAddMessage:
@@ -39,7 +39,7 @@ class TestAddMessage:
         parts = [
             TextPart("Based on the context:"),
             ContextPart(
-                uri="viking://user/test/resources/doc.md",
+                uri="ctx://user/test/resources/doc.md",
                 context_type="resource",
                 abstract="Some context abstract",
             ),
@@ -53,8 +53,8 @@ class TestAddMessage:
         tool_part = ToolPart(
             tool_id="tool_123",
             tool_name="search_tool",
-            tool_uri="viking://session/test/tools/tool_123",
-            skill_uri="viking://agent/skills/search",
+            tool_uri="ctx://session/test/tools/tool_123",
+            skill_uri="ctx://agent/skills/search",
             tool_input={"query": "test"},
             tool_status="running",
         )

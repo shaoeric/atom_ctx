@@ -5,9 +5,9 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
-from openviking.server.identity import RequestContext, Role
-from openviking.storage.expr import And, Eq, In
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx.storage.expr import And, Eq, In
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 class _FakeVectorStore:
@@ -123,11 +123,11 @@ class _NoopLockContext:
 
 @pytest.mark.asyncio
 async def test_mv_vector_store_moves_records(monkeypatch):
-    from openviking.storage.viking_fs import VikingFS
+    from atom_ctx.storage.ctx_fs import VikingFS
 
     ctx = RequestContext(user=UserIdentifier("acc", "user", "agent"), role=Role.ROOT)
-    old_uri = "viking://resources/a"
-    new_uri = "viking://resources/b"
+    old_uri = "ctx://resources/a"
+    new_uri = "ctx://resources/b"
 
     store = _FakeVectorStore(
         [
@@ -171,7 +171,7 @@ async def test_mv_vector_store_moves_records(monkeypatch):
             super().__init__(agfs=_FakeAGFS(), vector_store=store)
 
         def _uri_to_path(self, uri, ctx=None):
-            return f"/mock/{uri.replace('viking://', '')}"
+            return f"/mock/{uri.replace('ctx://', '')}"
 
         async def stat(self, uri, ctx=None):
             return {"isDir": True}
@@ -180,11 +180,11 @@ async def test_mv_vector_store_moves_records(monkeypatch):
             return None
 
     monkeypatch.setattr(
-        "openviking.storage.viking_fs.get_viking_fs",
+        "atom_ctx.storage.ctx_fs.get_ctx_fs",
         lambda: _FakeVikingFS(),
     )
-    monkeypatch.setattr("openviking.storage.transaction.get_lock_manager", lambda: None)
-    monkeypatch.setattr("openviking.storage.transaction.LockContext", _NoopLockContext)
+    monkeypatch.setattr("atom_ctx.storage.transaction.get_lock_manager", lambda: None)
+    monkeypatch.setattr("atom_ctx.storage.transaction.LockContext", _NoopLockContext)
 
     fs = _FakeVikingFS()
     await fs._mv_vector_store_l0_l1(old_uri, new_uri, ctx=ctx)
@@ -198,11 +198,11 @@ async def test_mv_vector_store_moves_records(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_mv_vector_store_requires_directories(monkeypatch):
-    from openviking.storage.viking_fs import VikingFS
+    from atom_ctx.storage.ctx_fs import VikingFS
 
     ctx = RequestContext(user=UserIdentifier("acc", "user", "agent"), role=Role.ROOT)
-    old_uri = "viking://resources/a"
-    new_uri = "viking://resources/b"
+    old_uri = "ctx://resources/a"
+    new_uri = "ctx://resources/b"
 
     store = _FakeVectorStore([])
 
@@ -215,7 +215,7 @@ async def test_mv_vector_store_requires_directories(monkeypatch):
             super().__init__(agfs=_FakeAGFS(), vector_store=store)
 
         def _uri_to_path(self, uri, ctx=None):
-            return f"/mock/{uri.replace('viking://', '')}"
+            return f"/mock/{uri.replace('ctx://', '')}"
 
         async def stat(self, uri, ctx=None):
             return {"isDir": uri == old_uri}
@@ -224,11 +224,11 @@ async def test_mv_vector_store_requires_directories(monkeypatch):
             return None
 
     monkeypatch.setattr(
-        "openviking.storage.viking_fs.get_viking_fs",
+        "atom_ctx.storage.ctx_fs.get_ctx_fs",
         lambda: _FakeVikingFS(),
     )
-    monkeypatch.setattr("openviking.storage.transaction.get_lock_manager", lambda: None)
-    monkeypatch.setattr("openviking.storage.transaction.LockContext", _NoopLockContext)
+    monkeypatch.setattr("atom_ctx.storage.transaction.get_lock_manager", lambda: None)
+    monkeypatch.setattr("atom_ctx.storage.transaction.LockContext", _NoopLockContext)
 
     fs = _FakeVikingFS()
     with pytest.raises(ValueError):

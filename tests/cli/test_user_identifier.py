@@ -1,9 +1,9 @@
 """Tests for UserIdentifier, specifically agent_space_name collision safety."""
 
-from openviking_cli.session.user_id import UserIdentifier
-from openviking_cli.utils.config import (
-    OpenVikingConfigSingleton,
-    get_openviking_config,
+from atom_ctx_cli.session.user_id import UserIdentifier
+from atom_ctx_cli.utils.config import (
+    AtomCtxConfigSingleton,
+    get_atom_ctx_config,
 )
 
 
@@ -37,24 +37,24 @@ class TestAgentSpaceNameCollision:
 
     def test_agent_scope_mode_agent_shares_across_users(self):
         """When memory.agent_scope_mode=agent, users of the same agent share the same space."""
-        OpenVikingConfigSingleton.reset_instance()
-        config = get_openviking_config()
+        AtomCtxConfigSingleton.reset_instance()
+        config = get_atom_ctx_config()
         config.memory.agent_scope_mode = "agent"
 
         u1 = UserIdentifier("acct", "alice", "bot")
         u2 = UserIdentifier("acct", "bob", "bot")
         assert u1.agent_space_name() == u2.agent_space_name()
 
-        OpenVikingConfigSingleton.reset_instance()
+        AtomCtxConfigSingleton.reset_instance()
 
     def test_agent_scope_mode_user_and_agent_keeps_user_isolation(self):
         """When memory.agent_scope_mode=user+agent, different users remain isolated."""
-        OpenVikingConfigSingleton.reset_instance()
-        config = get_openviking_config()
+        AtomCtxConfigSingleton.reset_instance()
+        config = get_atom_ctx_config()
         config.memory.agent_scope_mode = "user+agent"
 
         u1 = UserIdentifier("acct", "alice", "bot")
         u2 = UserIdentifier("acct", "bob", "bot")
         assert u1.agent_space_name() != u2.agent_space_name()
 
-        OpenVikingConfigSingleton.reset_instance()
+        AtomCtxConfigSingleton.reset_instance()

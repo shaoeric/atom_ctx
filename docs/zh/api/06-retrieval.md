@@ -1,6 +1,6 @@
 # 检索
 
-OpenViking 提供两种搜索方法：`find` 用于简单的语义搜索，`search` 用于带会话上下文的复杂检索。
+AtomCtx 提供两种搜索方法：`find` 用于简单的语义搜索，`search` 用于带会话上下文的复杂检索。
 
 ## find 与 search 对比
 
@@ -44,7 +44,7 @@ class FindResult:
 
 ```python
 class MatchedContext:
-    uri: str                         # Viking URI
+    uri: str                         # Ctx URI
     context_type: ContextType        # "resource"、"memory" 或 "skill"
     is_leaf: bool                    # 是否为叶子节点
     abstract: str                    # L0 内容
@@ -86,7 +86,7 @@ curl -X POST http://localhost:1933/api/v1/search/find \
 **CLI**
 
 ```bash
-openviking find "how to authenticate users" [--uri viking://resources/] [--limit 10]
+atom_ctx find "how to authenticate users" [--uri ctx://resources/] [--limit 10]
 ```
 
 **响应**
@@ -98,7 +98,7 @@ openviking find "how to authenticate users" [--uri viking://resources/] [--limit
     "memories": [],
     "resources": [
       {
-        "uri": "viking://resources/docs/auth/",
+        "uri": "ctx://resources/docs/auth/",
         "context_type": "resource",
         "is_leaf": false,
         "abstract": "Authentication guide covering OAuth 2.0...",
@@ -121,25 +121,25 @@ openviking find "how to authenticate users" [--uri viking://resources/] [--limit
 # 仅在资源中搜索
 results = client.find(
     "authentication",
-    target_uri="viking://resources/"
+    target_uri="ctx://resources/"
 )
 
 # 仅在用户记忆中搜索
 results = client.find(
     "preferences",
-    target_uri="viking://user/memories/"
+    target_uri="ctx://user/memories/"
 )
 
 # 仅在技能中搜索
 results = client.find(
     "web search",
-    target_uri="viking://skills/"
+    target_uri="ctx://skills/"
 )
 
 # 在特定项目中搜索
 results = client.find(
     "API endpoints",
-    target_uri="viking://resources/my-project/"
+    target_uri="ctx://resources/my-project/"
 )
 ```
 
@@ -152,7 +152,7 @@ curl -X POST http://localhost:1933/api/v1/search/find \
   -H "X-API-Key: your-key" \
   -d '{
     "query": "authentication",
-    "target_uri": "viking://resources/"
+    "target_uri": "ctx://resources/"
   }'
 
 # 使用分数阈值搜索
@@ -161,7 +161,7 @@ curl -X POST http://localhost:1933/api/v1/search/find \
   -H "X-API-Key: your-key" \
   -d '{
     "query": "API endpoints",
-    "target_uri": "viking://resources/my-project/",
+    "target_uri": "ctx://resources/my-project/",
     "score_threshold": 0.5,
     "limit": 5
   }'
@@ -188,7 +188,7 @@ curl -X POST http://localhost:1933/api/v1/search/find \
 **Python SDK (Embedded / HTTP)**
 
 ```python
-from openviking.message import TextPart
+from atom_ctx.message import TextPart
 
 # 创建带对话上下文的会话
 session = client.session()
@@ -230,7 +230,7 @@ curl -X POST http://localhost:1933/api/v1/search/search \
 **CLI**
 
 ```bash
-openviking search "best practices" [--session-id abc123] [--limit 10]
+atom_ctx search "best practices" [--session-id abc123] [--limit 10]
 ```
 
 **响应**
@@ -242,7 +242,7 @@ openviking search "best practices" [--session-id abc123] [--limit 10]
     "memories": [],
     "resources": [
       {
-        "uri": "viking://resources/docs/oauth-best-practices/",
+        "uri": "ctx://resources/docs/oauth-best-practices/",
         "context_type": "resource",
         "is_leaf": false,
         "abstract": "OAuth 2.0 best practices for login pages...",
@@ -296,7 +296,7 @@ curl -X POST http://localhost:1933/api/v1/search/search \
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| uri | str | 是 | - | 要搜索的 Viking URI |
+| uri | str | 是 | - | 要搜索的 Ctx URI |
 | pattern | str | 是 | - | 搜索模式（正则表达式） |
 | case_insensitive | bool | 否 | False | 忽略大小写 |
 
@@ -304,7 +304,7 @@ curl -X POST http://localhost:1933/api/v1/search/search \
 
 ```python
 results = client.grep(
-    "viking://resources/",
+    "ctx://resources/",
     "authentication",
     case_insensitive=True
 )
@@ -326,7 +326,7 @@ curl -X POST http://localhost:1933/api/v1/search/grep \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
-    "uri": "viking://resources/",
+    "uri": "ctx://resources/",
     "pattern": "authentication",
     "case_insensitive": true
   }'
@@ -335,7 +335,7 @@ curl -X POST http://localhost:1933/api/v1/search/grep \
 **CLI**
 
 ```bash
-openviking grep viking://resources/ "authentication" [--ignore-case]
+atom_ctx grep ctx://resources/ "authentication" [--ignore-case]
 ```
 
 **响应**
@@ -346,7 +346,7 @@ openviking grep viking://resources/ "authentication" [--ignore-case]
   "result": {
     "matches": [
       {
-        "uri": "viking://resources/docs/auth.md",
+        "uri": "ctx://resources/docs/auth.md",
         "line": 15,
         "content": "User authentication is handled by..."
       }
@@ -368,19 +368,19 @@ openviking grep viking://resources/ "authentication" [--ignore-case]
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
 | pattern | str | 是 | - | Glob 模式（例如 `**/*.md`） |
-| uri | str | 否 | "viking://" | 起始 URI |
+| uri | str | 否 | "ctx://" | 起始 URI |
 
 **Python SDK (Embedded / HTTP)**
 
 ```python
 # 查找所有 markdown 文件
-results = client.glob("**/*.md", "viking://resources/")
+results = client.glob("**/*.md", "ctx://resources/")
 print(f"Found {results['count']} markdown files:")
 for uri in results['matches']:
     print(f"  {uri}")
 
 # 查找所有 Python 文件
-results = client.glob("**/*.py", "viking://resources/")
+results = client.glob("**/*.py", "ctx://resources/")
 print(f"Found {results['count']} Python files")
 ```
 
@@ -396,14 +396,14 @@ curl -X POST http://localhost:1933/api/v1/search/glob \
   -H "X-API-Key: your-key" \
   -d '{
     "pattern": "**/*.md",
-    "uri": "viking://resources/"
+    "uri": "ctx://resources/"
   }'
 ```
 
 **CLI**
 
 ```bash
-openviking glob "**/*.md" [--uri viking://resources/]
+atom_ctx glob "**/*.md" [--uri ctx://resources/]
 ```
 
 **响应**
@@ -413,8 +413,8 @@ openviking glob "**/*.md" [--uri viking://resources/]
   "status": "ok",
   "result": {
     "matches": [
-      "viking://resources/docs/api.md",
-      "viking://resources/docs/guide.md"
+      "ctx://resources/docs/api.md",
+      "ctx://resources/docs/guide.md"
     ],
     "count": 2
   },
@@ -468,11 +468,11 @@ curl -X POST http://localhost:1933/api/v1/search/find \
   -d '{"query": "authentication"}'
 
 # 步骤 2：读取目录结果的概览
-curl -X GET "http://localhost:1933/api/v1/content/overview?uri=viking://resources/docs/auth/" \
+curl -X GET "http://localhost:1933/api/v1/content/overview?uri=ctx://resources/docs/auth/" \
   -H "X-API-Key: your-key"
 
 # 步骤 3：读取文件结果的完整内容
-curl -X GET "http://localhost:1933/api/v1/content/read?uri=viking://resources/docs/auth.md" \
+curl -X GET "http://localhost:1933/api/v1/content/read?uri=ctx://resources/docs/auth.md" \
   -H "X-API-Key: your-key"
 ```
 
@@ -496,7 +496,7 @@ for ctx in results.resources:
 
 ```bash
 # 获取资源的关联关系
-curl -X GET "http://localhost:1933/api/v1/relations?uri=viking://resources/docs/auth/" \
+curl -X GET "http://localhost:1933/api/v1/relations?uri=ctx://resources/docs/auth/" \
   -H "X-API-Key: your-key"
 ```
 
@@ -518,7 +518,7 @@ results = client.find("auth")
 # 在相关范围内搜索以获得更好的结果
 results = client.find(
     "error handling",
-    target_uri="viking://resources/my-project/"
+    target_uri="ctx://resources/my-project/"
 )
 ```
 
@@ -526,7 +526,7 @@ results = client.find(
 
 ```python
 # 对于对话式搜索，使用会话
-from openviking.message import TextPart
+from atom_ctx.message import TextPart
 
 session = client.session()
 session.add_message("user", [

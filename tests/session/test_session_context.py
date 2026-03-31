@@ -10,14 +10,14 @@ from unittest.mock import patch
 import pytest
 import pytest_asyncio
 
-from openviking import AsyncOpenViking
-from openviking.message import Message, TextPart
-from openviking.models.embedder.base import DenseEmbedderBase, EmbedResult
-from openviking.service.task_tracker import get_task_tracker
-from openviking.session import Session
-from openviking_cli.utils.config.embedding_config import EmbeddingConfig
-from openviking_cli.utils.config.open_viking_config import OpenVikingConfigSingleton
-from openviking_cli.utils.config.vlm_config import VLMConfig
+from atom_ctx import AsyncAtomCtx
+from atom_ctx.message import Message, TextPart
+from atom_ctx.models.embedder.base import DenseEmbedderBase, EmbedResult
+from atom_ctx.service.task_tracker import get_task_tracker
+from atom_ctx.session import Session
+from atom_ctx_cli.utils.config.embedding_config import EmbeddingConfig
+from atom_ctx_cli.utils.config.ctx_config import AtomCtxConfigSingleton
+from atom_ctx_cli.utils.config.vlm_config import VLMConfig
 from tests.utils.mock_agfs import MockLocalAGFS
 
 
@@ -51,7 +51,7 @@ def _install_fake_vlm(monkeypatch):
 
 
 def _write_test_config(tmp_path):
-    config_path = tmp_path / "ov.conf"
+    config_path = tmp_path / "ctx.conf"
     config_path.write_text(
         json.dumps(
             {
@@ -81,20 +81,20 @@ async def client(test_data_dir, monkeypatch, tmp_path):
     config_path = _write_test_config(tmp_path)
     mock_agfs = MockLocalAGFS(root_path=tmp_path / "mock_agfs_root")
 
-    OpenVikingConfigSingleton.reset_instance()
-    await AsyncOpenViking.reset()
-    monkeypatch.setenv("OPENVIKING_CONFIG_FILE", str(config_path))
+    AtomCtxConfigSingleton.reset_instance()
+    await AsyncAtomCtx.reset()
+    monkeypatch.setenv("CTX_CONFIG_FILE", str(config_path))
     _install_fake_embedder(monkeypatch)
     _install_fake_vlm(monkeypatch)
 
-    with patch("openviking.utils.agfs_utils.create_agfs_client", return_value=mock_agfs):
-        client = AsyncOpenViking(path=str(test_data_dir))
+    with patch("atom_ctx.utils.agfs_utils.create_agfs_client", return_value=mock_agfs):
+        client = AsyncAtomCtx(path=str(test_data_dir))
         await client.initialize()
         yield client
         await client.close()
 
-    OpenVikingConfigSingleton.reset_instance()
-    await AsyncOpenViking.reset()
+    AtomCtxConfigSingleton.reset_instance()
+    await AsyncAtomCtx.reset()
 
 
 def _estimate_tokens(text: str) -> int:
@@ -129,7 +129,7 @@ class TestGetContextForSearch:
         assert isinstance(context, dict)
         assert len(context["current_messages"]) <= 2
 
-    async def test_get_context_returns_latest_completed_archive_only(self, client: AsyncOpenViking):
+    async def test_get_context_returns_latest_completed_archive_only(self, client: AsyncAtomCtx):
         """Current context should expose only the latest completed archive overview."""
         session = client.session(session_id="archive_context_test")
 
@@ -143,7 +143,7 @@ class TestGetContextForSearch:
         session.add_message("user", [TextPart("Third message")])
         result2 = await session.commit_async()
         await _wait_for_task(result2["task_id"])
-        latest_overview = await session._viking_fs.read_file(
+        latest_overview = await session._ctx_fs.read_file(
             f"{result2['archive_uri']}/.overview.md",
             ctx=session.ctx,
         )
@@ -155,7 +155,7 @@ class TestGetContextForSearch:
         assert context["latest_archive_overview"] == latest_overview
         assert len(context["current_messages"]) == 1
 
-    async def test_get_context_skips_incomplete_latest_archive(self, client: AsyncOpenViking):
+    async def test_get_context_skips_incomplete_latest_archive(self, client: AsyncAtomCtx):
         """Incomplete archives without .done must not replace the latest completed overview."""
         session = client.session(session_id="archive_context_incomplete_test")
 
@@ -164,11 +164,11 @@ class TestGetContextForSearch:
         result = await session.commit_async()
         await _wait_for_task(result["task_id"])
 
-        completed_overview = await session._viking_fs.read_file(
+        completed_overview = await session._ctx_fs.read_file(
             f"{result['archive_uri']}/.overview.md",
             ctx=session.ctx,
         )
-        await session._viking_fs.write_file(
+        await session._ctx_fs.write_file(
             uri=f"{session.uri}/history/archive_999/.overview.md",
             content="INCOMPLETE OVERVIEW",
             ctx=session.ctx,
@@ -178,7 +178,7 @@ class TestGetContextForSearch:
 
         assert context["latest_archive_overview"] == completed_overview
 
-    async def test_get_context_includes_incomplete_archive_messages(self, client: AsyncOpenViking):
+    async def test_get_context_includes_incomplete_archive_messages(self, client: AsyncAtomCtx):
         """Pending archive messages should be merged with current live messages."""
         session = client.session(session_id="archive_context_pending_messages_test")
 
@@ -190,7 +190,7 @@ class TestGetContextForSearch:
             Message.create_user("Pending user message"),
             Message.create_assistant("Pending assistant response"),
         ]
-        await session._viking_fs.write_file(
+        await session._ctx_fs.write_file(
             uri=f"{session.uri}/history/archive_002/messages.jsonl",
             content="\n".join(msg.to_jsonl() for msg in pending_messages) + "\n",
             ctx=session.ctx,
@@ -206,7 +206,7 @@ class TestGetContextForSearch:
         ]
 
     async def test_get_context_max_messages_applies_after_pending_merge(
-        self, client: AsyncOpenViking
+        self, client: AsyncAtomCtx
     ):
         """max_messages should trim the merged pending + live message sequence."""
         session = client.session(session_id="archive_context_pending_max_messages_test")
@@ -219,7 +219,7 @@ class TestGetContextForSearch:
             Message.create_user("Pending 1"),
             Message.create_assistant("Pending 2"),
         ]
-        await session._viking_fs.write_file(
+        await session._ctx_fs.write_file(
             uri=f"{session.uri}/history/archive_002/messages.jsonl",
             content="\n".join(msg.to_jsonl() for msg in pending_messages) + "\n",
             ctx=session.ctx,
@@ -244,7 +244,7 @@ class TestGetContextForSearch:
         assert context["latest_archive_overview"] == ""
         assert context["current_messages"] == []
 
-    async def test_get_context_after_commit(self, client: AsyncOpenViking):
+    async def test_get_context_after_commit(self, client: AsyncAtomCtx):
         """Test getting context after commit"""
         session = client.session(session_id="post_commit_context_test")
 
@@ -263,7 +263,7 @@ class TestGetContextForSearch:
         assert len(context["current_messages"]) == 1
 
     async def test_get_context_tracks_multiple_rapid_commits_by_done_boundary(
-        self, client: AsyncOpenViking
+        self, client: AsyncAtomCtx
     ):
         """Context should only advance latest overview when the earlier archive is .done."""
         session = client.session(session_id="archive_context_done_boundary_test")
@@ -303,7 +303,7 @@ class TestGetContextForSearch:
         first_gate.set()
         await asyncio.wait_for(second_started.wait(), timeout=5.0)
 
-        first_overview = await session._viking_fs.read_file(
+        first_overview = await session._ctx_fs.read_file(
             f"{result1['archive_uri']}/.overview.md",
             ctx=session.ctx,
         )
@@ -318,7 +318,7 @@ class TestGetContextForSearch:
         await _wait_for_task(result1["task_id"])
         await _wait_for_task(result2["task_id"])
 
-        second_overview = await session._viking_fs.read_file(
+        second_overview = await session._ctx_fs.read_file(
             f"{result2['archive_uri']}/.overview.md",
             ctx=session.ctx,
         )
@@ -331,7 +331,7 @@ class TestGetSessionContext:
     """Test get_session_context"""
 
     async def test_get_session_context_returns_latest_archive_overview_and_history(
-        self, client: AsyncOpenViking, monkeypatch
+        self, client: AsyncAtomCtx, monkeypatch
     ):
         session = client.session(session_id="assemble_trim_test")
         summaries = [
@@ -392,7 +392,7 @@ class TestGetSessionContext:
         assert context["stats"]["activeTokens"] > _estimate_tokens("Executing tool...")
 
     async def test_get_session_context_reads_latest_overview_and_previous_abstracts(
-        self, client: AsyncOpenViking, monkeypatch
+        self, client: AsyncAtomCtx, monkeypatch
     ):
         """Overview should only be read for the latest archive; older archives use abstracts."""
         session = client.session(session_id="assemble_lazy_read_test")
@@ -425,7 +425,7 @@ class TestGetSessionContext:
             + (_estimate_tokens(previous_abstract) * 2)
         )
 
-        original_read_file = session._viking_fs.read_file
+        original_read_file = session._ctx_fs.read_file
         read_uris: list[str] = []
 
         async def tracking_read_file(*args, **kwargs):
@@ -433,7 +433,7 @@ class TestGetSessionContext:
             read_uris.append(uri)
             return await original_read_file(*args, **kwargs)
 
-        monkeypatch.setattr(session._viking_fs, "read_file", tracking_read_file)
+        monkeypatch.setattr(session._ctx_fs, "read_file", tracking_read_file)
 
         context = await session.get_session_context(token_budget=token_budget)
 
@@ -463,7 +463,7 @@ class TestGetSessionContext:
         )
 
     async def test_get_session_context_drops_oldest_pre_archive_abstracts_first(
-        self, client: AsyncOpenViking, monkeypatch
+        self, client: AsyncAtomCtx, monkeypatch
     ):
         session = client.session(session_id="assemble_trim_oldest_abstracts_test")
         summaries = [
@@ -506,7 +506,7 @@ class TestGetSessionContext:
         assert context["stats"]["droppedArchives"] == 1
 
     async def test_get_session_context_falls_back_to_older_completed_archive(
-        self, client: AsyncOpenViking, monkeypatch
+        self, client: AsyncAtomCtx, monkeypatch
     ):
         session = client.session(session_id="assemble_failed_archive_test")
         summaries = [
@@ -528,7 +528,7 @@ class TestGetSessionContext:
         result = await session.commit_async()
         await _wait_for_task(result["task_id"])
 
-        original_read_file = session._viking_fs.read_file
+        original_read_file = session._ctx_fs.read_file
 
         async def flaky_read_file(*args, **kwargs):
             uri = args[0] if args else kwargs.get("uri")
@@ -536,7 +536,7 @@ class TestGetSessionContext:
                 raise RuntimeError("simulated archive read failure")
             return await original_read_file(*args, **kwargs)
 
-        monkeypatch.setattr(session._viking_fs, "read_file", flaky_read_file)
+        monkeypatch.setattr(session._ctx_fs, "read_file", flaky_read_file)
 
         context = await session.get_session_context(token_budget=128_000)
 
@@ -549,7 +549,7 @@ class TestGetSessionContext:
         assert context["stats"]["failedArchives"] == 1
 
     async def test_get_session_context_budget_trim_keeps_latest_archive_id(
-        self, client: AsyncOpenViking, monkeypatch
+        self, client: AsyncAtomCtx, monkeypatch
     ):
         session = client.session(session_id="assemble_trim_id_test")
 
@@ -576,7 +576,7 @@ class TestGetSessionArchive:
     """Test get_session_archive"""
 
     async def test_get_session_archive_returns_messages_and_summary(
-        self, client: AsyncOpenViking, monkeypatch
+        self, client: AsyncAtomCtx, monkeypatch
     ):
         session = client.session(session_id="session_archive_expand_test")
         summaries = [
@@ -606,7 +606,7 @@ class TestGetSessionArchive:
         assert archive["overview"] == "# Session Summary\n\narchive one"
         assert [m["parts"][0]["text"] for m in archive["messages"]] == ["turn one", "reply one"]
 
-    async def test_get_session_archive_raises_for_missing_archive(self, client: AsyncOpenViking):
+    async def test_get_session_archive_raises_for_missing_archive(self, client: AsyncAtomCtx):
         session = client.session(session_id="missing_session_archive_test")
 
         with pytest.raises(Exception, match="Session archive not found: archive_999"):

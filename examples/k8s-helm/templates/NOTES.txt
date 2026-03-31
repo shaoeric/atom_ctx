@@ -1,8 +1,8 @@
-OpenViking has been deployed!
+AtomCtx has been deployed!
 
 Access the server via port-forward:
 
-  kubectl port-forward svc/{{ include "openviking.fullname" . }} 1933:{{ .Values.service.port }} -n {{ .Release.Namespace }}
+  kubectl port-forward svc/{{ include "atom_ctx.fullname" . }} 1933:{{ .Values.service.port }} -n {{ .Release.Namespace }}
 
 Then update your ovcli.conf to point to http://localhost:1933.
 

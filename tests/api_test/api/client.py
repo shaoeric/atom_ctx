@@ -11,7 +11,7 @@ import requests
 from config import Config
 
 
-class OpenVikingAPIClient:
+class AtomCtxAPIClient:
     def __init__(
         self,
         base_url: Optional[str] = None,
@@ -22,9 +22,9 @@ class OpenVikingAPIClient:
     ):
         self.base_url = base_url or Config.CONSOLE_URL
         self.server_url = server_url or Config.SERVER_URL
-        self.api_key = api_key or Config.OPENVIKING_API_KEY
-        self.account = account or Config.OPENVIKING_ACCOUNT
-        self.user = user or Config.OPENVIKING_USER
+        self.api_key = api_key or Config.ATOM_CTX_API_KEY
+        self.account = account or Config.ATOM_CTX_ACCOUNT
+        self.user = user or Config.ATOM_CTX_USER
         self.session = requests.Session()
         self._setup_default_headers()
         self.max_retries = 3
@@ -104,8 +104,8 @@ class OpenVikingAPIClient:
             "Connection": "keep-alive",
             "Content-Type": "application/json",
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-            "X-OpenViking-Account": self.account,
-            "X-OpenViking-User": self.user,
+            "X-AtomCtx-Account": self.account,
+            "X-AtomCtx-User": self.user,
         }
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
@@ -206,25 +206,25 @@ class OpenVikingAPIClient:
         return self._request_with_retry("POST", url, json=payload)
 
     def read_content(self, uri: str, offset: int = 0, limit: int = -1) -> requests.Response:
-        endpoint = "/console/api/v1/ov/content/read"
+        endpoint = "/console/api/v1/ctx/content/read"
         params = {"uri": uri, "offset": offset, "limit": limit}
         url = self._build_url(self.base_url, endpoint, params)
         return self.session.get(url)
 
     def list_contents(self, path: str, offset: int = 0, limit: int = 100) -> requests.Response:
-        endpoint = "/console/api/v1/ov/content/list"
+        endpoint = "/console/api/v1/ctx/content/list"
         params = {"path": path, "offset": offset, "limit": limit}
         url = self._build_url(self.base_url, endpoint, params)
         return self.session.get(url)
 
     def write_content(self, uri: str, content: str) -> requests.Response:
-        endpoint = "/console/api/v1/ov/content/write"
+        endpoint = "/console/api/v1/ctx/content/write"
         params = {"uri": uri}
         url = self._build_url(self.base_url, endpoint, params)
         return self.session.post(url, json={"content": content})
 
     def delete_content(self, uri: str) -> requests.Response:
-        endpoint = "/console/api/v1/ov/content/delete"
+        endpoint = "/console/api/v1/ctx/content/delete"
         params = {"uri": uri}
         url = self._build_url(self.base_url, endpoint, params)
         return self.session.delete(url)
@@ -350,18 +350,18 @@ class OpenVikingAPIClient:
         url = self._build_url(self.server_url, endpoint, params)
         return self.session.get(url)
 
-    def export_ovpack(self, uri: str, to: str) -> requests.Response:
+    def export_ctxpack(self, uri: str, to: str) -> requests.Response:
         endpoint = "/api/v1/pack/export"
         url = self._build_url(self.server_url, endpoint)
         return self.session.post(url, json={"uri": uri, "to": to})
 
-    def import_ovpack(
+    def import_ctxpack(
         self, file_path: str, parent: str, force: bool = False, vectorize: bool = True
     ) -> requests.Response:
         endpoint = "/api/v1/pack/import"
         url = self._build_url(self.server_url, endpoint)
         if not os.path.isfile(file_path):
-            raise FileNotFoundError(f"Local ovpack file not found: {file_path}")
+            raise FileNotFoundError(f"Local ctxpack file not found: {file_path}")
         payload = {"parent": parent, "force": force, "vectorize": vectorize}
         payload["temp_file_id"] = self._upload_temp_file(file_path)
         return self._request_with_retry(

@@ -1,13 +1,13 @@
-# openviking-opencode
+# atom_ctx-opencode
 
-用于 [OpenCode](https://opencode.ai) 的 OpenViking 插件。将您索引的代码仓库注入到 AI 的上下文中，并在需要时自动启动 OpenViking 服务器。
+用于 [OpenCode](https://opencode.ai) 的 AtomCtx 插件。将您索引的代码仓库注入到 AI 的上下文中，并在需要时自动启动 AtomCtx 服务器。
 
 ## 前置要求
 
-安装最新版的 OpenViking 并配置 `~/.openviking/ov.conf`：
+安装最新版的 AtomCtx 并配置 `~/.ctx/ctx.conf`：
 
 ```bash
-pip install openviking --upgrade
+pip install atom-ctx --upgrade
 ```
 
 ```json
@@ -34,12 +34,12 @@ pip install openviking --upgrade
 }
 ```
 
-对于其他提供商（火山引擎、Anthropic、DeepSeek、Ollama 等），请参阅 [OpenViking 文档](https://www.openviking.ai/docs)。
+对于其他提供商（火山引擎、Anthropic、DeepSeek、Ollama 等），请参阅 [AtomCtx 文档](https://www.ctx.ai/docs)。
 
-启动 OpenCode 之前，请确保 OpenViking 服务器正在运行。如果尚未启动：
+启动 OpenCode 之前，请确保 AtomCtx 服务器正在运行。如果尚未启动：
 
 ```bash
-openviking-server > /tmp/openviking.log 2>&1 &
+ctx-server > /tmp/ctx-server.log 2>&1 &
 ```
 
 ## 在 OpenCode 中使用
@@ -48,7 +48,7 @@ openviking-server > /tmp/openviking.log 2>&1 &
 
 ```json
 {
-  "plugin": ["openviking-opencode"]
+  "plugin": ["atom_ctx-opencode"]
 }
 ```
 
@@ -56,11 +56,11 @@ openviking-server > /tmp/openviking.log 2>&1 &
 
 **索引仓库**（直接在聊天中询问）：
 ```
-"将 https://github.com/tiangolo/fastapi 添加到 OpenViking"
+"将 https://github.com/tiangolo/fastapi 添加到 AtomCtx"
 ```
 
 **搜索** — 仓库索引完成后，AI 会在相关时自动搜索它们。您也可以显式触发：
 ```
 "FastAPI 如何处理依赖注入？"
-"使用 openviking 查找 JWT 令牌如何验证"
+"使用 atom_ctx 查找 JWT 令牌如何验证"
 ```

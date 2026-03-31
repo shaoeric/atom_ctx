@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-OpenViking Basic Usage Example
+AtomCtx Basic Usage Example
 
-This script demonstrates the core features of OpenViking:
+This script demonstrates the core features of AtomCtx:
 1. Initialization (embedded mode and HTTP client mode)
 2. Adding resources (URLs, files, directories)
 3. Browsing the virtual filesystem
@@ -11,8 +11,8 @@ This script demonstrates the core features of OpenViking:
 6. Session management for memory
 
 Requirements:
-- pip install openviking --upgrade
-- Configuration file at ~/.openviking/ov.conf
+- pip install atom-ctx --upgrade
+- Configuration file at ~/.ctx/ctx.conf
 """
 
 import os
@@ -25,29 +25,29 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 
 def main():
     print("=" * 60)
-    print("OpenViking Basic Usage Example")
+    print("AtomCtx Basic Usage Example")
     print("=" * 60)
     print()
 
     # ============================================================
     # 1. Initialization
     # ============================================================
-    print("1. Initializing OpenViking...")
+    print("1. Initializing AtomCtx...")
     print("-" * 40)
 
     try:
-        import openviking as ov
+        import atom_ctx as ctx
     except ImportError as e:
-        print(f"   Error: Failed to import openviking: {e}")
-        print("   Please install: pip install openviking --upgrade")
+        print(f"   Error: Failed to import atom_ctx: {e}")
+        print("   Please install: pip install atom-ctx --upgrade")
         sys.exit(1)
 
     # Embedded mode (local development)
     # Option A: Embedded mode with local path
-    client = ov.OpenViking(path="./data")
+    client = ctx.AtomCtx(path="./data")
 
     # Option B: HTTP client mode (connect to remote server)
-    # client = ov.SyncHTTPClient(url="http://localhost:1933")
+    # client = ctx.SyncHTTPClient(url="http://localhost:1933")
 
     try:
         client.initialize()
@@ -61,7 +61,7 @@ def main():
 
     except Exception as e:
         print(f"   Error during initialization: {e}")
-        print("   Make sure you have configured ~/.openviking/ov.conf")
+        print("   Make sure you have configured ~/.ctx/ctx.conf")
         sys.exit(1)
 
     print()
@@ -75,7 +75,7 @@ def main():
     try:
         # Add a URL resource
         result = client.add_resource(
-            path="https://raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md",
+            path="https://raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md",
             wait=False  # Non-blocking, process in background
         )
 
@@ -185,7 +185,7 @@ def main():
 
     if root_uri:
         try:
-            query = "what is openviking"
+            query = "what is atom_ctx"
             print(f"   Query: '{query}'")
             print("   Results:")
 
@@ -264,7 +264,7 @@ def main():
     # ============================================================
     # 9. Cleanup
     # ============================================================
-    print("8. Closing OpenViking...")
+    print("8. Closing AtomCtx...")
     print("-" * 40)
 
     client.close()

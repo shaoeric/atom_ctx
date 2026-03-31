@@ -1,4 +1,4 @@
-auth_path = "/usr/local/lib/python3.11/site-packages/openviking/server/auth.py"
+auth_path = "/usr/local/lib/python3.11/site-packages/atom_ctx/server/auth.py"
 print(f"Reading {auth_path}...")
 print("=" * 80)
 

@@ -13,7 +13,7 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from openviking.agfs_manager import AGFSManager
+from atom_ctx.agfs_manager import AGFSManager
 
 
 def _make_manager(port: int) -> AGFSManager:

@@ -2,9 +2,9 @@ import { spawn } from "node:child_process";
 import { tmpdir } from "node:os";
 
 import { Type } from "@sinclair/typebox";
-import { memoryOpenVikingConfigSchema } from "./config.js";
+import { memoryAtomCtxConfigSchema } from "./config.js";
 
-import { OpenVikingClient, localClientCache, localClientPendingPromises, isMemoryUri } from "./client.js";
+import { AtomCtxClient, localClientCache, localClientPendingPromises, isMemoryUri } from "./client.js";
 import type { FindResultItem, PendingClientEntry, CommitSessionResult, OVMessage } from "./client.js";
 import { formatMessageFaithful } from "./context-engine.js";
 import {
@@ -29,7 +29,7 @@ import {
   prepareLocalPort,
 } from "./process-manager.js";
 import {
-  createMemoryOpenVikingContextEngine,
+  createMemoryAtomCtxContextEngine,
   openClawSessionToOvStorageId,
 } from "./context-engine.js";
 import type { ContextEngineWithCommit } from "./context-engine.js";
@@ -105,16 +105,16 @@ type OpenClawPluginApi = {
   ) => void;
 };
 
-const MAX_OPENVIKING_STDERR_LINES = 200;
-const MAX_OPENVIKING_STDERR_CHARS = 256_000;
+const MAX_ATOM_CTX_STDERR_LINES = 200;
+const MAX_ATOM_CTX_STDERR_CHARS = 256_000;
 const AUTO_RECALL_TIMEOUT_MS = 5_000;
 
 /**
- * OpenViking `UserIdentifier` allows only [a-zA-Z0-9_-] for agent_id
- * (see openviking_cli/session/user_id.py). OpenClaw ids may contain ":"
- * (e.g. session keys); never send raw colons in X-OpenViking-Agent.
+ * AtomCtx `UserIdentifier` allows only [a-zA-Z0-9_-] for agent_id
+ * (see atom_ctx_cli/session/user_id.py). OpenClaw ids may contain ":"
+ * (e.g. session keys); never send raw colons in X-AtomCtx-Agent.
  */
-export function sanitizeOpenVikingAgentIdHeader(raw: string): string {
+export function sanitizeAtomCtxAgentIdHeader(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) {
     return "default";
@@ -123,7 +123,7 @@ export function sanitizeOpenVikingAgentIdHeader(raw: string): string {
     .replace(/[^a-zA-Z0-9_-]/g, "_")
     .replace(/_+/g, "_")
     .replace(/^_|_$/g, "");
-  return normalized.length > 0 ? normalized : "ov_agent";
+  return normalized.length > 0 ? normalized : "ctx_agent";
 }
 
 function extractAgentIdFromSessionKey(sessionKey?: string): string | undefined {
@@ -192,7 +192,7 @@ export function createSessionAgentResolver(configAgentId: string) {
       !configAgentId || configAgentId === "default"
         ? rawAgentId
         : `${configAgentId}_${rawAgentId}`;
-    const resolved = sanitizeOpenVikingAgentIdHeader(resolvedBeforeSanitize);
+    const resolved = sanitizeAtomCtxAgentIdHeader(resolvedBeforeSanitize);
     for (const alias of collectSessionAgentAliases(ctx.sessionId, ctx.sessionKey, ctx.ovSessionId)) {
       sessionAgentIds.set(alias, resolved);
     }
@@ -223,7 +223,7 @@ export function createSessionAgentResolver(configAgentId: string) {
         !configAgentId || configAgentId === "default"
           ? sessionScopedAgentId
           : `${configAgentId}_${sessionScopedAgentId}`;
-      resolved = sanitizeOpenVikingAgentIdHeader(resolvedBeforeSanitize);
+      resolved = sanitizeAtomCtxAgentIdHeader(resolvedBeforeSanitize);
       branch = "session_resolved";
     } else if (!configAgentId || configAgentId === "default") {
       resolvedBeforeSanitize = "default";
@@ -231,7 +231,7 @@ export function createSessionAgentResolver(configAgentId: string) {
       branch = "default_no_session";
     } else {
       resolvedBeforeSanitize = configAgentId;
-      resolved = sanitizeOpenVikingAgentIdHeader(configAgentId);
+      resolved = sanitizeAtomCtxAgentIdHeader(configAgentId);
       branch = "config_only_fallback";
     }
 
@@ -261,22 +261,22 @@ function totalCommitMemories(r: CommitSessionResult): number {
 }
 
 const contextEnginePlugin = {
-  id: "openviking",
-  name: "Context Engine (OpenViking)",
-  description: "OpenViking-backed context-engine memory with auto-recall/capture",
+  id: "atom_ctx",
+  name: "Context Engine (AtomCtx)",
+  description: "AtomCtx-backed context-engine memory with auto-recall/capture",
   kind: "context-engine" as const,
-  configSchema: memoryOpenVikingConfigSchema,
+  configSchema: memoryAtomCtxConfigSchema,
 
   register(api: OpenClawPluginApi) {
     const rawCfg =
       api.pluginConfig && typeof api.pluginConfig === "object" && !Array.isArray(api.pluginConfig)
         ? (api.pluginConfig as Record<string, unknown>)
         : {};
-    const cfg = memoryOpenVikingConfigSchema.parse(api.pluginConfig);
+    const cfg = memoryAtomCtxConfigSchema.parse(api.pluginConfig);
     const rawAgentId = rawCfg.agentId;
     if (cfg.logFindRequests) {
       api.logger.info(
-        "openviking: routing debug logging enabled (config logFindRequests, or env OPENVIKING_LOG_ROUTING=1 / OPENVIKING_DEBUG=1)",
+        "atom_ctx: routing debug logging enabled (config logFindRequests, or env ATOM_CTX_LOG_ROUTING=1 / ATOM_CTX_DEBUG=1)",
       );
     }
     const verboseRoutingInfo = (message: string) => {
@@ -285,12 +285,12 @@ const contextEnginePlugin = {
       }
     };
     verboseRoutingInfo(
-      `openviking: loaded plugin config agentId="${cfg.agentId}" ` +
-        `(raw plugins.entries.openviking.config.agentId=${JSON.stringify(rawAgentId ?? "(missing)")}; ` +
+      `atom_ctx: loaded plugin config agentId="${cfg.agentId}" ` +
+        `(raw plugins.entries.ctx.config.agentId=${JSON.stringify(rawAgentId ?? "(missing)")}; ` +
         `${
           cfg.agentId !== "default"
-            ? "non-default → X-OpenViking-Agent is <configAgentId>_<ctx.agentId> (sanitized to [a-zA-Z0-9_-]) when hooks expose session agent; config-only if ctx.agentId unknown"
-            : 'default → X-OpenViking-Agent follows OpenClaw ctx.agentId per session (e.g. "main")'
+            ? "non-default → X-AtomCtx-Agent is <configAgentId>_<ctx.agentId> (sanitized to [a-zA-Z0-9_-]) when hooks expose session agent; config-only if ctx.agentId unknown"
+            : 'default → X-AtomCtx-Agent follows OpenClaw ctx.agentId per session (e.g. "main")'
         })`,
     );
     const routingDebugLog = cfg.logFindRequests
@@ -302,21 +302,21 @@ const contextEnginePlugin = {
     const tenantUser = "";
     const localCacheKey = `${cfg.mode}:${cfg.baseUrl}:${cfg.configPath}:${cfg.apiKey}:${tenantAccount}:${tenantUser}:${cfg.agentId}:${cfg.logFindRequests ? "1" : "0"}`;
 
-    let clientPromise: Promise<OpenVikingClient>;
+    let clientPromise: Promise<AtomCtxClient>;
     let localProcess: ReturnType<typeof spawn> | null = null;
-    let resolveLocalClient: ((c: OpenVikingClient) => void) | null = null;
+    let resolveLocalClient: ((c: AtomCtxClient) => void) | null = null;
     let rejectLocalClient: ((err: unknown) => void) | null = null;
     let localUnavailableReason: string | null = null;
     const markLocalUnavailable = (reason: string, err?: unknown) => {
       if (!localUnavailableReason) {
         localUnavailableReason = reason;
         api.logger.warn(
-          `openviking: local mode marked unavailable (${reason})${err ? `: ${String(err)}` : ""}`,
+          `atom_ctx: local mode marked unavailable (${reason})${err ? `: ${String(err)}` : ""}`,
         );
       }
       if (rejectLocalClient) {
         rejectLocalClient(
-          err instanceof Error ? err : new Error(`openviking unavailable: ${reason}`),
+          err instanceof Error ? err : new Error(`atom_ctx unavailable: ${reason}`),
         );
         rejectLocalClient = null;
       }
@@ -334,7 +334,7 @@ const contextEnginePlugin = {
           clientPromise = existingPending.promise;
         } else {
           const entry = {} as PendingClientEntry;
-          entry.promise = new Promise<OpenVikingClient>((resolve, reject) => {
+          entry.promise = new Promise<AtomCtxClient>((resolve, reject) => {
             entry.resolve = resolve;
             entry.reject = reject;
           });
@@ -344,7 +344,7 @@ const contextEnginePlugin = {
       }
     } else {
       clientPromise = Promise.resolve(
-        new OpenVikingClient(
+        new AtomCtxClient(
           cfg.baseUrl,
           cfg.apiKey,
           cfg.agentId,
@@ -356,14 +356,14 @@ const contextEnginePlugin = {
       );
     }
 
-    const getClient = (): Promise<OpenVikingClient> => clientPromise;
+    const getClient = (): Promise<AtomCtxClient> => clientPromise;
 
     api.registerTool(
       (ctx: ToolContext) => ({
         name: "memory_recall",
-        label: "Memory Recall (OpenViking)",
+        label: "Memory Recall (AtomCtx)",
         description:
-          "Search long-term memories from OpenViking. Use when you need past user preferences, facts, or decisions.",
+          "Search long-term memories from AtomCtx. Use when you need past user preferences, facts, or decisions.",
         parameters: Type.Object({
           query: Type.String({ description: "Search query" }),
           limit: Type.Optional(
@@ -397,7 +397,7 @@ const contextEnginePlugin = {
           const recallClient = await getClient();
           if (cfg.logFindRequests) {
             api.logger.info(
-              `openviking: memory_recall X-OpenViking-Agent="${agentId}" ` +
+              `atom_ctx: memory_recall X-AtomCtx-Agent="${agentId}" ` +
                 `(plugin defaultAgentId="${recallClient.getDefaultAgentId()}" is unused when session context is present)`,
             );
           }
@@ -420,7 +420,7 @@ const contextEnginePlugin = {
               recallClient.find(
                 query,
                 {
-                  targetUri: "viking://user/memories",
+                  targetUri: "ctx://user/memories",
                   limit: requestLimit,
                   scoreThreshold: 0,
                 },
@@ -429,7 +429,7 @@ const contextEnginePlugin = {
               recallClient.find(
                 query,
                 {
-                  targetUri: "viking://agent/memories",
+                  targetUri: "ctx://agent/memories",
                   limit: requestLimit,
                   scoreThreshold: 0,
                 },
@@ -456,7 +456,7 @@ const contextEnginePlugin = {
           });
           if (memories.length === 0) {
             return {
-              content: [{ type: "text", text: "No relevant OpenViking memories found." }],
+              content: [{ type: "text", text: "No relevant AtomCtx memories found." }],
               details: { count: 0, total: result.total ?? 0, scoreThreshold },
             };
           }
@@ -483,13 +483,13 @@ const contextEnginePlugin = {
     api.registerTool(
       (ctx: ToolContext) => ({
         name: "memory_store",
-        label: "Memory Store (OpenViking)",
+        label: "Memory Store (AtomCtx)",
         description:
-          "Store text in OpenViking memory pipeline by writing to a session and running memory extraction.",
+          "Store text in AtomCtx memory pipeline by writing to a session and running memory extraction.",
         parameters: Type.Object({
           text: Type.String({ description: "Information to store as memory source text" }),
           role: Type.Optional(Type.String({ description: "Session role, default user" })),
-          sessionId: Type.Optional(Type.String({ description: "Existing OpenViking session ID" })),
+          sessionId: Type.Optional(Type.String({ description: "Existing AtomCtx session ID" })),
         }),
         async execute(_toolCallId: string, params: Record<string, unknown>) {
           rememberSessionAgentId(ctx);
@@ -503,7 +503,7 @@ const contextEnginePlugin = {
 
           if (cfg.logFindRequests) {
             api.logger.info?.(
-              `openviking: memory_store invoked (textLength=${text?.length ?? 0}, sessionId=${sessionIdIn ?? "auto"})`,
+              `atom_ctx: memory_store invoked (textLength=${text?.length ?? 0}, sessionId=${sessionIdIn ?? "auto"})`,
             );
           }
 
@@ -521,7 +521,7 @@ const contextEnginePlugin = {
             const memoriesCount = totalCommitMemories(commitResult);
             if (commitResult.status === "failed") {
               api.logger.warn(
-                `openviking: memory_store commit failed (sessionId=${sessionId}): ${commitResult.error ?? "unknown"}`,
+                `atom_ctx: memory_store commit failed (sessionId=${sessionId}): ${commitResult.error ?? "unknown"}`,
               );
               return {
                 content: [{ type: "text", text: `Memory extraction failed for session ${sessionId}: ${commitResult.error ?? "unknown"}` }],
@@ -536,7 +536,7 @@ const contextEnginePlugin = {
             }
             if (commitResult.status === "timeout") {
               api.logger.warn(
-                `openviking: memory_store commit timed out (sessionId=${sessionId}), task_id=${commitResult.task_id ?? "none"}. Memories may still be extracting in background.`,
+                `atom_ctx: memory_store commit timed out (sessionId=${sessionId}), task_id=${commitResult.task_id ?? "none"}. Memories may still be extracting in background.`,
               );
               return {
                 content: [{ type: "text", text: `Memory extraction timed out for session ${sessionId}. It may still complete in the background (task_id=${commitResult.task_id ?? "none"}).` }],
@@ -551,17 +551,17 @@ const contextEnginePlugin = {
             }
             if (memoriesCount === 0) {
               api.logger.warn(
-                `openviking: memory_store committed but 0 memories extracted (sessionId=${sessionId}). ` +
-                  "Check OpenViking server logs for embedding/extract errors (e.g. 401 API key, or extraction pipeline).",
+                `atom_ctx: memory_store committed but 0 memories extracted (sessionId=${sessionId}). ` +
+                  "Check AtomCtx server logs for embedding/extract errors (e.g. 401 API key, or extraction pipeline).",
               );
             } else {
-              api.logger.info?.(`openviking: memory_store committed, memories=${memoriesCount}`);
+              api.logger.info?.(`atom_ctx: memory_store committed, memories=${memoriesCount}`);
             }
             return {
               content: [
                 {
                   type: "text",
-                  text: `Stored in OpenViking session ${sessionId} and committed ${memoriesCount} memories.`,
+                  text: `Stored in AtomCtx session ${sessionId} and committed ${memoriesCount} memories.`,
                 },
               ],
               details: {
@@ -574,7 +574,7 @@ const contextEnginePlugin = {
               },
             };
           } catch (err) {
-            api.logger.warn(`openviking: memory_store failed: ${String(err)}`);
+            api.logger.warn(`atom_ctx: memory_store failed: ${String(err)}`);
             throw err;
           }
         },
@@ -585,7 +585,7 @@ const contextEnginePlugin = {
     api.registerTool(
       (ctx: ToolContext) => ({
         name: "memory_forget",
-        label: "Memory Forget (OpenViking)",
+        label: "Memory Forget (AtomCtx)",
         description:
           "Forget memory by URI, or search then delete when a strong single match is found.",
         parameters: Type.Object({
@@ -692,8 +692,8 @@ const contextEnginePlugin = {
       { name: "memory_forget" },
     );
     api.registerTool((ctx: ToolContext) => ({
-      name: "ov_archive_expand",
-      label: "Archive Expand (OpenViking)",
+      name: "ctx_archive_expand",
+      label: "Archive Expand (AtomCtx)",
       description:
         "Retrieve original messages from a compressed session archive. " +
         "Use when a session summary lacks specific details " +
@@ -709,10 +709,10 @@ const contextEnginePlugin = {
         rememberSessionAgentId(ctx);
         const archiveId = String((params as { archiveId?: string }).archiveId ?? "").trim();
         const activeSessionId = ctx.sessionId ?? "";
-        api.logger.info?.(`openviking: ov_archive_expand invoked (archiveId=${archiveId || "(empty)"}, sessionId=${activeSessionId || "(empty)"})`);
+        api.logger.info?.(`atom_ctx: ctx_archive_expand invoked (archiveId=${archiveId || "(empty)"}, sessionId=${activeSessionId || "(empty)"})`);
 
         if (!archiveId) {
-          api.logger.warn?.(`openviking: ov_archive_expand missing archiveId`);
+          api.logger.warn?.(`atom_ctx: ctx_archive_expand missing archiveId`);
           return {
             content: [{ type: "text", text: "Error: archiveId is required." }],
             details: { error: "missing_param", param: "archiveId" },
@@ -751,7 +751,7 @@ const contextEnginePlugin = {
             .map((m: OVMessage) => formatMessageFaithful(m))
             .join("\n\n");
 
-          api.logger.info?.(`openviking: ov_archive_expand expanded ${detail.archive_id}, messages=${detail.messages.length}, chars=${body.length}, sessionId=${sessionId}`);
+          api.logger.info?.(`atom_ctx: ctx_archive_expand expanded ${detail.archive_id}, messages=${detail.messages.length}, chars=${body.length}, sessionId=${sessionId}`);
           return {
             content: [{ type: "text", text: `${header}\n${body}` }],
             details: {
@@ -764,7 +764,7 @@ const contextEnginePlugin = {
           };
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          api.logger.warn?.(`openviking: ov_archive_expand failed (archiveId=${archiveId}, sessionId=${sessionId}): ${msg}`);
+          api.logger.warn?.(`atom_ctx: ctx_archive_expand failed (archiveId=${archiveId}, sessionId=${sessionId}): ${msg}`);
           return {
             content: [{ type: "text", text: `Failed to expand ${archiveId}: ${msg}` }],
             details: { error: msg, archiveId, sessionId, ovSessionId },
@@ -789,7 +789,7 @@ const contextEnginePlugin = {
       const result = sessionAgentResolver.resolve(sid, sk, ovSid);
       if (cfg.logFindRequests) {
         api.logger.info(
-          `openviking: resolveAgentId ${JSON.stringify({
+          `atom_ctx: resolveAgentId ${JSON.stringify({
             sessionId: sid || "(empty)",
             sessionKey: sk || "(empty)",
             ovSessionId: ovSid || "(empty)",
@@ -817,7 +817,7 @@ const contextEnginePlugin = {
 
       if (cfg.logFindRequests) {
         api.logger.info(
-          `openviking: hook before_prompt_build ctx=${JSON.stringify({
+          `atom_ctx: hook before_prompt_build ctx=${JSON.stringify({
             sessionId: ctx?.sessionId,
             sessionKey: ctx?.sessionKey,
             agentId: ctx?.agentId,
@@ -825,15 +825,15 @@ const contextEnginePlugin = {
         );
       }
       const agentId = resolveAgentId(ctx?.sessionId, ctx?.sessionKey);
-      let client: OpenVikingClient;
+      let client: AtomCtxClient;
       try {
         client = await withTimeout(
           getClient(),
           5000,
-          "openviking: client initialization timeout (OpenViking service not ready yet)"
+          "atom_ctx: client initialization timeout (AtomCtx service not ready yet)"
         );
       } catch (err) {
-        api.logger.warn?.(`openviking: failed to get client: ${String(err)}`);
+        api.logger.warn?.(`atom_ctx: failed to get client: ${String(err)}`);
         return;
       }
 
@@ -851,7 +851,7 @@ const contextEnginePlugin = {
         const precheck = await quickRecallPrecheck(cfg.mode, cfg.baseUrl, cfg.port, localProcess);
         if (!precheck.ok) {
           verboseRoutingInfo(
-            `openviking: skipping auto-recall because precheck failed (${precheck.reason})`,
+            `atom_ctx: skipping auto-recall because precheck failed (${precheck.reason})`,
           );
         } else {
           try {
@@ -860,12 +860,12 @@ const contextEnginePlugin = {
                 const candidateLimit = Math.max(cfg.recallLimit * 4, 20);
                 const [userSettled, agentSettled] = await Promise.allSettled([
                   client.find(queryText, {
-                    targetUri: "viking://user/memories",
+                    targetUri: "ctx://user/memories",
                     limit: candidateLimit,
                     scoreThreshold: 0,
                   }, agentId),
                   client.find(queryText, {
-                    targetUri: "viking://agent/memories",
+                    targetUri: "ctx://agent/memories",
                     limit: candidateLimit,
                     scoreThreshold: 0,
                   }, agentId),
@@ -874,10 +874,10 @@ const contextEnginePlugin = {
                 const userResult = userSettled.status === "fulfilled" ? userSettled.value : { memories: [] };
                 const agentResult = agentSettled.status === "fulfilled" ? agentSettled.value : { memories: [] };
                 if (userSettled.status === "rejected") {
-                  api.logger.warn(`openviking: user memories search failed: ${String(userSettled.reason)}`);
+                  api.logger.warn(`atom_ctx: user memories search failed: ${String(userSettled.reason)}`);
                 }
                 if (agentSettled.status === "rejected") {
-                  api.logger.warn(`openviking: agent memories search failed: ${String(agentSettled.reason)}`);
+                  api.logger.warn(`atom_ctx: agent memories search failed: ${String(agentSettled.reason)}`);
                 }
 
                 const allMemories = [...(userResult.memories ?? []), ...(agentResult.memories ?? [])];
@@ -900,7 +900,7 @@ const contextEnginePlugin = {
                     ctx?.sessionKey,
                   );
                   void client.sessionUsed(ovSessionId, recalledUris, agentId).catch((err) => {
-                    api.logger.warn(`openviking: sessionUsed failed: ${String(err)}`);
+                    api.logger.warn(`atom_ctx: sessionUsed failed: ${String(err)}`);
                   });
 
                   const { lines: memoryLines, estimatedTokens } = await buildMemoryLinesWithBudget(
@@ -914,23 +914,23 @@ const contextEnginePlugin = {
                   );
                   const memoryContext = memoryLines.join("\n");
                   verboseRoutingInfo(
-                    `openviking: injecting ${memoryLines.length} memories (~${estimatedTokens} tokens, budget=${cfg.recallTokenBudget})`,
+                    `atom_ctx: injecting ${memoryLines.length} memories (~${estimatedTokens} tokens, budget=${cfg.recallTokenBudget})`,
                   );
                   verboseRoutingInfo(
-                    `openviking: inject-detail ${toJsonLog({ count: memories.length, memories: summarizeInjectionMemories(memories) })}`,
+                    `atom_ctx: inject-detail ${toJsonLog({ count: memories.length, memories: summarizeInjectionMemories(memories) })}`,
                   );
                   prependContextParts.push(
-                    "<relevant-memories>\nThe following OpenViking memories may be relevant:\n" +
+                    "<relevant-memories>\nThe following AtomCtx memories may be relevant:\n" +
                       `${memoryContext}\n` +
                     "</relevant-memories>",
                   );
                 }
               })(),
               AUTO_RECALL_TIMEOUT_MS,
-              "openviking: auto-recall search timeout",
+              "atom_ctx: auto-recall search timeout",
             );
           } catch (err) {
-            api.logger.warn(`openviking: auto-recall failed: ${String(err)}`);
+            api.logger.warn(`atom_ctx: auto-recall failed: ${String(err)}`);
           }
         }
       }
@@ -942,7 +942,7 @@ const contextEnginePlugin = {
         });
         if (decision.shouldAssist) {
           verboseRoutingInfo(
-            `openviking: ingest-reply-assist applied (reason=${decision.reason}, speakerTurns=${decision.speakerTurns}, chars=${decision.chars})`,
+            `atom_ctx: ingest-reply-assist applied (reason=${decision.reason}, speakerTurns=${decision.speakerTurns}, chars=${decision.chars})`,
           );
           prependContextParts.push(
             "<ingest-reply-assist>\n" +
@@ -970,10 +970,10 @@ const contextEnginePlugin = {
         try {
           const ok = await contextEngineRef.commitOVSession(sessionId);
           if (ok) {
-            api.logger.info(`openviking: committed OV session on reset for session=${sessionId}`);
+            api.logger.info(`atom_ctx: committed CTX session on reset for session=${sessionId}`);
           }
         } catch (err) {
-          api.logger.warn(`openviking: failed to commit OV session on reset: ${String(err)}`);
+          api.logger.warn(`atom_ctx: failed to commit CTX session on reset: ${String(err)}`);
         }
       }
     });
@@ -983,7 +983,7 @@ const contextEnginePlugin = {
 
     if (typeof api.registerContextEngine === "function") {
       api.registerContextEngine(contextEnginePlugin.id, () => {
-        contextEngineRef = createMemoryOpenVikingContextEngine({
+        contextEngineRef = createMemoryAtomCtxContextEngine({
           id: contextEnginePlugin.id,
           name: contextEnginePlugin.name,
           version: "0.1.0",
@@ -996,16 +996,16 @@ const contextEnginePlugin = {
         return contextEngineRef;
       });
       api.logger.info(
-        "openviking: registered context-engine (before_prompt_build=auto-recall, afterTurn=auto-capture, assemble=archive+active, session→OV id=uuid-or-sha256 + diag/Phase2 options)",
+        "atom_ctx: registered context-engine (before_prompt_build=auto-recall, afterTurn=auto-capture, assemble=archive+active, session→OV id=uuid-or-sha256 + diag/Phase2 options)",
       );
     } else {
       api.logger.warn(
-        "openviking: registerContextEngine is unavailable; context-engine behavior will not run",
+        "atom_ctx: registerContextEngine is unavailable; context-engine behavior will not run",
       );
     }
 
     api.registerService({
-      id: "openviking",
+      id: "atom_ctx",
       start: async () => {
         // Claim the pending entry — only the first start() call to claim it spawns the process.
         // Subsequent start() calls (from other registrations sharing the same promise) fall through.
@@ -1020,7 +1020,7 @@ const contextEnginePlugin = {
           const timeoutMs = 60_000;
           const intervalMs = 500;
 
-          // Prepare port: kill stale OpenViking, or auto-find free port if occupied by others
+          // Prepare port: kill stale AtomCtx, or auto-find free port if occupied by others
           const actualPort = await prepareLocalPort(cfg.port, api.logger);
           const baseUrl = `http://127.0.0.1:${actualPort}`;
 
@@ -1032,17 +1032,17 @@ const contextEnginePlugin = {
             ...process.env,
             PYTHONUNBUFFERED: "1",
             PYTHONWARNINGS: "ignore::RuntimeWarning",
-            OPENVIKING_CONFIG_FILE: cfg.configPath,
-            OPENVIKING_START_CONFIG: cfg.configPath,
-            OPENVIKING_START_HOST: "127.0.0.1",
-            OPENVIKING_START_PORT: String(actualPort),
-            ...(process.env.OPENVIKING_GO_PATH && { PATH: `${process.env.OPENVIKING_GO_PATH}${pathSep}${process.env.PATH || ""}` }),
-            ...(process.env.OPENVIKING_GOPATH && { GOPATH: process.env.OPENVIKING_GOPATH }),
-            ...(process.env.OPENVIKING_GOPROXY && { GOPROXY: process.env.OPENVIKING_GOPROXY }),
+            CTX_CONFIG_FILE: cfg.configPath,
+            ATOM_CTX_START_CONFIG: cfg.configPath,
+            ATOM_CTX_START_HOST: "127.0.0.1",
+            ATOM_CTX_START_PORT: String(actualPort),
+            ...(process.env.ATOM_CTX_GO_PATH && { PATH: `${process.env.ATOM_CTX_GO_PATH}${pathSep}${process.env.PATH || ""}` }),
+            ...(process.env.ATOM_CTX_GOPATH && { GOPATH: process.env.ATOM_CTX_GOPATH }),
+            ...(process.env.ATOM_CTX_GOPROXY && { GOPROXY: process.env.ATOM_CTX_GOPROXY }),
           };
-          // Run OpenViking server: use run_path on the module file to avoid RuntimeWarning from
+          // Run AtomCtx server: use run_path on the module file to avoid RuntimeWarning from
           // "parent package import loads submodule before execution" (exit 3). Fallback to run_module with warning suppressed.
-          const runpyCode = `import sys,os,warnings; warnings.filterwarnings('ignore', category=RuntimeWarning, message='.*sys.modules.*'); sys.argv=['openviking.server.bootstrap','--config',os.environ['OPENVIKING_START_CONFIG'],'--host',os.environ.get('OPENVIKING_START_HOST','127.0.0.1'),'--port',os.environ['OPENVIKING_START_PORT']]; import runpy, importlib.util; spec=importlib.util.find_spec('openviking.server.bootstrap'); (runpy.run_path(spec.origin, run_name='__main__') if spec and getattr(spec,'origin',None) else runpy.run_module('openviking.server.bootstrap', run_name='__main__', alter_sys=True))`;
+          const runpyCode = `import sys,os,warnings; warnings.filterwarnings('ignore', category=RuntimeWarning, message='.*sys.modules.*'); sys.argv=['atom_ctx.server.bootstrap','--config',os.environ['ATOM_CTX_START_CONFIG'],'--host',os.environ.get('ATOM_CTX_START_HOST','127.0.0.1'),'--port',os.environ['ATOM_CTX_START_PORT']]; import runpy, importlib.util; spec=importlib.util.find_spec('atom_ctx.server.bootstrap'); (runpy.run_path(spec.origin, run_name='__main__') if spec and getattr(spec,'origin',None) else runpy.run_module('atom_ctx.server.bootstrap', run_name='__main__', alter_sys=True))`;
           const child = spawn(
             pythonCmd,
             ["-c", runpyCode],
@@ -1057,8 +1057,8 @@ const contextEnginePlugin = {
             stderrChunks.push(chunk);
             stderrCharCount += chunk.length;
             while (
-              stderrChunks.length > MAX_OPENVIKING_STDERR_LINES ||
-              stderrCharCount > MAX_OPENVIKING_STDERR_CHARS
+              stderrChunks.length > MAX_ATOM_CTX_STDERR_LINES ||
+              stderrCharCount > MAX_ATOM_CTX_STDERR_CHARS
             ) {
               const dropped = stderrChunks.shift();
               if (!dropped) break;
@@ -1072,16 +1072,16 @@ const contextEnginePlugin = {
               stderrDroppedChunks > 0
                 ? `[truncated ${stderrDroppedChunks} earlier stderr chunk(s)]\n`
                 : "";
-            return `\n[openviking stderr]\n${truncated}${stderrChunks.join("\n")}`;
+            return `\n[atom_ctx stderr]\n${truncated}${stderrChunks.join("\n")}`;
           };
-          child.on("error", (err: Error) => api.logger.warn(`openviking: local server error: ${String(err)}`));
+          child.on("error", (err: Error) => api.logger.warn(`atom_ctx: local server error: ${String(err)}`));
           child.stderr?.on("data", (chunk: Buffer) => {
             const s = String(chunk).trim();
             pushStderrChunk(s);
             if (cfg.logFindRequests) {
-              api.logger.info(`[openviking-local] ${s}`);
+              api.logger.info(`[atom_ctx-local] ${s}`);
             } else {
-              api.logger.debug?.(`[openviking] ${s}`);
+              api.logger.debug?.(`[atom_ctx] ${s}`);
             }
           });
           child.on("exit", (code: number | null, signal: string | null) => {
@@ -1090,11 +1090,11 @@ const contextEnginePlugin = {
               localClientCache.delete(localCacheKey);
             }
             const out = formatStderrOutput();
-            api.logger.warn(`openviking: subprocess exited (code=${code}, signal=${signal})${out}`);
+            api.logger.warn(`atom_ctx: subprocess exited (code=${code}, signal=${signal})${out}`);
           });
           try {
             await waitForHealth(baseUrl, timeoutMs, intervalMs);
-            const client = new OpenVikingClient(
+            const client = new AtomCtxClient(
               baseUrl,
               cfg.apiKey,
               cfg.agentId,
@@ -1107,7 +1107,7 @@ const contextEnginePlugin = {
             resolveLocalClient!(client);
             rejectLocalClient = null;
             api.logger.info(
-              `openviking: local server started (${baseUrl}, config: ${cfg.configPath})`,
+              `atom_ctx: local server started (${baseUrl}, config: ${cfg.configPath})`,
             );
           } catch (err) {
             localProcess = null;
@@ -1115,7 +1115,7 @@ const contextEnginePlugin = {
             markLocalUnavailable("startup failed", err);
             if (stderrChunks.length) {
               api.logger.warn(
-                `openviking: startup failed (health check timeout or error).${formatStderrOutput()}`,
+                `atom_ctx: startup failed (health check timeout or error).${formatStderrOutput()}`,
               );
             }
             throw err;
@@ -1131,7 +1131,7 @@ const contextEnginePlugin = {
             const healthOk = await quickHealthCheck(`http://127.0.0.1:${cfg.port}`, 2000);
             if (!healthOk) {
               api.logger.warn(
-                `openviking: no valid local process detected (isSpawner=false), triggering defensive re-spawn`,
+                `atom_ctx: no valid local process detected (isSpawner=false), triggering defensive re-spawn`,
               );
               const timeoutMs = 60_000;
               const intervalMs = 500;
@@ -1143,63 +1143,63 @@ const contextEnginePlugin = {
                 ...process.env,
                 PYTHONUNBUFFERED: "1",
                 PYTHONWARNINGS: "ignore::RuntimeWarning",
-                OPENVIKING_CONFIG_FILE: cfg.configPath,
-                OPENVIKING_START_CONFIG: cfg.configPath,
-                OPENVIKING_START_HOST: "127.0.0.1",
-                OPENVIKING_START_PORT: String(actualPort),
-                ...(process.env.OPENVIKING_GO_PATH && { PATH: `${process.env.OPENVIKING_GO_PATH}${pathSep}${process.env.PATH || ""}` }),
-                ...(process.env.OPENVIKING_GOPATH && { GOPATH: process.env.OPENVIKING_GOPATH }),
-                ...(process.env.OPENVIKING_GOPROXY && { GOPROXY: process.env.OPENVIKING_GOPROXY }),
+                CTX_CONFIG_FILE: cfg.configPath,
+                ATOM_CTX_START_CONFIG: cfg.configPath,
+                ATOM_CTX_START_HOST: "127.0.0.1",
+                ATOM_CTX_START_PORT: String(actualPort),
+                ...(process.env.ATOM_CTX_GO_PATH && { PATH: `${process.env.ATOM_CTX_GO_PATH}${pathSep}${process.env.PATH || ""}` }),
+                ...(process.env.ATOM_CTX_GOPATH && { GOPATH: process.env.ATOM_CTX_GOPATH }),
+                ...(process.env.ATOM_CTX_GOPROXY && { GOPROXY: process.env.ATOM_CTX_GOPROXY }),
               };
-              const runpyCode = `import sys,os,warnings; warnings.filterwarnings('ignore', category=RuntimeWarning, message='.*sys.modules.*'); sys.argv=['openviking.server.bootstrap','--config',os.environ['OPENVIKING_START_CONFIG'],'--host',os.environ.get('OPENVIKING_START_HOST','127.0.0.1'),'--port',os.environ['OPENVIKING_START_PORT']]; import runpy, importlib.util; spec=importlib.util.find_spec('openviking.server.bootstrap'); (runpy.run_path(spec.origin, run_name='__main__') if spec and getattr(spec,'origin',None) else runpy.run_module('openviking.server.bootstrap', run_name='__main__', alter_sys=True))`;
+              const runpyCode = `import sys,os,warnings; warnings.filterwarnings('ignore', category=RuntimeWarning, message='.*sys.modules.*'); sys.argv=['atom_ctx.server.bootstrap','--config',os.environ['ATOM_CTX_START_CONFIG'],'--host',os.environ.get('ATOM_CTX_START_HOST','127.0.0.1'),'--port',os.environ['ATOM_CTX_START_PORT']]; import runpy, importlib.util; spec=importlib.util.find_spec('atom_ctx.server.bootstrap'); (runpy.run_path(spec.origin, run_name='__main__') if spec and getattr(spec,'origin',None) else runpy.run_module('atom_ctx.server.bootstrap', run_name='__main__', alter_sys=True))`;
               const child = spawn(
                 pythonCmd,
                 ["-c", runpyCode],
                 { env, cwd: IS_WIN ? tmpdir() : "/tmp", stdio: ["ignore", "pipe", "pipe"] },
               );
               localProcess = child;
-              child.on("error", (err: Error) => api.logger.warn(`openviking: local server error (re-spawn): ${String(err)}`));
+              child.on("error", (err: Error) => api.logger.warn(`atom_ctx: local server error (re-spawn): ${String(err)}`));
               child.stderr?.on("data", (chunk: Buffer) => {
-                api.logger.debug?.(`[openviking-respawn] ${String(chunk).trim()}`);
+                api.logger.debug?.(`[atom_ctx-respawn] ${String(chunk).trim()}`);
               });
               child.on("exit", (code: number | null, signal: string | null) => {
                 if (localProcess === child) {
                   localProcess = null;
                   localClientCache.delete(localCacheKey);
                 }
-                api.logger.warn(`openviking: re-spawned subprocess exited (code=${code}, signal=${signal})`);
+                api.logger.warn(`atom_ctx: re-spawned subprocess exited (code=${code}, signal=${signal})`);
               });
               try {
                 await waitForHealth(baseUrl, timeoutMs, intervalMs);
-                const client = new OpenVikingClient(baseUrl, cfg.apiKey, cfg.agentId, cfg.timeoutMs);
+                const client = new AtomCtxClient(baseUrl, cfg.apiKey, cfg.agentId, cfg.timeoutMs);
                 localClientCache.set(localCacheKey, { client, process: child });
                 if (resolveLocalClient) {
                   resolveLocalClient(client);
                   rejectLocalClient = null;
                 }
                 api.logger.info(
-                  `openviking: local server re-spawned successfully (${baseUrl}, config: ${cfg.configPath})`,
+                  `atom_ctx: local server re-spawned successfully (${baseUrl}, config: ${cfg.configPath})`,
                 );
               } catch (err) {
                 localProcess = null;
                 child.kill("SIGTERM");
                 markLocalUnavailable("re-spawn failed", err);
-                api.logger.warn(`openviking: defensive re-spawn failed: ${String(err)}`);
+                api.logger.warn(`atom_ctx: defensive re-spawn failed: ${String(err)}`);
                 throw err;
               }
             } else {
-              api.logger.info(`openviking: local process healthy on port ${cfg.port} (isSpawner=false)`);
+              api.logger.info(`atom_ctx: local process healthy on port ${cfg.port} (isSpawner=false)`);
             }
           } else {
             await (await getClient()).healthCheck().catch(() => {});
             api.logger.info(
-              `openviking: initialized via cache (url: ${cfg.baseUrl}, targetUri: ${cfg.targetUri})`,
+              `atom_ctx: initialized via cache (url: ${cfg.baseUrl}, targetUri: ${cfg.targetUri})`,
             );
           }
         } else {
           await (await getClient()).healthCheck().catch(() => {});
           api.logger.info(
-            `openviking: initialized (url: ${cfg.baseUrl}, targetUri: ${cfg.targetUri}, search: hybrid endpoint)`,
+            `atom_ctx: initialized (url: ${cfg.baseUrl}, targetUri: ${cfg.targetUri}, search: hybrid endpoint)`,
           );
         }
       },
@@ -1209,9 +1209,9 @@ const contextEnginePlugin = {
           localClientCache.delete(localCacheKey);
           localClientPendingPromises.delete(localCacheKey);
           localProcess = null;
-          api.logger.info("openviking: local server stopped");
+          api.logger.info("atom_ctx: local server stopped");
         } else {
-          api.logger.info("openviking: stopped");
+          api.logger.info("atom_ctx: stopped");
         }
       },
     });

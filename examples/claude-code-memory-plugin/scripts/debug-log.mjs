@@ -1,8 +1,8 @@
 /**
  * Shared structured debug logger for Claude Code hook scripts.
  *
- * Activation: OPENVIKING_DEBUG=1 env var  OR  claude_code.debug: true in ov.conf.
- * Log path:   OPENVIKING_DEBUG_LOG env var OR  ~/.openviking/logs/cc-hooks.log.
+ * Activation: ATOM_CTX_DEBUG=1 env var  OR  claude_code.debug: true in ctx.conf.
+ * Log path:   ATOM_CTX_DEBUG_LOG env var OR  ~/.ctx/logs/cc-hooks.log.
  * Format:     JSON Lines — { ts, hook, stage, data } | { ts, hook, stage, error }.
  *
  * When inactive, log() and logError() are zero-cost no-ops.
@@ -45,7 +45,7 @@ const noop = () => {};
 /**
  * @param {string} hookName — e.g. "auto-recall" or "auto-capture"
  * @param {{ debug?: boolean, debugLogPath?: string }} [overrideCfg]
- *        Pass a config object directly (avoids re-loading ov.conf in test scripts).
+ *        Pass a config object directly (avoids re-loading ctx.conf in test scripts).
  * @returns {{ log: (stage: string, data: any) => void, logError: (stage: string, err: any) => void }}
  */
 export function createLogger(hookName, overrideCfg) {

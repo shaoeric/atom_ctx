@@ -5,14 +5,14 @@
 
 import asyncio
 
-from openviking import AsyncOpenViking
-from openviking.message import TextPart
+from atom_ctx import AsyncAtomCtx
+from atom_ctx.message import TextPart
 
 
 class TestCommitRace:
     """Test concurrent commit safety."""
 
-    async def test_concurrent_commit_no_duplicate(self, client: AsyncOpenViking):
+    async def test_concurrent_commit_no_duplicate(self, client: AsyncAtomCtx):
         """Two concurrent commits on the same session: only one should archive."""
         session = client.session(session_id="race_test_dedup")
         session.add_message("user", [TextPart("Hello")])
@@ -32,7 +32,7 @@ class TestCommitRace:
         # Compression index should have incremented exactly once
         assert session._compression.compression_index == 1
 
-    async def test_message_added_during_commit_not_lost(self, client: AsyncOpenViking):
+    async def test_message_added_during_commit_not_lost(self, client: AsyncAtomCtx):
         """Messages added while commit is running should not be lost."""
         session = client.session(session_id="race_test_msg_safety")
         session.add_message("user", [TextPart("Original message")])

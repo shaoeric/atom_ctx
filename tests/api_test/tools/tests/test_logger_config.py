@@ -1,11 +1,11 @@
 import logging
 
-from openviking_cli.utils import get_logger
+from atom_ctx_cli.utils import get_logger
 
 print("Testing logger config...")
 print("=" * 80)
 
-logger = get_logger("openviking.server.app")
+logger = get_logger("atom_ctx.server.app")
 print(f"Logger: {logger}")
 print(f"Logger level: {logger.level}")
 print(f"Logger effective level: {logger.getEffectiveLevel()}")

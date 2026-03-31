@@ -1,6 +1,6 @@
 """
 Centralized logging configuration
-Set OV_DEBUG=1 environment variable to enable debug logging
+Set CTX_DEBUG=1 environment variable to enable debug logging
 """
 
 import logging
@@ -12,7 +12,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # Check debug mode from environment
-DEBUG = os.environ.get("OV_DEBUG") == "1"
+DEBUG = os.environ.get("CTX_DEBUG") == "1"
 
 if DEBUG:
     # Debug mode - show all logs
@@ -33,86 +33,86 @@ else:
             },
             "root": {"level": "CRITICAL", "handlers": ["null"]},
             "loggers": {
-                # Suppress all OpenViking loggers
-                "openviking": {"level": "CRITICAL", "handlers": ["null"], "propagate": False},
-                "openviking.agfs_manager": {
+                # Suppress all AtomCtx loggers
+                "atom_ctx": {"level": "CRITICAL", "handlers": ["null"], "propagate": False},
+                "atom_ctx.agfs_manager": {
                     "level": "CRITICAL",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.storage": {
+                "atom_ctx.storage": {
                     "level": "CRITICAL",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.storage.viking_vector_index_backend": {
+                "atom_ctx.storage.viking_vector_index_backend": {
                     "level": "CRITICAL",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.storage.queuefs": {
+                "atom_ctx.storage.queuefs": {
                     "level": "CRITICAL",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.storage.queuefs.queue_manager": {
+                "atom_ctx.storage.queuefs.queue_manager": {
                     "level": "CRITICAL",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.storage.vikingdb_manager": {
+                "atom_ctx.storage.vikingdb_manager": {
                     "level": "CRITICAL",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.storage.viking_fs": {
+                "atom_ctx.storage.ctx_fs": {
                     "level": "CRITICAL",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.session.session": {
+                "atom_ctx.session.session": {
                     "level": "ERROR",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.session.memory_extractor": {
+                "atom_ctx.session.memory_extractor": {
                     "level": "ERROR",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.session.compressor": {
+                "atom_ctx.session.compressor": {
                     "level": "ERROR",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.async_client": {
+                "atom_ctx.async_client": {
                     "level": "CRITICAL",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.parse": {"level": "CRITICAL", "handlers": ["null"], "propagate": False},
-                "openviking.parse.parsers": {
+                "atom_ctx.parse": {"level": "CRITICAL", "handlers": ["null"], "propagate": False},
+                "atom_ctx.parse.parsers": {
                     "level": "CRITICAL",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.parse.parsers.markdown": {
+                "atom_ctx.parse.parsers.markdown": {
                     "level": "CRITICAL",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.storage.queuefs.semantic_processor": {
+                "atom_ctx.storage.queuefs.semantic_processor": {
                     "level": "CRITICAL",
                     "handlers": ["null"],
                     "propagate": False,
                 },
                 "apscheduler": {"level": "CRITICAL", "handlers": ["null"], "propagate": False},
-                "openviking.parse.tree_builder": {
+                "atom_ctx.parse.tree_builder": {
                     "level": "CRITICAL",
                     "handlers": ["null"],
                     "propagate": False,
                 },
-                "openviking.service.core": {
+                "atom_ctx.service.core": {
                     "level": "CRITICAL",
                     "handlers": ["null"],
                     "propagate": False,
@@ -122,7 +122,7 @@ else:
     )
 
     # Additional enforcement: set all loggers after config
-    for logger_name in ["openviking", "apscheduler"]:
+    for logger_name in ["atom_ctx", "apscheduler"]:
         logger = logging.getLogger(logger_name)
         logger.setLevel(logging.CRITICAL)
         logger.propagate = False

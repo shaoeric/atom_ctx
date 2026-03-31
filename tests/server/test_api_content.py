@@ -7,9 +7,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from openviking.server.identity import RequestContext, Role
-from openviking.server.routers.content import ReindexRequest, reindex
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx.server.routers.content import ReindexRequest, reindex
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 async def test_read_content(client_with_resource):
@@ -75,7 +75,7 @@ async def test_reindex_request_validation(client):
     # Invalid type for regenerate
     resp = await client.post(
         "/api/v1/content/reindex",
-        json={"uri": "viking://resources/test", "regenerate": "not_a_bool"},
+        json={"uri": "ctx://resources/test", "regenerate": "not_a_bool"},
     )
     # Pydantic coerces strings to bool, so this may or may not fail
     assert resp.status_code in (200, 422, 500)
@@ -86,7 +86,7 @@ async def test_reindex_wait_parameter_schema(client):
     # Invalid wait type should be coerced or rejected, not crash
     resp = await client.post(
         "/api/v1/content/reindex",
-        json={"uri": "viking://resources/test", "wait": "invalid"},
+        json={"uri": "ctx://resources/test", "wait": "invalid"},
     )
     # Pydantic coerces or rejects — either way, not a 404/405
     assert resp.status_code != 404
@@ -115,21 +115,21 @@ async def test_reindex_uses_request_tenant_for_exists(monkeypatch):
         user=UserIdentifier(account_id="test", user_id="alice", agent_id="default"),
         role=Role.ADMIN,
     )
-    request = ReindexRequest(uri="viking://resources/demo/demo-note.md", wait=True)
+    request = ReindexRequest(uri="ctx://resources/demo/demo-note.md", wait=True)
 
-    monkeypatch.setattr("openviking.storage.viking_fs.get_viking_fs", lambda: FakeVikingFS())
+    monkeypatch.setattr("atom_ctx.storage.ctx_fs.get_ctx_fs", lambda: FakeVikingFS())
     monkeypatch.setattr(
-        "openviking.service.task_tracker.get_task_tracker",
+        "atom_ctx.service.task_tracker.get_task_tracker",
         lambda: FakeTracker(),
     )
     monkeypatch.setattr(
-        "openviking.server.routers.content.get_service",
+        "atom_ctx.server.routers.content.get_service",
         lambda: SimpleNamespace(),
     )
-    monkeypatch.setattr("openviking.server.routers.content._do_reindex", fake_do_reindex)
+    monkeypatch.setattr("atom_ctx.server.routers.content._do_reindex", fake_do_reindex)
 
     response = await reindex(request=request, _ctx=ctx)
 
     assert response.status == "ok"
-    assert seen["uri"] == "viking://resources/demo/demo-note.md"
+    assert seen["uri"] == "ctx://resources/demo/demo-note.md"
     assert seen["ctx"] == ctx

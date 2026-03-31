@@ -1,4 +1,4 @@
-from openviking.server.config import load_server_config
+from atom_ctx.server.config import load_server_config
 
 print("Testing config value...")
 print("=" * 80)

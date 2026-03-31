@@ -1,6 +1,6 @@
 # Data Encryption
 
-OpenViking provides transparent at-rest data encryption to ensure data security and isolation in multi-tenant environments.
+AtomCtx provides transparent at-rest data encryption to ensure data security and isolation in multi-tenant environments.
 
 ## Overview
 
@@ -22,13 +22,13 @@ Encryption is completely transparent to users and developers:
 
 ## Three-Layer Key Architecture
 
-OpenViking uses an Envelope Encryption architecture with a three-layer key system:
+AtomCtx uses an Envelope Encryption architecture with a three-layer key system:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Layer 1: Root Key                                     │
-│  • Global unique per OpenViking instance               │
-│  • Storage: KMS service / ~/.openviking/master.key    │
+│  • Global unique per AtomCtx instance               │
+│  • Storage: KMS service / ~/.ctx/master.key    │
 │  • Purpose: Derive all account keys                    │
 └────────────────────┬────────────────────────────────────┘
                      │ HKDF derivation
@@ -59,11 +59,11 @@ OpenViking uses an Envelope Encryption architecture with a three-layer key syste
 
 ## Key Providers
 
-OpenViking supports three key providers for different deployment scenarios:
+AtomCtx supports three key providers for different deployment scenarios:
 
 | Provider | Use Case | Root Key Storage | Features |
 |----------|----------|-----------------|----------|
-| **Local** | Dev environments, single-node deployments | Local file `~/.openviking/master.key` | Simple, no external services |
+| **Local** | Dev environments, single-node deployments | Local file `~/.ctx/master.key` | Simple, no external services |
 | **Vault** | Production, multi-cloud | HashiCorp Vault Transit Engine | Enterprise-grade key management, version control |
 | **Volcengine KMS** | Volcengine cloud deployments | Volcengine KMS | Cloud-native KMS service |
 
@@ -77,7 +77,7 @@ Suitable for development and single-node deployments:
     "enabled": true,
     "provider": "local",
     "local": {
-      "key_file": "~/.openviking/master.key"
+      "key_file": "~/.ctx/master.key"
     }
   }
 }
@@ -85,7 +85,7 @@ Suitable for development and single-node deployments:
 
 **Initialization command**:
 ```bash
-ov crypto init-key --output ~/.openviking/master.key
+ctx crypto init-key --output ~/.ctx/master.key
 ```
 
 ### Vault (HashiCorp Vault)
@@ -103,8 +103,8 @@ Suitable for production and multi-cloud deployments:
       "mount_point": "transit",
       "kv_mount_point": "secret",
       "kv_version": 1,
-      "root_key_name": "openviking-root-key",
-      "encrypted_root_key_key": "openviking-encrypted-root-key"
+      "root_key_name": "atom_ctx-root-key",
+      "encrypted_root_key_key": "atom_ctx-encrypted-root-key"
     }
   }
 }
@@ -125,7 +125,7 @@ Suitable for Volcengine cloud deployments:
       "access_key": "AKLTxxxxxxxxxxxxxxxxxx",
       "secret_key": "Tmpxxxxxxxxxxxxxxxxxxxxxx",
       "endpoint": null,
-      "key_file": "~/.openviking/openviking-volcengine-root-key.enc"
+      "key_file": "~/.ctx/atom_ctx-volcengine-root-key.enc"
     }
   }
 }
@@ -188,7 +188,7 @@ Client              VikingFS             FileEncryptor         KeyManager       
 
 ### Envelope Format
 
-Encrypted files use a unified envelope format starting with the magic number `OVE1` (OpenViking Encryption v1):
+Encrypted files use a unified envelope format starting with the magic number `OVE1` (AtomCtx Encryption v1):
 
 ```
 ┌─────────────────────────────────────────────────────────────┐

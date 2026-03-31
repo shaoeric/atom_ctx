@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Beijing Volcano Engine Technology Co., Ltd.
 # SPDX-License-Identifier: Apache-2.0
 """
-Simplified edge case tests for OpenViking that don't rely on complex imports.
+Simplified edge case tests for AtomCtx that don't rely on complex imports.
 
 These tests focus on boundary conditions and edge cases that can be tested
 with minimal dependencies, highlighting potential issues in the codebase.
@@ -149,7 +149,7 @@ class TestBasicEdgeCases:
 
 def run_all_tests():
     """Run all edge case tests."""
-    print("Running OpenViking Edge Case Tests...")
+    print("Running AtomCtx Edge Case Tests...")
     print("=" * 50)
 
     test_instance = TestBasicEdgeCases()

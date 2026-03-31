@@ -2,20 +2,20 @@
 
 ## Basic Concepts
 
-### What is OpenViking? What problems does it solve?
+### What is AtomCtx? What problems does it solve?
 
-OpenViking is an open-source context database designed specifically for AI Agents. It solves core pain points when building AI Agents:
+AtomCtx is an open-source context database designed specifically for AI Agents. It solves core pain points when building AI Agents:
 
 - **Fragmented Context**: Memories, resources, and skills are scattered everywhere, difficult to manage uniformly
 - **Poor Retrieval Effectiveness**: Traditional RAG's flat storage lacks global view, making it hard to understand complete context
 - **Unobservable Context**: Implicit retrieval chains are like black boxes, difficult to debug when errors occur
 - **Limited Memory Iteration**: Lacks Agent-related task memory and self-evolution capabilities
 
-OpenViking unifies all context management through a filesystem paradigm, enabling tiered delivery and self-iteration.
+AtomCtx unifies all context management through a filesystem paradigm, enabling tiered delivery and self-iteration.
 
-### What's the fundamental difference between OpenViking and traditional vector databases?
+### What's the fundamental difference between AtomCtx and traditional vector databases?
 
-| Dimension | Traditional Vector DB | OpenViking |
+| Dimension | Traditional Vector DB | AtomCtx |
 |-----------|----------------------|------------|
 | **Storage Model** | Flat vector storage | Hierarchical filesystem (AGFS) |
 | **Retrieval Method** | Single vector similarity search | Directory recursive retrieval + Intent analysis + Rerank |
@@ -26,7 +26,7 @@ OpenViking unifies all context management through a filesystem paradigm, enablin
 
 ### What is the L0/L1/L2 layered model? Why is it needed?
 
-L0/L1/L2 is OpenViking's progressive content loading mechanism, solving the problem of "stuffing massive context into prompts all at once":
+L0/L1/L2 is AtomCtx's progressive content loading mechanism, solving the problem of "stuffing massive context into prompts all at once":
 
 | Layer | Name | Token Limit | Purpose |
 |-------|------|-------------|---------|
@@ -36,12 +36,12 @@ L0/L1/L2 is OpenViking's progressive content loading mechanism, solving the prob
 
 This design allows Agents to browse abstracts for quick positioning, then load details on demand, significantly saving token consumption.
 
-### What is Viking URI? What's its purpose?
+### What is Ctx URI? What's its purpose?
 
-Viking URI is OpenViking's unified resource identifier, formatted as `viking://{scope}/{path}`. It enables precise location of any context:
+Ctx URI is AtomCtx's unified resource identifier, formatted as `ctx://{scope}/{path}`. It enables precise location of any context:
 
 ```
-viking://
+ctx://
 ├── resources/              # Knowledge base: documents, code, web pages, etc.
 │   └── my_project/
 ├── user/                   # User context
@@ -73,18 +73,18 @@ If your environment supports Go compilation or you've installed a Wheel package 
 
 This usually means the AGFS shared library is not pre-built in your environment. You can:
 1. **Re-compile and install**: Run `pip install -e . --force-reinstall` in the project root (requires Go environment).
-2. **Switch to HTTP mode**: Set `storage.agfs.mode = "http-client"` in your `ov.conf` and ensure an `agfs-server` is running.
+2. **Switch to HTTP mode**: Set `storage.agfs.mode = "http-client"` in your `ctx.conf` and ensure an `agfs-server` is running.
 
-### How do I install/upgrade OpenViking?
+### How do I install/upgrade AtomCtx?
 
 ```bash
-pip install openviking --upgrade --force-reinstall
+pip install atom-ctx --upgrade --force-reinstall
 
 ```
 
-### How do I configure OpenViking?
+### How do I configure AtomCtx?
 
-Create an `~/.openviking/ov.conf` configuration file in your project directory:
+Create an `~/.ctx/ctx.conf` configuration file in your project directory:
 
 ```json
 {
@@ -116,7 +116,7 @@ Create an `~/.openviking/ov.conf` configuration file in your project directory:
 }
 ```
 
-Config files at the default path `~/.openviking/ov.conf` are loaded automatically; you can also specify a different path via the `OPENVIKING_CONFIG_FILE` environment variable or `--config` flag. See [Configuration Guide](../guides/01-configuration.md) for details.
+Config files at the default path `~/.ctx/ctx.conf` are loaded automatically; you can also specify a different path via the `CTX_CONFIG_FILE` environment variable or `--config` flag. See [Configuration Guide](../guides/01-configuration.md) for details.
 
 ### What Embedding providers are supported?
 
@@ -135,18 +135,18 @@ Supports Dense, Sparse, and Hybrid embedding modes.
 ### How do I initialize the client?
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
 # Async client - embedded mode (recommended)
-client = ov.AsyncOpenViking(path="./my_data")
+client = ctx.AsyncAtomCtx(path="./my_data")
 await client.initialize()
 
 # Async client - HTTP client mode
-client = ov.AsyncHTTPClient(url="http://localhost:1933", api_key="your-key")
+client = ctx.AsyncHTTPClient(url="http://localhost:1933", api_key="your-key")
 await client.initialize()
 ```
 
-The SDK constructor only accepts `url`, `api_key`, and `path` parameters. Other configuration (embedding, vlm, etc.) is managed through the `ov.conf` config file.
+The SDK constructor only accepts `url`, `api_key`, and `path` parameters. Other configuration (embedding, vlm, etc.) is managed through the `ctx.conf` config file.
 
 ### What file formats are supported?
 
@@ -166,7 +166,7 @@ The SDK constructor only accepts `url`, `api_key`, and `path` parameters. Other 
 await client.add_resource(
     "./document.pdf",
     reason="Project technical documentation",  # Describe resource purpose to improve retrieval quality
-    target="viking://resources/docs/"  # Specify storage location
+    target="ctx://resources/docs/"  # Specify storage location
 )
 
 # Add web page
@@ -192,7 +192,7 @@ await client.wait_processed()
 # find(): Simple direct semantic search
 results = await client.find(
     "OAuth authentication flow",
-    target_uri="viking://resources/"
+    target_uri="ctx://resources/"
 )
 
 # search(): Complex tasks requiring intent analysis
@@ -208,7 +208,7 @@ results = await client.search(
 
 ### How do I use session management?
 
-Session management is a core capability of OpenViking, supporting conversation tracking and memory extraction:
+Session management is a core capability of AtomCtx, supporting conversation tracking and memory extraction:
 
 ```python
 # Create session
@@ -219,15 +219,15 @@ await session.add_message("user", [{"type": "text", "text": "Help me analyze per
 await session.add_message("assistant", [{"type": "text", "text": "Let me analyze..."}])
 
 # Mark used context (for tracking)
-await session.used(["viking://resources/code/main.py"])
+await session.used(["ctx://resources/code/main.py"])
 
 # Commit session to trigger memory extraction
 await session.commit()
 ```
 
-### What memory types does OpenViking support?
+### What memory types does AtomCtx support?
 
-OpenViking has 6 built-in memory categories, automatically extracted during session commit:
+AtomCtx has 6 built-in memory categories, automatically extracted during session commit:
 
 | Category | Belongs To | Description |
 |----------|------------|-------------|
@@ -242,16 +242,16 @@ OpenViking has 6 built-in memory categories, automatically extracted during sess
 
 ```python
 # List directory contents
-items = await client.ls("viking://resources/")
+items = await client.ls("ctx://resources/")
 
 # Read full content (L2)
-content = await client.read("viking://resources/doc.md")
+content = await client.read("ctx://resources/doc.md")
 
 # Get abstract (L0)
-abstract = await client.abstract("viking://resources")
+abstract = await client.abstract("ctx://resources")
 
 # Get overview (L1)
-overview = await client.overview("viking://resources")
+overview = await client.overview("ctx://resources")
 ```
 
 ## Retrieval Optimization
@@ -266,7 +266,7 @@ overview = await client.overview("viking://resources")
 
 ### How is the retrieval result score calculated?
 
-OpenViking uses a score propagation mechanism:
+AtomCtx uses a score propagation mechanism:
 
 ```
 Final Score = 0.5 × Embedding Similarity + 0.5 × Parent Directory Score
@@ -276,7 +276,7 @@ This design gives content under high-scoring directories a boost, reflecting the
 
 ### What is directory recursive retrieval?
 
-Directory recursive retrieval is OpenViking's innovative retrieval strategy:
+Directory recursive retrieval is AtomCtx's innovative retrieval strategy:
 
 1. **Intent Analysis**: Analyze query to generate multiple retrieval conditions
 2. **Initial Positioning**: Vector retrieval to locate high-scoring directories
@@ -299,7 +299,7 @@ This strategy finds semantically matching fragments while understanding the comp
    ```
 
 2. **Embedding model configuration error**
-   - Check if `api_key` in `~/.openviking/ov.conf` is correct
+   - Check if `api_key` in `~/.ctx/ctx.conf` is correct
    - Confirm model name and endpoint are configured correctly
 
 3. **Unsupported file format**
@@ -319,7 +319,7 @@ This strategy finds semantically matching fragments while understanding the comp
 1. **Confirm resources have been processed**
    ```python
    # Check if resources exist
-   items = await client.ls("viking://resources/")
+   items = await client.ls("ctx://resources/")
    ```
 
 2. **Check `target_uri` filter condition**
@@ -332,7 +332,7 @@ This strategy finds semantically matching fragments while understanding the comp
 
 4. **Check L0 abstract quality**
    ```python
-   abstract = await client.abstract("viking://resources/your-doc")
+   abstract = await client.abstract("ctx://resources/your-doc")
    print(abstract)  # Confirm abstract accurately reflects content
    ```
 
@@ -355,7 +355,7 @@ This strategy finds semantically matching fragments while understanding the comp
 
 4. **View extracted memories**
    ```python
-   memories = await client.find("", target_uri="viking://user/memories/")
+   memories = await client.find("", target_uri="ctx://user/memories/")
    ```
 
 ### Performance issues
@@ -365,7 +365,7 @@ This strategy finds semantically matching fragments while understanding the comp
 1. **Batch processing**: Adding multiple resources at once is more efficient than one by one
 2. **Set appropriate `batch_size`**: Adjust batch processing size in Embedding configuration
 3. **Use local storage**: Use `local` backend during development to reduce network latency
-4. **Async operations**: Fully utilize `AsyncOpenViking` / `AsyncHTTPClient`'s async capabilities
+4. **Async operations**: Fully utilize `AsyncAtomCtx` / `AsyncHTTPClient`'s async capabilities
 
 ## Deployment
 
@@ -378,19 +378,19 @@ This strategy finds semantically matching fragments while understanding the comp
 
 ```python
 # Embedded mode
-client = ov.AsyncOpenViking(path="./data")
+client = ctx.AsyncAtomCtx(path="./data")
 
 # HTTP client mode (connects to a remote server)
-client = ov.AsyncHTTPClient(url="http://localhost:1933", api_key="your-key")
+client = ctx.AsyncHTTPClient(url="http://localhost:1933", api_key="your-key")
 ```
 
-### Is OpenViking open source?
+### Is AtomCtx open source?
 
-Yes, OpenViking is fully open source under the Apache 2.0 license.
+Yes, AtomCtx is fully open source under the Apache 2.0 license.
 
 ## Related Documentation
 
-- [Introduction](../getting-started/01-introduction.md) - Understand OpenViking's design philosophy
+- [Introduction](../getting-started/01-introduction.md) - Understand AtomCtx's design philosophy
 - [Quick Start](../getting-started/02-quickstart.md) - 5-minute tutorial
 - [Architecture Overview](../concepts/01-architecture.md) - Deep dive into system design
 - [Retrieval Mechanism](../concepts/07-retrieval.md) - Detailed retrieval process

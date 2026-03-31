@@ -1,7 +1,7 @@
 import asyncio
 
-from openviking.server.app import create_app
-from openviking.server.config import load_server_config
+from atom_ctx.server.app import create_app
+from atom_ctx.server.config import load_server_config
 
 print("Testing lifespan...")
 print("=" * 80)

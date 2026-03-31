@@ -1,3 +1,3 @@
-from .client import OpenVikingAPIClient
+from .client import AtomCtxAPIClient
 
-__all__ = ["OpenVikingAPIClient"]
+__all__ = ["AtomCtxAPIClient"]

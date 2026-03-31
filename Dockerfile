@@ -17,9 +17,9 @@ COPY --from=rust-toolchain /usr/local/rustup /usr/local/rustup
 ENV CARGO_HOME=/usr/local/cargo
 ENV RUSTUP_HOME=/usr/local/rustup
 ENV PATH="/usr/local/cargo/bin:/usr/local/go/bin:${PATH}"
-ARG OPENVIKING_VERSION=0.0.0
+ARG CTX_VERSION=0.0.0
 ARG TARGETPLATFORM
-ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_OPENVIKING=${OPENVIKING_VERSION}
+ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_ATOM_CTX=${CTX_VERSION}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -37,8 +37,8 @@ COPY Cargo.toml Cargo.lock ./
 COPY pyproject.toml uv.lock setup.py README.md ./
 COPY build_support/ build_support/
 COPY crates/ crates/
-COPY openviking/ openviking/
-COPY openviking_cli/ openviking_cli/
+COPY atom_ctx/ atom_ctx/
+COPY atom_ctx_cli/ atom_ctx_cli/
 COPY src/ src/
 COPY third_party/ third_party/
 
@@ -61,7 +61,7 @@ WORKDIR /app
 
 COPY --from=py-builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
-ENV OPENVIKING_CONFIG_FILE="/app/ov.conf"
+ENV CTX_CONFIG_FILE="/app/ctx.conf"
 
 EXPOSE 1933
 
@@ -69,5 +69,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD curl -fsS http://127.0.0.1:1933/health || exit 1
 
 # Default runs server; override command to run CLI, e.g.:
-# docker run --rm <image> -v "$HOME/.openviking/ovcli.conf:/root/.openviking/ovcli.conf" openviking --help
-CMD ["openviking-server"]
+# docker run --rm <image> -v "$HOME/.ctx/ctx-cli.conf:/root/.ctx/ctx-cli.conf" atom_ctx --help
+CMD ["ctx-server"]

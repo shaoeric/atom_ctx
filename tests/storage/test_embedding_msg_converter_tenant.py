@@ -5,24 +5,24 @@
 
 import pytest
 
-from openviking.core.context import Context
-from openviking.storage.queuefs.embedding_msg_converter import EmbeddingMsgConverter
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.core.context import Context
+from atom_ctx.storage.queuefs.embedding_msg_converter import EmbeddingMsgConverter
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 @pytest.mark.parametrize(
     ("uri", "expected_space"),
     [
         (
-            "viking://user/memories/preferences/me.md",
+            "ctx://user/memories/preferences/me.md",
             lambda user: user.user_space_name(),
         ),
         (
-            "viking://agent/memories/cases/me.md",
+            "ctx://agent/memories/cases/me.md",
             lambda user: user.agent_space_name(),
         ),
         (
-            "viking://resources/doc.md",
+            "ctx://resources/doc.md",
             lambda _user: "",
         ),
     ],

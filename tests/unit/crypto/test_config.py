@@ -6,7 +6,7 @@ Unit tests for crypto configuration.
 
 import pytest
 
-from openviking.crypto.config import bootstrap_encryption
+from atom_ctx.crypto.config import bootstrap_encryption
 
 
 @pytest.mark.asyncio
@@ -48,7 +48,7 @@ async def test_bootstrap_encryption_invalid_provider():
     """Test bootstrap_encryption with invalid provider."""
     config = {"encryption": {"enabled": True, "provider": "invalid_provider"}}
 
-    from openviking.crypto.exceptions import ConfigError
+    from atom_ctx.crypto.exceptions import ConfigError
 
     with pytest.raises(ConfigError):
         await bootstrap_encryption(config)

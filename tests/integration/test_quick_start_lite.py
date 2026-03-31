@@ -11,7 +11,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from openviking.models.embedder.base import EmbedResult  # noqa: E402
+from atom_ctx.models.embedder.base import EmbedResult  # noqa: E402
 
 
 class TestQuickStartLite(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestQuickStartLite(unittest.TestCase):
 
         # Create a temporary config file
         self.config_dir = tempfile.mkdtemp()
-        self.config_file = os.path.join(self.config_dir, "ov_test.json")
+        self.config_file = os.path.join(self.config_dir, "ctx_test.json")
 
         # Create a dummy config structure (minimal valid config for Volcengine provider)
         config_data = {
@@ -59,16 +59,16 @@ class TestQuickStartLite(unittest.TestCase):
         # Cleanup temp config
         shutil.rmtree(self.config_dir)
 
-        # Reset OpenVikingConfig singleton to avoid side effects
-        from openviking_cli.utils.config.open_viking_config import OpenVikingConfigSingleton
+        # Reset AtomCtxConfig singleton to avoid side effects
+        from atom_ctx_cli.utils.config.ctx_config import AtomCtxConfigSingleton
 
-        OpenVikingConfigSingleton.reset_instance()
+        AtomCtxConfigSingleton.reset_instance()
 
     def test_quick_start_script_execution(self):
         """
         Run examples/quick_start.py with real C++ engine and AGFS,
         but Mocked Remote Models (VLM & Embedding).
-        Configuration is provided via OPENVIKING_CONFIG_FILE pointing to a real file.
+        Configuration is provided via CTX_CONFIG_FILE pointing to a real file.
         """
         script_path = os.path.join(PROJECT_ROOT, "examples/quick_start.py")
         if not os.path.exists(script_path):
@@ -152,8 +152,8 @@ class TestQuickStartLite(unittest.TestCase):
             Generate a deterministic pseudo-embedding based on text content.
             Features:
             1. Deterministic: Same text -> Same vector (using hash seed)
-            2. Semantic Simulation: If text contains 'openviking', boost dimension 0.
-               This allows "what is openviking" query to match "OpenViking" docs better.
+            2. Semantic Simulation: If text contains 'atom_ctx', boost dimension 0.
+               This allows "what is atom_ctx" query to match "AtomCtx" docs better.
             3. Length Feature: Encode length in dimension 1 (as requested by user).
             """
             import hashlib
@@ -170,8 +170,8 @@ class TestQuickStartLite(unittest.TestCase):
             vector = [rng.uniform(-0.1, 0.1) for _ in range(DIMENSION)]
 
             # 2. Semantic Simulation (Keyword Boosting)
-            # If text is relevant to "openviking", boost the first dimension significantly
-            if "openviking" in text_lower:
+            # If text is relevant to "atom_ctx", boost the first dimension significantly
+            if "atom_ctx" in text_lower:
                 vector[0] = 1.0  # Strong signal
 
             # 3. Length Feature (as requested)
@@ -205,25 +205,25 @@ class TestQuickStartLite(unittest.TestCase):
         # BUT, we are now providing a valid CONFIG FILE so that the config loading phase passes validation naturally.
 
         # NOTE: We do NOT use patch.dict(os.environ, env_vars) here anymore.
-        # Instead, we rely on OPENVIKING_CONFIG_FILE pointing to our file.
+        # Instead, we rely on CTX_CONFIG_FILE pointing to our file.
 
-        env_override = {"OPENVIKING_CONFIG_FILE": self.config_file}
+        env_override = {"CTX_CONFIG_FILE": self.config_file}
 
-        # IMPORTANT: We need to ensure that when `initialize_openviking_config` is called,
+        # IMPORTANT: We need to ensure that when `initialize_atom_ctx_config` is called,
         # it reads our file. We can set the env var for the subprocess/exec context.
 
         with (
             patch.dict(os.environ, env_override),
             patch(
-                "openviking_cli.utils.config.EmbeddingConfig.get_embedder",
+                "atom_ctx_cli.utils.config.EmbeddingConfig.get_embedder",
                 return_value=mock_embedder,
             ),
-            patch("openviking_cli.utils.config.VLMConfig.get_vlm_instance", return_value=mock_vlm),
+            patch("atom_ctx_cli.utils.config.VLMConfig.get_vlm_instance", return_value=mock_vlm),
         ):
             # Reset the singleton again inside the patched environment just in case
-            from openviking_cli.utils.config.open_viking_config import OpenVikingConfigSingleton
+            from atom_ctx_cli.utils.config.ctx_config import AtomCtxConfigSingleton
 
-            OpenVikingConfigSingleton.reset_instance()
+            AtomCtxConfigSingleton.reset_instance()
 
             # Read script code
             with open(script_path, "r", encoding="utf-8") as f:

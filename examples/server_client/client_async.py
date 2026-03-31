@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-OpenViking 异步客户端示例 (HTTP mode)
+AtomCtx 异步客户端示例 (HTTP mode)
 
 使用 AsyncHTTPClient 通过 HTTP 连接远程 Server，演示完整 API。
 
 前置条件:
-    先启动 Server: openviking-server
+    先启动 Server: ctx-server
 
 运行:
     uv run client_async.py
@@ -23,7 +23,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-import openviking as ov
+import atom_ctx as ctx
 
 console = Console()
 PANEL_WIDTH = 78
@@ -34,14 +34,14 @@ def _bool_mark(value) -> str:
 
 
 async def main():
-    parser = argparse.ArgumentParser(description="OpenViking async client example")
+    parser = argparse.ArgumentParser(description="AtomCtx async client example")
     parser.add_argument("--url", default="http://localhost:1933", help="Server URL")
     parser.add_argument("--api-key", default=None, help="API key")
     parser.add_argument("--agent-id", default=None, help="Agent ID")
     parser.add_argument("--timeout", type=float, default=60.0, help="HTTP timeout in seconds")
     args = parser.parse_args()
 
-    client = ov.AsyncHTTPClient(
+    client = ctx.AsyncHTTPClient(
         url=args.url, api_key=args.api_key, agent_id=args.agent_id, timeout=args.timeout
     )
 
@@ -73,7 +73,7 @@ async def main():
         console.print(Panel("Add Resource", style="bold magenta", width=PANEL_WIDTH))
         with console.status("Adding resource..."):
             result = await client.add_resource(
-                path="https://raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md",
+                path="https://raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md",
                 reason="async demo",
             )
         root_uri = result.get("root_uri", "")
@@ -85,7 +85,7 @@ async def main():
 
         # ── File System ──
         console.print(Panel("File System", style="bold magenta", width=PANEL_WIDTH))
-        entries = await client.ls("viking://")
+        entries = await client.ls("ctx://")
         fs_table = Table(box=box.SIMPLE, show_header=True, header_style="bold")
         fs_table.add_column("Name", style="cyan")
         fs_table.add_column("Type", style="dim")
@@ -99,7 +99,7 @@ async def main():
                 fs_table.add_row(str(entry), "")
         console.print(fs_table)
 
-        tree = await client.tree("viking://")
+        tree = await client.tree("ctx://")
         tree_nodes = tree if isinstance(tree, list) else tree.get("children", [])
         console.print(f"  Tree nodes: [bold]{len(tree_nodes)}[/bold]")
         console.print()
@@ -132,7 +132,7 @@ async def main():
         # ── Semantic Search (find) ──
         console.print(Panel("Semantic Search", style="bold magenta", width=PANEL_WIDTH))
         with console.status("Searching..."):
-            results = await client.find("what is openviking", limit=3)
+            results = await client.find("what is atom_ctx", limit=3)
         if hasattr(results, "resources") and results.resources:
             search_table = Table(
                 box=box.ROUNDED,
@@ -151,9 +151,9 @@ async def main():
 
         # ── Grep & Glob ──
         console.print(Panel("Grep & Glob", style="bold magenta", width=PANEL_WIDTH))
-        grep_result = await client.grep(uri="viking://", pattern="OpenViking")
+        grep_result = await client.grep(uri="ctx://", pattern="AtomCtx")
         grep_count = len(grep_result) if isinstance(grep_result, list) else grep_result
-        console.print(f"  Grep 'OpenViking': [bold]{grep_count}[/bold] matches")
+        console.print(f"  Grep 'AtomCtx': [bold]{grep_count}[/bold] matches")
 
         glob_result = await client.glob(pattern="**/*.md")
         glob_count = len(glob_result) if isinstance(glob_result, list) else glob_result
@@ -165,10 +165,10 @@ async def main():
         session = client.session()
         console.print(f"  Created session: [bold]{session.session_id}[/bold]")
 
-        await session.add_message(role="user", content="Tell me about OpenViking")
+        await session.add_message(role="user", content="Tell me about AtomCtx")
         await session.add_message(
             role="assistant",
-            content="OpenViking is an agent-native context database.",
+            content="AtomCtx is an agent-native context database.",
         )
         console.print("  Added [bold]2[/bold] messages")
 
@@ -190,7 +190,7 @@ async def main():
 
         # ── Relations ──
         console.print(Panel("Relations", style="bold magenta", width=PANEL_WIDTH))
-        entries = await client.ls("viking://", simple=True)
+        entries = await client.ls("ctx://", simple=True)
         if len(entries) >= 2:
             uri_a = entries[0] if isinstance(entries[0], str) else entries[0].get("uri", "")
             uri_b = entries[1] if isinstance(entries[1], str) else entries[1].get("uri", "")

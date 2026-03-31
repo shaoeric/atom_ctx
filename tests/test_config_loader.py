@@ -4,7 +4,7 @@
 
 import pytest
 
-from openviking_cli.utils.config.config_loader import (
+from atom_ctx_cli.utils.config.config_loader import (
     load_json_config,
     require_config,
     resolve_config_path,
@@ -39,19 +39,19 @@ class TestResolveConfigPath:
         assert result is None
 
     def test_default_path(self, tmp_path, monkeypatch):
-        import openviking_cli.utils.config.config_loader as loader
+        import atom_ctx_cli.utils.config.config_loader as loader
 
-        conf = tmp_path / "ov.conf"
+        conf = tmp_path / "ctx.conf"
         conf.write_text("{}")
         monkeypatch.setattr(loader, "DEFAULT_CONFIG_DIR", tmp_path)
         monkeypatch.delenv("TEST_CONFIG_ENV", raising=False)
-        result = resolve_config_path(None, "TEST_CONFIG_ENV", "ov.conf")
+        result = resolve_config_path(None, "TEST_CONFIG_ENV", "ctx.conf")
         assert result == conf
 
     def test_nothing_found(self, monkeypatch):
         monkeypatch.delenv("TEST_CONFIG_ENV", raising=False)
         result = resolve_config_path(None, "TEST_CONFIG_ENV", "nonexistent.conf")
-        # May or may not be None depending on whether ~/.openviking/nonexistent.conf exists
+        # May or may not be None depending on whether ~/.ctx/nonexistent.conf exists
         # but for a random filename it should be None
         assert result is None
 
@@ -109,16 +109,16 @@ class TestRequireConfig:
             require_config(None, "TEST_MISSING_ENV", "nonexistent_file.conf", "test")
 
 
-def test_openviking_config_rejects_unknown_nested_parser_section(monkeypatch):
-    monkeypatch.setenv("OPENVIKING_CONFIG_FILE", "/tmp/codex-no-config.json")
+def test_atom_ctx_config_rejects_unknown_nested_parser_section(monkeypatch):
+    monkeypatch.setenv("CTX_CONFIG_FILE", "/tmp/codex-no-config.json")
 
-    from openviking_cli.utils.config.open_viking_config import (
-        OpenVikingConfig,
-        OpenVikingConfigSingleton,
+    from atom_ctx_cli.utils.config.ctx_config import (
+        AtomCtxConfig,
+        AtomCtxConfigSingleton,
     )
 
     with pytest.raises(ValueError, match="markdown"):
-        OpenVikingConfig.from_dict(
+        AtomCtxConfig.from_dict(
             {
                 "embedding": {
                     "dense": {
@@ -131,21 +131,21 @@ def test_openviking_config_rejects_unknown_nested_parser_section(monkeypatch):
             }
         )
 
-    OpenVikingConfigSingleton.reset_instance()
+    AtomCtxConfigSingleton.reset_instance()
 
 
-def test_openviking_config_rejects_unknown_top_level_section_with_suggestion(monkeypatch):
-    monkeypatch.setenv("OPENVIKING_CONFIG_FILE", "/tmp/codex-no-config.json")
+def test_atom_ctx_config_rejects_unknown_top_level_section_with_suggestion(monkeypatch):
+    monkeypatch.setenv("CTX_CONFIG_FILE", "/tmp/codex-no-config.json")
 
-    from openviking_cli.utils.config.open_viking_config import (
-        OpenVikingConfig,
-        OpenVikingConfigSingleton,
+    from atom_ctx_cli.utils.config.ctx_config import (
+        AtomCtxConfig,
+        AtomCtxConfigSingleton,
     )
 
     with pytest.raises(
-        ValueError, match=r"Unknown config field 'erver' in OpenVikingConfig .*'server'"
+        ValueError, match=r"Unknown config field 'erver' in AtomCtxConfig .*'server'"
     ):
-        OpenVikingConfig.from_dict(
+        AtomCtxConfig.from_dict(
             {
                 "erver": {
                     "host": "127.0.0.1",
@@ -163,20 +163,20 @@ def test_openviking_config_rejects_unknown_top_level_section_with_suggestion(mon
             }
         )
 
-    OpenVikingConfigSingleton.reset_instance()
+    AtomCtxConfigSingleton.reset_instance()
 
 
-def test_openviking_config_singleton_preserves_value_error_for_bad_config(tmp_path, monkeypatch):
-    monkeypatch.setenv("OPENVIKING_CONFIG_FILE", "/tmp/codex-no-config.json")
+def test_atom_ctx_config_singleton_preserves_value_error_for_bad_config(tmp_path, monkeypatch):
+    monkeypatch.setenv("CTX_CONFIG_FILE", "/tmp/codex-no-config.json")
 
-    from openviking_cli.utils.config.open_viking_config import OpenVikingConfigSingleton
+    from atom_ctx_cli.utils.config.ctx_config import AtomCtxConfigSingleton
 
-    config_path = tmp_path / "ov.conf"
+    config_path = tmp_path / "ctx.conf"
     config_path.write_text(
         '{"erver": {"host": "127.0.0.1"}, "embedding": {"dense": {"provider": "openai", "api_key": "x", "model": "m"}}}'
     )
 
-    OpenVikingConfigSingleton.reset_instance()
+    AtomCtxConfigSingleton.reset_instance()
     with pytest.raises(ValueError, match="server"):
-        OpenVikingConfigSingleton.initialize(config_path=str(config_path))
-    OpenVikingConfigSingleton.reset_instance()
+        AtomCtxConfigSingleton.initialize(config_path=str(config_path))
+    AtomCtxConfigSingleton.reset_instance()

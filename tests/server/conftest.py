@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Beijing Volcano Engine Technology Co., Ltd.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Shared fixtures for OpenViking server tests."""
+"""Shared fixtures for AtomCtx server tests."""
 
 import shutil
 import socket
@@ -15,16 +15,16 @@ import pytest
 import pytest_asyncio
 import uvicorn
 
-from openviking import AsyncOpenViking
-from openviking.models.embedder.base import DenseEmbedderBase, EmbedResult
-from openviking.server.app import create_app
-from openviking.server.config import ServerConfig
-from openviking.server.identity import RequestContext, Role
-from openviking.service.core import OpenVikingService
-from openviking.storage.transaction import reset_lock_manager
-from openviking_cli.session.user_id import UserIdentifier
-from openviking_cli.utils.config.embedding_config import EmbeddingConfig
-from openviking_cli.utils.config.vlm_config import VLMConfig
+from atom_ctx import AsyncAtomCtx
+from atom_ctx.models.embedder.base import DenseEmbedderBase, EmbedResult
+from atom_ctx.server.app import create_app
+from atom_ctx.server.config import ServerConfig
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx.service.core import AtomCtxService
+from atom_ctx.storage.transaction import reset_lock_manager
+from atom_ctx_cli.session.user_id import UserIdentifier
+from atom_ctx_cli.utils.config.embedding_config import EmbeddingConfig
+from atom_ctx_cli.utils.config.vlm_config import VLMConfig
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -115,11 +115,11 @@ def upload_temp_dir(temp_dir: Path, monkeypatch) -> Path:
         storage=SimpleNamespace(get_upload_temp_dir=lambda: temp_dir),
     )
     monkeypatch.setattr(
-        "openviking.server.routers.resources.get_openviking_config",
+        "atom_ctx.server.routers.resources.get_atom_ctx_config",
         lambda: config,
     )
     monkeypatch.setattr(
-        "openviking.server.routers.pack.get_openviking_config",
+        "atom_ctx.server.routers.pack.get_atom_ctx_config",
         lambda: config,
     )
     return temp_dir
@@ -127,24 +127,24 @@ def upload_temp_dir(temp_dir: Path, monkeypatch) -> Path:
 
 @pytest_asyncio.fixture(scope="function")
 async def service(temp_dir: Path, monkeypatch):
-    """Create and initialize an OpenVikingService in embedded mode."""
+    """Create and initialize an AtomCtxService in embedded mode."""
     reset_lock_manager()
     fake_embedder_cls = _install_fake_embedder(monkeypatch)
     _install_fake_vlm(monkeypatch)
-    svc = OpenVikingService(
+    svc = AtomCtxService(
         path=str(temp_dir / "data"), user=UserIdentifier.the_default_user("test_user")
     )
     await svc.initialize()
-    svc.viking_fs.query_embedder = fake_embedder_cls()
+    svc.ctx_fs.query_embedder = fake_embedder_cls()
     yield svc
     await svc.close()
     reset_lock_manager()
 
 
 @pytest_asyncio.fixture(scope="function")
-async def app(service: OpenVikingService):
+async def app(service: AtomCtxService):
     """Create FastAPI app with pre-initialized service (no auth)."""
-    from openviking.server.dependencies import set_service
+    from atom_ctx.server.dependencies import set_service
 
     config = ServerConfig()
     fastapi_app = create_app(config=config, service=service)
@@ -182,16 +182,16 @@ async def client_with_resource(client, service, sample_markdown_file):
 @pytest_asyncio.fixture(scope="function")
 async def running_server(temp_dir: Path, monkeypatch):
     """Start a real uvicorn server in a background thread."""
-    await AsyncOpenViking.reset()
+    await AsyncAtomCtx.reset()
     reset_lock_manager()
     fake_embedder_cls = _install_fake_embedder(monkeypatch)
     _install_fake_vlm(monkeypatch)
 
-    svc = OpenVikingService(
+    svc = AtomCtxService(
         path=str(temp_dir / "sdk_data"), user=UserIdentifier.the_default_user("sdk_test_user")
     )
     await svc.initialize()
-    svc.viking_fs.query_embedder = fake_embedder_cls()
+    svc.ctx_fs.query_embedder = fake_embedder_cls()
 
     config = ServerConfig()
     fastapi_app = create_app(config=config, service=svc)
@@ -220,4 +220,4 @@ async def running_server(temp_dir: Path, monkeypatch):
     server.should_exit = True
     thread.join(timeout=5)
     await svc.close()
-    await AsyncOpenViking.reset()
+    await AsyncAtomCtx.reset()

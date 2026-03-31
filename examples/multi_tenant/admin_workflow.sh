@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# OpenViking Multi-Tenant Admin Workflow (CLI)
+# AtomCtx Multi-Tenant Admin Workflow (CLI)
 #
 # This script demonstrates account and user management through the CLI.
 # It walks through a full lifecycle: create account → register users →
@@ -8,9 +8,9 @@
 #
 # Prerequisites:
 #   1. Configure & start the server with root_api_key:
-#      Copy ov.conf.example to ov.conf, fill in your model API keys, then:
+#      Copy ctx.conf.example to ctx.conf, fill in your model API keys, then:
 #
-#      openviking-server --config ./ov.conf
+#      ctx-server --config ./ctx.conf
 #
 #      The key config for multi-tenant auth:
 #        {
@@ -50,18 +50,18 @@ expect_fail() {
 }
 
 # ── Temp config management ──
-# The CLI reads ovcli.conf for url/api_key. We create temp configs
+# The CLI reads ctx-cli.conf for url/api_key. We create temp configs
 # to switch between different keys (root, alice, bob, etc.)
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
-# Helper: run openviking CLI with a specific API key
+# Helper: run atom_ctx CLI with a specific API key
 ovcli() {
   local key="$1"; shift
   cat > "$TMPDIR/cli.conf" <<EOF
 {"url": "$SERVER", "api_key": "$key"}
 EOF
-  OPENVIKING_CLI_CONFIG_FILE="$TMPDIR/cli.conf" openviking "$@"
+  CTX_CLI_CONFIG_FILE="$TMPDIR/cli.conf" atom_ctx "$@"
 }
 
 # Helper: extract field from JSON output
@@ -69,14 +69,14 @@ jq_field() {
   python3 -c "import sys,json; print(json.load(sys.stdin)['result']['$1'])"
 }
 
-printf '\033[1m=== OpenViking Multi-Tenant Admin Workflow (CLI) ===\033[0m\n'
+printf '\033[1m=== AtomCtx Multi-Tenant Admin Workflow (CLI) ===\033[0m\n'
 info "Server:   $SERVER"
 info "Root Key: ${ROOT_KEY:0:8}..."
 
 # ============================================================================
 # 1. Health Check
 # ============================================================================
-# `openviking health` never requires authentication.
+# `atom_ctx health` never requires authentication.
 
 section "1. Health Check (no auth required)"
 ovcli "$ROOT_KEY" health
@@ -84,7 +84,7 @@ ovcli "$ROOT_KEY" health
 # ============================================================================
 # 2. Create Account
 # ============================================================================
-# openviking admin create-account <account_id> --admin <admin_user_id>
+# atom_ctx admin create-account <account_id> --admin <admin_user_id>
 #
 # Creates a new account (workspace) with its first admin user.
 # Returns the admin user's API key.
@@ -98,7 +98,7 @@ ok "Alice (ADMIN) key: ${ALICE_KEY:0:16}..."
 # ============================================================================
 # 3. Register User — as ROOT
 # ============================================================================
-# openviking admin register-user <account_id> <user_id> [--role user|admin]
+# atom_ctx admin register-user <account_id> <user_id> [--role user|admin]
 #
 # Register a user in the account. Default role is "user".
 
@@ -122,7 +122,7 @@ ok "Charlie (USER) key: ${CHARLIE_KEY:0:16}..."
 # ============================================================================
 # 5. List Accounts
 # ============================================================================
-# openviking admin list-accounts  (ROOT only)
+# atom_ctx admin list-accounts  (ROOT only)
 
 section "5. List All Accounts"
 ovcli "$ROOT_KEY" admin list-accounts
@@ -130,7 +130,7 @@ ovcli "$ROOT_KEY" admin list-accounts
 # ============================================================================
 # 6. List Users
 # ============================================================================
-# openviking admin list-users <account_id>  (ROOT or ADMIN)
+# atom_ctx admin list-users <account_id>  (ROOT or ADMIN)
 
 section "6. List Users in 'acme'"
 ovcli "$ROOT_KEY" admin list-users acme
@@ -138,7 +138,7 @@ ovcli "$ROOT_KEY" admin list-users acme
 # ============================================================================
 # 7. Change User Role
 # ============================================================================
-# openviking admin set-role <account_id> <user_id> <role>  (ROOT only)
+# atom_ctx admin set-role <account_id> <user_id> <role>  (ROOT only)
 
 section "7. Promote Bob to ADMIN"
 ovcli "$ROOT_KEY" admin set-role acme bob admin
@@ -152,7 +152,7 @@ ok "Bob (ADMIN) can list users in acme"
 # ============================================================================
 # 8. Regenerate User Key
 # ============================================================================
-# openviking admin regenerate-key <account_id> <user_id>  (ROOT or ADMIN)
+# atom_ctx admin regenerate-key <account_id> <user_id>  (ROOT or ADMIN)
 #
 # Generates a new key; the old key is immediately invalidated.
 
@@ -169,8 +169,8 @@ ok "New key: ${NEW_CHARLIE_KEY:0:16}... (old key invalidated)"
 # Regular CLI commands accept user keys for authentication.
 
 section "9. Bob Accesses Data"
-info "openviking ls viking:// with Bob's key:"
-ovcli "$BOB_KEY" ls viking://
+info "atom_ctx ls ctx:// with Bob's key:"
+ovcli "$BOB_KEY" ls ctx://
 
 # ============================================================================
 # 10. Error Handling & Permission Tests
@@ -183,9 +183,9 @@ section "10. Error Handling & Permission Tests"
 # ── 10a. Invalid / missing key ──
 info "10a. Invalid & missing API key:"
 expect_fail "Random key rejected" \
-  ovcli "this-is-not-a-valid-key-at-all" ls viking://
+  ovcli "this-is-not-a-valid-key-at-all" ls ctx://
 expect_fail "Empty key rejected" \
-  ovcli "" ls viking://
+  ovcli "" ls ctx://
 
 # ── 10b. USER cannot do admin operations ──
 # Charlie is still a USER at this point
@@ -227,7 +227,7 @@ expect_fail "Duplicate user rejected" \
 # ── 10e. Old key after regeneration ──
 info "10e. Old key after regeneration:"
 expect_fail "Charlie's old key rejected" \
-  ovcli "$CHARLIE_KEY" ls viking://
+  ovcli "$CHARLIE_KEY" ls ctx://
 
 # ── 10f. ADMIN cross-account isolation ──
 # Create a second account to test that ADMIN of one account cannot manage another
@@ -269,7 +269,7 @@ expect_fail "Regenerate key for non-existent user" \
 # ============================================================================
 # 11. Remove User
 # ============================================================================
-# openviking admin remove-user <account_id> <user_id>  (ROOT or ADMIN)
+# atom_ctx admin remove-user <account_id> <user_id>  (ROOT or ADMIN)
 #
 # Removes the user and invalidates their key.
 
@@ -278,7 +278,7 @@ ovcli "$ROOT_KEY" admin remove-user acme charlie
 
 # Verify: charlie's key should now fail
 info "Verify charlie's key is invalid:"
-if ovcli "$NEW_CHARLIE_KEY" ls viking:// 2>/dev/null; then
+if ovcli "$NEW_CHARLIE_KEY" ls ctx:// 2>/dev/null; then
   fail "UNEXPECTED SUCCESS: Charlie's key should have been rejected"
 else
   ok "Charlie's key rejected (expected)"
@@ -287,7 +287,7 @@ fi
 # ============================================================================
 # 12. Delete Account
 # ============================================================================
-# openviking admin delete-account <account_id>  (ROOT only)
+# atom_ctx admin delete-account <account_id>  (ROOT only)
 #
 # Deletes the account and all associated user keys.
 
@@ -296,12 +296,12 @@ ovcli "$ROOT_KEY" admin delete-account acme
 
 # Verify: all keys from deleted account should fail
 info "Verify all keys from deleted account are invalid:"
-if ovcli "$ALICE_KEY" ls viking:// 2>/dev/null; then
+if ovcli "$ALICE_KEY" ls ctx:// 2>/dev/null; then
   fail "UNEXPECTED SUCCESS: Alice's key should have been rejected"
 else
   ok "Alice's key rejected (expected)"
 fi
-if ovcli "$BOB_KEY" ls viking:// 2>/dev/null; then
+if ovcli "$BOB_KEY" ls ctx:// 2>/dev/null; then
   fail "UNEXPECTED SUCCESS: Bob's key should have been rejected"
 else
   ok "Bob's key rejected (expected)"

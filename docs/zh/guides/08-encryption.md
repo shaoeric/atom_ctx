@@ -1,10 +1,10 @@
 # 加密指南
 
-本指南介绍如何在 OpenViking 中启用和使用静态数据加密功能。
+本指南介绍如何在 AtomCtx 中启用和使用静态数据加密功能。
 
 ## 概述
 
-OpenViking 提供透明的静态数据加密，确保多租户环境下的数据安全与隔离：
+AtomCtx 提供透明的静态数据加密，确保多租户环境下的数据安全与隔离：
 
 - ✅ **透明加密**：API 无变化，应用层无感知
 - ✅ **多租户隔离**：不同账户使用独立密钥
@@ -18,12 +18,12 @@ OpenViking 提供透明的静态数据加密，确保多租户环境下的数据
 ### 1. 初始化根密钥（Local 模式）
 
 ```bash
-ov system crypto init-key --output ~/.openviking/master.key
+ctx system crypto init-key --output ~/.ctx/master.key
 ```
 
 ### 2. 配置加密
 
-编辑 `~/.openviking/ov.conf`：
+编辑 `~/.ctx/ctx.conf`：
 
 ```json
 {
@@ -31,7 +31,7 @@ ov system crypto init-key --output ~/.openviking/master.key
     "enabled": true,
     "provider": "local",
     "local": {
-      "key_file": "~/.openviking/master.key"
+      "key_file": "~/.ctx/master.key"
     }
   },
   "storage": {
@@ -43,12 +43,12 @@ ov system crypto init-key --output ~/.openviking/master.key
 ### 3. 验证
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 import asyncio
 
 
 async def test():
-    client = ov.AsyncOpenViking(path="./data")
+    client = ctx.AsyncAtomCtx(path="./data")
     await client.initialize()
 
     # 添加资源（自动加密）
@@ -82,16 +82,16 @@ asyncio.run(test())
 
 ```bash
 # 生成并保存到指定路径
-ov system  crypto init-key --output ~/.openviking/master.key
+ctx system  crypto init-key --output ~/.ctx/master.key
 
 # 或者使用简短命令
-ov system crypto init-key -o ~/.openviking/master.key
+ctx system crypto init-key -o ~/.ctx/master.key
 ```
 
 **输出示例**：
 ```
 ✓ Root key generated successfully
-✓ Saved to: /Users/you/.openviking/master.key
+✓ Saved to: /Users/you/.ctx/master.key
 ```
 
 ### 安全提示
@@ -109,7 +109,7 @@ ov system crypto init-key -o ~/.openviking/master.key
     "enabled": true,
     "provider": "local",
     "local": {
-      "key_file": "~/.openviking/master.key"
+      "key_file": "~/.ctx/master.key"
     }
   }
 }
@@ -143,7 +143,7 @@ vault secrets enable -version=2 kv
 vault secrets enable kv
 ```
 
-3. 配置 OpenViking：
+3. 配置 AtomCtx：
 
 ```json
 {
@@ -156,8 +156,8 @@ vault secrets enable kv
       "mount_point": "transit",
       "kv_mount_point": "secret",
       "kv_version": 1,
-      "root_key_name": "openviking-root-key",
-      "encrypted_root_key_key": "openviking-encrypted-root-key"
+      "root_key_name": "atom_ctx-root-key",
+      "encrypted_root_key_key": "atom_ctx-encrypted-root-key"
     }
   }
 }
@@ -172,19 +172,19 @@ vault secrets enable kv
 | `mount_point` | Transit 引擎挂载路径 | `"transit"` |
 | `kv_mount_point` | KV 引擎挂载路径 | `"secret"` |
 | `kv_version` | KV 引擎版本（1 或 2） | `1` |
-| `root_key_name` | Transit 引擎中的密钥名称 | `"openviking-root-key"` |
-| `encrypted_root_key_key` | KV 引擎中存储加密根密钥的路径 | `"openviking-encrypted-root-key"` |
+| `root_key_name` | Transit 引擎中的密钥名称 | `"atom_ctx-root-key"` |
+| `encrypted_root_key_key` | KV 引擎中存储加密根密钥的路径 | `"atom_ctx-encrypted-root-key"` |
 
 ### Vault 权限建议
 
 为 Token 配置最小权限：
 
 ```hcl
-path "transit/encrypt/openviking-root" {
+path "transit/encrypt/atom_ctx-root" {
   capabilities = ["update"]
 }
 
-path "transit/decrypt/openviking-root" {
+path "transit/decrypt/atom_ctx-root" {
   capabilities = ["update"]
 }
 ```
@@ -206,7 +206,7 @@ path "transit/decrypt/openviking-root" {
 3. 选择"对称密钥"，算法选择 `AES_256`
 4. 记录密钥 ID
 
-### 配置 OpenViking
+### 配置 AtomCtx
 
 ```json
 {
@@ -219,7 +219,7 @@ path "transit/decrypt/openviking-root" {
       "access_key": "AKLTxxxxxxxxxxxxxxxxxx",
       "secret_key": "Tmpxxxxxxxxxxxxxxxxxxxxxx",
       "endpoint": null,
-      "key_file": "~/.openviking/openviking-volcengine-root-key.enc"
+      "key_file": "~/.ctx/atom_ctx-volcengine-root-key.enc"
     }
   }
 }
@@ -234,7 +234,7 @@ path "transit/decrypt/openviking-root" {
 | `access_key` | Access Key | 必需 |
 | `secret_key` | Secret Key | 必需 |
 | `endpoint` | 自定义 KMS 端点（可选） | `null`（使用默认端点） |
-| `key_file` | 加密根密钥本地缓存文件路径 | `"~/.openviking/openviking-volcengine-root-key.enc"` |
+| `key_file` | 加密根密钥本地缓存文件路径 | `"~/.ctx/atom_ctx-volcengine-root-key.enc"` |
 
 ### 权限建议
 
@@ -308,12 +308,12 @@ except Exception as e:
 3. 重新导入所有资源：
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 import asyncio
 
 
 async def migrate():
-    client = ov.AsyncOpenViking(path="./data")
+    client = ctx.AsyncAtomCtx(path="./data")
     await client.initialize()
 
     # 列出所有资源
@@ -347,7 +347,7 @@ asyncio.run(migrate())
 ### 密钥文件找不到
 
 ```
-Error: Key file not found: ~/.openviking/master.key
+Error: Key file not found: ~/.ctx/master.key
 ```
 
 **解决方案**：
@@ -388,9 +388,9 @@ Error: KeyMismatchError
 
 ### 部分读取返回密文
 
-如果使用旧版本 OpenViking 创建的加密文件，部分读取可能返回密文。
+如果使用旧版本 AtomCtx 创建的加密文件，部分读取可能返回密文。
 
-**解决方案**：升级到最新版本的 OpenViking。
+**解决方案**：升级到最新版本的 AtomCtx。
 
 ---
 

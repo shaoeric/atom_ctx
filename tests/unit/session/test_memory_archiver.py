@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from openviking.session.memory_archiver import (
+from atom_ctx.session.memory_archiver import (
     ArchivalCandidate,
     MemoryArchiver,
     _build_archive_uri,
@@ -23,19 +23,19 @@ from openviking.session.memory_archiver import (
 class TestBuildArchiveUri:
     def test_simple_file(self):
         assert (
-            _build_archive_uri("viking://memories/facts/greeting.md")
-            == "viking://memories/facts/_archive/greeting.md"
+            _build_archive_uri("ctx://memories/facts/greeting.md")
+            == "ctx://memories/facts/_archive/greeting.md"
         )
 
     def test_nested_path(self):
         assert (
-            _build_archive_uri("viking://memories/user/prefs/theme.md")
-            == "viking://memories/user/prefs/_archive/theme.md"
+            _build_archive_uri("ctx://memories/user/prefs/theme.md")
+            == "ctx://memories/user/prefs/_archive/theme.md"
         )
 
     def test_root_level_file(self):
         assert (
-            _build_archive_uri("viking://memories/note.md") == "viking://memories/_archive/note.md"
+            _build_archive_uri("ctx://memories/note.md") == "ctx://memories/_archive/note.md"
         )
 
     def test_no_slash(self):
@@ -45,21 +45,21 @@ class TestBuildArchiveUri:
 class TestBuildRestoreUri:
     def test_simple_restore(self):
         assert (
-            _build_restore_uri("viking://memories/facts/_archive/greeting.md")
-            == "viking://memories/facts/greeting.md"
+            _build_restore_uri("ctx://memories/facts/_archive/greeting.md")
+            == "ctx://memories/facts/greeting.md"
         )
 
     def test_nested_restore(self):
         assert (
-            _build_restore_uri("viking://memories/user/_archive/pref.md")
-            == "viking://memories/user/pref.md"
+            _build_restore_uri("ctx://memories/user/_archive/pref.md")
+            == "ctx://memories/user/pref.md"
         )
 
     def test_not_archived_returns_none(self):
-        assert _build_restore_uri("viking://memories/facts/greeting.md") is None
+        assert _build_restore_uri("ctx://memories/facts/greeting.md") is None
 
     def test_roundtrip(self):
-        original = "viking://memories/deep/path/to/file.md"
+        original = "ctx://memories/deep/path/to/file.md"
         archived = _build_archive_uri(original)
         restored = _build_restore_uri(archived)
         assert restored == original
@@ -108,7 +108,7 @@ def _make_storage(records):
     return storage
 
 
-def _make_viking_fs():
+def _make_ctx_fs():
     """Create a mock VikingFS."""
     vfs = AsyncMock()
     vfs.mv = AsyncMock(return_value={"status": "ok"})
@@ -125,102 +125,102 @@ class TestScan:
     async def test_scan_finds_cold_memories(self):
         records = [
             {
-                "uri": "viking://memories/fact1.md",
+                "uri": "ctx://memories/fact1.md",
                 "active_count": 0,
                 "updated_at": OLD_DATE,
                 "context_type": "memory",
-                "parent_uri": "viking://memories/",
+                "parent_uri": "ctx://memories/",
             },
         ]
         archiver = MemoryArchiver(
-            viking_fs=_make_viking_fs(),
+            ctx_fs=_make_ctx_fs(),
             storage=_make_storage(records),
             threshold=0.5,
             min_age_days=7,
         )
-        candidates = await archiver.scan("viking://memories/", now=NOW)
+        candidates = await archiver.scan("ctx://memories/", now=NOW)
         assert len(candidates) == 1
-        assert candidates[0].uri == "viking://memories/fact1.md"
+        assert candidates[0].uri == "ctx://memories/fact1.md"
         assert candidates[0].score < 0.5
 
     @pytest.mark.asyncio
     async def test_scan_skips_recent_memories(self):
         records = [
             {
-                "uri": "viking://memories/recent.md",
+                "uri": "ctx://memories/recent.md",
                 "active_count": 0,
                 "updated_at": RECENT_DATE,
                 "context_type": "memory",
-                "parent_uri": "viking://memories/",
+                "parent_uri": "ctx://memories/",
             },
         ]
         archiver = MemoryArchiver(
-            viking_fs=_make_viking_fs(),
+            ctx_fs=_make_ctx_fs(),
             storage=_make_storage(records),
             threshold=0.5,
             min_age_days=7,
         )
-        candidates = await archiver.scan("viking://memories/", now=NOW)
+        candidates = await archiver.scan("ctx://memories/", now=NOW)
         assert len(candidates) == 0
 
     @pytest.mark.asyncio
     async def test_scan_skips_already_archived(self):
         records = [
             {
-                "uri": "viking://memories/_archive/old.md",
+                "uri": "ctx://memories/_archive/old.md",
                 "active_count": 0,
                 "updated_at": OLD_DATE,
                 "context_type": "memory",
-                "parent_uri": "viking://memories/_archive/",
+                "parent_uri": "ctx://memories/_archive/",
             },
         ]
         archiver = MemoryArchiver(
-            viking_fs=_make_viking_fs(),
+            ctx_fs=_make_ctx_fs(),
             storage=_make_storage(records),
             threshold=0.5,
             min_age_days=7,
         )
-        candidates = await archiver.scan("viking://memories/", now=NOW)
+        candidates = await archiver.scan("ctx://memories/", now=NOW)
         assert len(candidates) == 0
 
     @pytest.mark.asyncio
     async def test_scan_skips_out_of_scope(self):
         records = [
             {
-                "uri": "viking://resources/doc.md",
+                "uri": "ctx://resources/doc.md",
                 "active_count": 0,
                 "updated_at": OLD_DATE,
                 "context_type": "resource",
-                "parent_uri": "viking://resources/",
+                "parent_uri": "ctx://resources/",
             },
         ]
         archiver = MemoryArchiver(
-            viking_fs=_make_viking_fs(),
+            ctx_fs=_make_ctx_fs(),
             storage=_make_storage(records),
             threshold=0.5,
             min_age_days=7,
         )
-        candidates = await archiver.scan("viking://memories/", now=NOW)
+        candidates = await archiver.scan("ctx://memories/", now=NOW)
         assert len(candidates) == 0
 
     @pytest.mark.asyncio
     async def test_scan_keeps_hot_memories(self):
         records = [
             {
-                "uri": "viking://memories/hot.md",
+                "uri": "ctx://memories/hot.md",
                 "active_count": 100,
                 "updated_at": NOW - timedelta(days=1),
                 "context_type": "memory",
-                "parent_uri": "viking://memories/",
+                "parent_uri": "ctx://memories/",
             },
         ]
         archiver = MemoryArchiver(
-            viking_fs=_make_viking_fs(),
+            ctx_fs=_make_ctx_fs(),
             storage=_make_storage(records),
             threshold=0.5,
             min_age_days=0,
         )
-        candidates = await archiver.scan("viking://memories/", now=NOW)
+        candidates = await archiver.scan("ctx://memories/", now=NOW)
         # High active_count + recent = hot, should not be a candidate
         assert len(candidates) == 0
 
@@ -228,40 +228,40 @@ class TestScan:
     async def test_scan_sorts_coldest_first(self):
         records = [
             {
-                "uri": "viking://memories/warm.md",
+                "uri": "ctx://memories/warm.md",
                 "active_count": 5,
                 "updated_at": OLD_DATE,
                 "context_type": "memory",
-                "parent_uri": "viking://memories/",
+                "parent_uri": "ctx://memories/",
             },
             {
-                "uri": "viking://memories/cold.md",
+                "uri": "ctx://memories/cold.md",
                 "active_count": 0,
                 "updated_at": OLD_DATE - timedelta(days=60),
                 "context_type": "memory",
-                "parent_uri": "viking://memories/",
+                "parent_uri": "ctx://memories/",
             },
         ]
         archiver = MemoryArchiver(
-            viking_fs=_make_viking_fs(),
+            ctx_fs=_make_ctx_fs(),
             storage=_make_storage(records),
             threshold=0.5,
             min_age_days=7,
         )
-        candidates = await archiver.scan("viking://memories/", now=NOW)
+        candidates = await archiver.scan("ctx://memories/", now=NOW)
         assert len(candidates) == 2
-        assert candidates[0].uri == "viking://memories/cold.md"
+        assert candidates[0].uri == "ctx://memories/cold.md"
         assert candidates[0].score <= candidates[1].score
 
     @pytest.mark.asyncio
     async def test_scan_empty_store(self):
         archiver = MemoryArchiver(
-            viking_fs=_make_viking_fs(),
+            ctx_fs=_make_ctx_fs(),
             storage=_make_storage([]),
             threshold=0.5,
             min_age_days=7,
         )
-        candidates = await archiver.scan("viking://memories/", now=NOW)
+        candidates = await archiver.scan("ctx://memories/", now=NOW)
         assert candidates == []
 
 
@@ -273,11 +273,11 @@ class TestScan:
 class TestArchive:
     @pytest.mark.asyncio
     async def test_archive_moves_files(self):
-        vfs = _make_viking_fs()
-        archiver = MemoryArchiver(viking_fs=vfs, storage=_make_storage([]))
+        vfs = _make_ctx_fs()
+        archiver = MemoryArchiver(ctx_fs=vfs, storage=_make_storage([]))
         candidates = [
             ArchivalCandidate(
-                uri="viking://memories/fact1.md",
+                uri="ctx://memories/fact1.md",
                 active_count=0,
                 updated_at=OLD_DATE,
                 score=0.01,
@@ -287,18 +287,18 @@ class TestArchive:
         assert result.archived == 1
         assert result.errors == 0
         vfs.mv.assert_called_once_with(
-            "viking://memories/fact1.md",
-            "viking://memories/_archive/fact1.md",
+            "ctx://memories/fact1.md",
+            "ctx://memories/_archive/fact1.md",
             ctx=None,
         )
 
     @pytest.mark.asyncio
     async def test_archive_dry_run(self):
-        vfs = _make_viking_fs()
-        archiver = MemoryArchiver(viking_fs=vfs, storage=_make_storage([]))
+        vfs = _make_ctx_fs()
+        archiver = MemoryArchiver(ctx_fs=vfs, storage=_make_storage([]))
         candidates = [
             ArchivalCandidate(
-                uri="viking://memories/fact1.md",
+                uri="ctx://memories/fact1.md",
                 active_count=0,
                 updated_at=OLD_DATE,
                 score=0.01,
@@ -311,12 +311,12 @@ class TestArchive:
 
     @pytest.mark.asyncio
     async def test_archive_handles_mv_error(self):
-        vfs = _make_viking_fs()
+        vfs = _make_ctx_fs()
         vfs.mv = AsyncMock(side_effect=RuntimeError("AGFS error"))
-        archiver = MemoryArchiver(viking_fs=vfs, storage=_make_storage([]))
+        archiver = MemoryArchiver(ctx_fs=vfs, storage=_make_storage([]))
         candidates = [
             ArchivalCandidate(
-                uri="viking://memories/fact1.md",
+                uri="ctx://memories/fact1.md",
                 active_count=0,
                 updated_at=OLD_DATE,
                 score=0.01,
@@ -329,7 +329,7 @@ class TestArchive:
     @pytest.mark.asyncio
     async def test_archive_empty_candidates(self):
         archiver = MemoryArchiver(
-            viking_fs=_make_viking_fs(),
+            ctx_fs=_make_ctx_fs(),
             storage=_make_storage([]),
         )
         result = await archiver.archive([])
@@ -345,30 +345,30 @@ class TestArchive:
 class TestRestore:
     @pytest.mark.asyncio
     async def test_restore_moves_back(self):
-        vfs = _make_viking_fs()
-        archiver = MemoryArchiver(viking_fs=vfs, storage=_make_storage([]))
-        ok = await archiver.restore("viking://memories/_archive/fact1.md")
+        vfs = _make_ctx_fs()
+        archiver = MemoryArchiver(ctx_fs=vfs, storage=_make_storage([]))
+        ok = await archiver.restore("ctx://memories/_archive/fact1.md")
         assert ok is True
         vfs.mv.assert_called_once_with(
-            "viking://memories/_archive/fact1.md",
-            "viking://memories/fact1.md",
+            "ctx://memories/_archive/fact1.md",
+            "ctx://memories/fact1.md",
             ctx=None,
         )
 
     @pytest.mark.asyncio
     async def test_restore_non_archived_uri(self):
-        vfs = _make_viking_fs()
-        archiver = MemoryArchiver(viking_fs=vfs, storage=_make_storage([]))
-        ok = await archiver.restore("viking://memories/fact1.md")
+        vfs = _make_ctx_fs()
+        archiver = MemoryArchiver(ctx_fs=vfs, storage=_make_storage([]))
+        ok = await archiver.restore("ctx://memories/fact1.md")
         assert ok is False
         vfs.mv.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_restore_handles_error(self):
-        vfs = _make_viking_fs()
+        vfs = _make_ctx_fs()
         vfs.mv = AsyncMock(side_effect=RuntimeError("AGFS error"))
-        archiver = MemoryArchiver(viking_fs=vfs, storage=_make_storage([]))
-        ok = await archiver.restore("viking://memories/_archive/fact1.md")
+        archiver = MemoryArchiver(ctx_fs=vfs, storage=_make_storage([]))
+        ok = await archiver.restore("ctx://memories/_archive/fact1.md")
         assert ok is False
 
 
@@ -382,42 +382,42 @@ class TestScanAndArchive:
     async def test_scan_and_archive(self):
         records = [
             {
-                "uri": "viking://memories/cold.md",
+                "uri": "ctx://memories/cold.md",
                 "active_count": 0,
                 "updated_at": OLD_DATE,
                 "context_type": "memory",
-                "parent_uri": "viking://memories/",
+                "parent_uri": "ctx://memories/",
             },
         ]
-        vfs = _make_viking_fs()
+        vfs = _make_ctx_fs()
         archiver = MemoryArchiver(
-            viking_fs=vfs,
+            ctx_fs=vfs,
             storage=_make_storage(records),
             threshold=0.5,
             min_age_days=7,
         )
-        result = await archiver.scan_and_archive("viking://memories/", now=NOW)
+        result = await archiver.scan_and_archive("ctx://memories/", now=NOW)
         assert result.archived == 1
 
     @pytest.mark.asyncio
     async def test_scan_and_archive_dry_run(self):
         records = [
             {
-                "uri": "viking://memories/cold.md",
+                "uri": "ctx://memories/cold.md",
                 "active_count": 0,
                 "updated_at": OLD_DATE,
                 "context_type": "memory",
-                "parent_uri": "viking://memories/",
+                "parent_uri": "ctx://memories/",
             },
         ]
-        vfs = _make_viking_fs()
+        vfs = _make_ctx_fs()
         archiver = MemoryArchiver(
-            viking_fs=vfs,
+            ctx_fs=vfs,
             storage=_make_storage(records),
             threshold=0.5,
             min_age_days=7,
         )
-        result = await archiver.scan_and_archive("viking://memories/", dry_run=True, now=NOW)
+        result = await archiver.scan_and_archive("ctx://memories/", dry_run=True, now=NOW)
         assert result.archived == 0
         assert result.skipped == 1
         vfs.mv.assert_not_called()

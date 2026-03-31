@@ -9,8 +9,8 @@ import asyncio
 import pytest_asyncio
 import pytest
 
-from openviking_cli.client.http import AsyncHTTPClient
-from openviking_cli.exceptions import FailedPreconditionError
+from atom_ctx_cli.client.http import AsyncHTTPClient
+from atom_ctx_cli.exceptions import FailedPreconditionError
 from tests.server.conftest import SAMPLE_MD_CONTENT, TEST_TMP_DIR
 
 
@@ -51,7 +51,7 @@ async def test_sdk_add_resource(http_client):
     assert "usage" not in result
     assert "telemetry" not in result
     assert "root_uri" in result
-    assert result["root_uri"].startswith("viking://")
+    assert result["root_uri"].startswith("ctx://")
 
 
 async def test_sdk_add_skill_from_local_file(http_client):
@@ -70,30 +70,30 @@ description: SDK localhost upload test
 
     result = await client.add_skill(data=str(f), wait=True)
     assert "uri" in result
-    assert result["uri"].startswith("viking://agent/skills/")
+    assert result["uri"].startswith("ctx://agent/skills/")
 
 
-def _build_ovpack_bytes() -> bytes:
+def _build_ctxpack_bytes() -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as zf:
-        zf.writestr("pkg/_._meta.json", '{"uri": "viking://resources/pkg"}')
+        zf.writestr("pkg/_._meta.json", '{"uri": "ctx://resources/pkg"}')
         zf.writestr("pkg/content.md", "# Demo\n")
     return buffer.getvalue()
 
 
-async def test_sdk_import_ovpack_from_local_file(http_client):
+async def test_sdk_import_ctxpack_from_local_file(http_client):
     client, _ = http_client
-    f = TEST_TMP_DIR / "sdk_import.ovpack"
+    f = TEST_TMP_DIR / "sdk_import.ctxpack"
     f.parent.mkdir(parents=True, exist_ok=True)
-    f.write_bytes(_build_ovpack_bytes())
+    f.write_bytes(_build_ctxpack_bytes())
 
-    uri = await client.import_ovpack(
+    uri = await client.import_ctxpack(
         str(f),
-        parent="viking://resources/imported/",
+        parent="ctx://resources/imported/",
         force=True,
         vectorize=False,
     )
-    assert uri.startswith("viking://resources/imported/")
+    assert uri.startswith("ctx://resources/imported/")
 
 
 async def test_sdk_wait_processed(http_client):
@@ -109,20 +109,20 @@ async def test_sdk_wait_processed(http_client):
 
 async def test_sdk_ls(http_client):
     client, _ = http_client
-    result = await client.ls("viking://")
+    result = await client.ls("ctx://")
     assert isinstance(result, list)
 
 
 async def test_sdk_mkdir_and_ls(http_client):
     client, _ = http_client
-    await client.mkdir("viking://resources/sdk_dir/")
-    result = await client.ls("viking://resources/")
+    await client.mkdir("ctx://resources/sdk_dir/")
+    result = await client.ls("ctx://resources/")
     assert isinstance(result, list)
 
 
 async def test_sdk_tree(http_client):
     client, _ = http_client
-    result = await client.tree("viking://")
+    result = await client.tree("ctx://")
     assert isinstance(result, list)
 
 

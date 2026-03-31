@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from openviking.utils.process_lock import (
+from atom_ctx.utils.process_lock import (
     LOCK_FILENAME,
     DataDirectoryLocked,
     _is_pid_alive,
@@ -138,7 +138,7 @@ class TestAcquireDataDirLock:
         with pytest.raises(DataDirectoryLocked) as exc_info:
             acquire_data_dir_lock(str(tmp_path))
 
-        assert "Another OpenViking process" in str(exc_info.value)
+        assert "Another AtomCtx process" in str(exc_info.value)
         assert "PID 1" in str(exc_info.value)
 
     def test_acquire_creates_directory(self, tmp_path: Path):
@@ -158,7 +158,7 @@ class TestAcquireDataDirLock:
 
         error_msg = str(exc_info.value)
         assert "HTTP mode" in error_msg
-        assert "openviking-server" in error_msg
+        assert "ctx-server" in error_msg
 
     def test_error_message_shows_pid(self, tmp_path: Path):
         """Test error message shows conflicting PID."""
@@ -204,7 +204,7 @@ class TestAcquireDataDirLockEdgeCases:
 
     def test_lock_filename_constant(self):
         """Test LOCK_FILENAME constant is correct."""
-        assert LOCK_FILENAME == ".openviking.pid"
+        assert LOCK_FILENAME == ".ctx.pid"
 
     def test_acquire_with_pathlib_path(self, tmp_path: Path):
         """Test acquiring with pathlib.Path instead of string."""

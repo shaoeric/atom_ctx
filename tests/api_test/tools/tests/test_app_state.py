@@ -9,8 +9,8 @@ print(os.listdir("/app"))
 print("\nNow let's create a simple test script:")
 test_script_content = """
 import asyncio
-from openviking.server.app import create_app
-from openviking.server.config import load_server_config
+from atom_ctx.server.app import create_app
+from atom_ctx.server.config import load_server_config
 
 async def test_app_state():
     try:
@@ -50,7 +50,7 @@ async def test_app_state():
 
             mock_request = MockRequest(app)
 
-            from openviking.server.routers.admin import _get_api_key_manager
+            from atom_ctx.server.routers.admin import _get_api_key_manager
 
             try:
                 manager = _get_api_key_manager(mock_request)

@@ -50,7 +50,7 @@ curl -X POST http://localhost:1933/api/v1/admin/accounts \
 **CLI**
 
 ```bash
-openviking admin create-account acme --admin alice
+atom_ctx admin create-account acme --admin alice
 ```
 
 **响应**
@@ -87,7 +87,7 @@ curl -X GET http://localhost:1933/api/v1/admin/accounts \
 **CLI**
 
 ```bash
-openviking admin list-accounts
+atom_ctx admin list-accounts
 ```
 
 **响应**
@@ -129,7 +129,7 @@ curl -X DELETE http://localhost:1933/api/v1/admin/accounts/acme \
 **CLI**
 
 ```bash
-openviking admin delete-account acme
+atom_ctx admin delete-account acme
 ```
 
 **响应**
@@ -177,7 +177,7 @@ curl -X POST http://localhost:1933/api/v1/admin/accounts/acme/users \
 **CLI**
 
 ```bash
-openviking admin register-user acme bob --role user
+atom_ctx admin register-user acme bob --role user
 ```
 
 **响应**
@@ -220,7 +220,7 @@ curl -X GET http://localhost:1933/api/v1/admin/accounts/acme/users \
 **CLI**
 
 ```bash
-openviking admin list-users acme
+atom_ctx admin list-users acme
 ```
 
 **响应**
@@ -263,7 +263,7 @@ curl -X DELETE http://localhost:1933/api/v1/admin/accounts/acme/users/bob \
 **CLI**
 
 ```bash
-openviking admin remove-user acme bob
+atom_ctx admin remove-user acme bob
 ```
 
 **响应**
@@ -309,7 +309,7 @@ curl -X PUT http://localhost:1933/api/v1/admin/accounts/acme/users/bob/role \
 **CLI**
 
 ```bash
-openviking admin set-role acme bob admin
+atom_ctx admin set-role acme bob admin
 ```
 
 **响应**
@@ -354,7 +354,7 @@ curl -X POST http://localhost:1933/api/v1/admin/accounts/acme/users/bob/key \
 **CLI**
 
 ```bash
-openviking admin regenerate-key acme bob
+atom_ctx admin regenerate-key acme bob
 ```
 
 **响应**
@@ -377,27 +377,27 @@ openviking admin regenerate-key acme bob
 
 ```bash
 # 步骤 1：ROOT 创建工作区，指定 alice 为首个 admin
-openviking admin create-account acme --admin alice
+atom_ctx admin create-account acme --admin alice
 # 返回 alice 的 user_key
 
 # 步骤 2：alice（admin）注册普通用户 bob
-openviking admin register-user acme bob --role user
+atom_ctx admin register-user acme bob --role user
 # 返回 bob 的 user_key
 
 # 步骤 3：查看账户下所有用户
-openviking admin list-users acme
+atom_ctx admin list-users acme
 
 # 步骤 4：ROOT 将 bob 提升为 admin
-openviking admin set-role acme bob admin
+atom_ctx admin set-role acme bob admin
 
 # 步骤 5：bob 丢失 key，重新生成（旧 key 立即失效）
-openviking admin regenerate-key acme bob
+atom_ctx admin regenerate-key acme bob
 
 # 步骤 6：移除用户
-openviking admin remove-user acme bob
+atom_ctx admin remove-user acme bob
 
 # 步骤 7：删除整个工作区
-openviking admin delete-account acme
+atom_ctx admin delete-account acme
 ```
 
 ### HTTP API 等效流程

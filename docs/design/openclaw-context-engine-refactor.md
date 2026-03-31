@@ -2,20 +2,20 @@
 
 ## 1. 背景与目标
 
-当前 `examples/openclaw-plugin` 已经具备 OpenViking 记忆写入、自动召回和工具式记忆操作能力，但整体仍然是“记忆插件 + 一个很薄的 context-engine 外壳”，而不是由 context-engine 生命周期统一负责上下文管理的真正上下文引擎。
+当前 `examples/openclaw-plugin` 已经具备 AtomCtx 记忆写入、自动召回和工具式记忆操作能力，但整体仍然是“记忆插件 + 一个很薄的 context-engine 外壳”，而不是由 context-engine 生命周期统一负责上下文管理的真正上下文引擎。
 
 现状特征：
 
 - 自动召回主路径仍挂在 `before_prompt_build`
 - 自动写入主路径仍挂在 `afterTurn`
 - `assemble()` 目前基本没有承担上下文组装职责
-- `compact()` 仍然委托 legacy engine，OpenViking 只参与记忆提取
+- `compact()` 仍然委托 legacy engine，AtomCtx 只参与记忆提取
 
 这会带来 4 类问题：
 
-1. OpenViking 统一以 context engine 的方式注册，但继续保留并使用原有 hook 链路。这里的 hook 能力并不等同于“必须注册成独立 memory plugin 并占据 `kind=memory` slot 才能使用”的能力。当前问题不是要去掉 hook，而是要把 hook 与 context engine 生命周期之间的职责分工、调用优先级和数据流转规则明确收口。
+1. AtomCtx 统一以 context engine 的方式注册，但继续保留并使用原有 hook 链路。这里的 hook 能力并不等同于“必须注册成独立 memory plugin 并占据 `kind=memory` slot 才能使用”的能力。当前问题不是要去掉 hook，而是要把 hook 与 context engine 生命周期之间的职责分工、调用优先级和数据流转规则明确收口。
 2. 自动召回结果目前以 `prependContext` 文本块直接注入，模型只能看到结果内容，看不到检索动作本身。这使自动召回与显式 `memory_recall` 工具在模型视角下不一致，模型也无法基于当前 recall 的 query 和结果边界判断是否需要继续检索。
-3. 当前 compact 仍由 legacy engine 主导，OpenViking 只是在 compact 过程中附带参与记忆提取，尚未成为这条链路的正式主控方。因此，原始上下文的无损落盘、compact summary 生成、长期记忆提取、后续历史回放与来源追溯还没有被收口为一条统一的数据链路。
+3. 当前 compact 仍由 legacy engine 主导，AtomCtx 只是在 compact 过程中附带参与记忆提取，尚未成为这条链路的正式主控方。因此，原始上下文的无损落盘、compact summary 生成、长期记忆提取、后续历史回放与来源追溯还没有被收口为一条统一的数据链路。
 4. 后续如果要支持 skill memory、tool memory 和 session history expand，这些能力都需要跨越“原始 turn 写入、上下文组装、compact、历史回放、来源追溯”多个阶段流转。当前插件里还缺少统一的引擎状态和稳定的数据模型来记录这些对象及其引用关系，后续扩展容易分散在多个局部逻辑中，难以形成一致的数据链路。
 
 ## 2. 设计原则
@@ -24,11 +24,11 @@
 
 ### 2.1 职责分层
 
-OpenViking 统一注册为 context engine，但继续保留原有 hook 链路。后续需要明确的是二者的职责边界：hook 继续承接兼容路径和局部增强能力；完整的上下文组装、compact、历史回放和主生命周期协同由 context engine 统一编排。
+AtomCtx 统一注册为 context engine，但继续保留原有 hook 链路。后续需要明确的是二者的职责边界：hook 继续承接兼容路径和局部增强能力；完整的上下文组装、compact、历史回放和主生命周期协同由 context engine 统一编排。
 
-### 2.2 复用 OpenViking 原生能力
+### 2.2 复用 AtomCtx 原生能力
 
-优先复用 OpenViking 已有的 `Session -> Commit -> Archive -> Memory Extract` 体系，不在插件层额外创造第二套上下文生命周期，也不新增独立数据库。实现上尽量沿用以下能力完成闭环：
+优先复用 AtomCtx 已有的 `Session -> Commit -> Archive -> Memory Extract` 体系，不在插件层额外创造第二套上下文生命周期，也不新增独立数据库。实现上尽量沿用以下能力完成闭环：
 
 - `session.add_message`
 - `session.commit`
@@ -38,7 +38,7 @@ OpenViking 统一注册为 context engine，但继续保留原有 hook 链路。
 
 ### 2.3 无损优先
 
-每轮参与推理的原始上下文必须先保存，再考虑抽取和压缩。compact 压缩的是“模型接下来看到的工作上下文”，不是 OpenViking 中已经无损保存的原始 turn / session 数据；压缩结果也不能替代原始消息本体。
+每轮参与推理的原始上下文必须先保存，再考虑抽取和压缩。compact 压缩的是“模型接下来看到的工作上下文”，不是 AtomCtx 中已经无损保存的原始 turn / session 数据；压缩结果也不能替代原始消息本体。
 
 ### 2.4 可追溯、可展开
 
@@ -52,7 +52,7 @@ OpenViking 统一注册为 context engine，但继续保留原有 hook 链路。
 本文档作为后续开发执行规范，聚焦 OpenClaw 插件升级为真正上下文引擎时的目标架构、数据模型和落地步骤，并优先按各个 hook 的实施职责组织说明。
 
 参考资料：
-- [OpenViking Session 管理文档](/Users/quemingjian/Source/OpenViking/docs/en/concepts/08-session.md)
+- [AtomCtx Session 管理文档](/Users/quemingjian/Source/AtomCtx/docs/en/concepts/08-session.md)
 
 ---
 
@@ -60,9 +60,9 @@ OpenViking 统一注册为 context engine，但继续保留原有 hook 链路。
 
 当前相关实现主要分布于：
 
-- [examples/openclaw-plugin/index.ts](/Users/quemingjian/Source/OpenViking/examples/openclaw-plugin/index.ts)
-- [examples/openclaw-plugin/context-engine.ts](/Users/quemingjian/Source/OpenViking/examples/openclaw-plugin/context-engine.ts)
-- [examples/openclaw-plugin/client.ts](/Users/quemingjian/Source/OpenViking/examples/openclaw-plugin/client.ts)
+- [examples/openclaw-plugin/index.ts](/Users/quemingjian/Source/AtomCtx/examples/openclaw-plugin/index.ts)
+- [examples/openclaw-plugin/context-engine.ts](/Users/quemingjian/Source/AtomCtx/examples/openclaw-plugin/context-engine.ts)
+- [examples/openclaw-plugin/client.ts](/Users/quemingjian/Source/AtomCtx/examples/openclaw-plugin/client.ts)
 
 ## 3.1 `before_prompt_build`: 兼容 fallback 与迁移约束
 
@@ -78,7 +78,7 @@ OpenViking 统一注册为 context engine，但继续保留原有 hook 链路。
 
 1. 保留当前 recall fallback 作为兼容与降级路径，保证旧环境继续可用；后续新增的自动召回能力、上下文编排能力和注入形态演进统一落在 `assemble()`，不再继续扩展 `before_prompt_build` 主逻辑。
 2. 延续现有“宽检索、窄注入”的有界策略，不允许回退到无上限全文拼接。
-3. 保持并行检索 `viking://user/memories` 与 `viking://agent/memories` 的做法，并在本地完成去重、筛选、排序和预算裁剪。
+3. 保持并行检索 `ctx://user/memories` 与 `ctx://agent/memories` 的做法，并在本地完成去重、筛选、排序和预算裁剪。
 4. 保持 `level === 2` 作为最终可注入 detail memory 的判断标准，不把 L0/L1 直接当作最终注入正文。
 5. 保持 `recallScoreThreshold`、`recallMaxContentChars`、`recallPreferAbstract`、`recallTokenBudget` 这些配置约束继续生效。
 6. 后续迁移到 `assemble()` 时，迁移的是并行检索、去重、`level === 2` 过滤、score threshold、query-aware ranking、摘要优先、单条截断、总 token budget 这些规则本身；迁移完成后，`before_prompt_build` 只保留一个最小 fallback，而不再作为默认主入口。
@@ -93,18 +93,18 @@ OpenViking 统一注册为 context engine，但继续保留原有 hook 链路。
 
 ### 当前实现
 
-当前 `afterTurn` 会提取本轮增量 user/assistant 文本，创建临时 OpenViking session，并调用 `/extract`。
+当前 `afterTurn` 会提取本轮增量 user/assistant 文本，创建临时 AtomCtx session，并调用 `/extract`。
 
 ### 职责
 afterTurn 在新架构中承担两件事：
-1. **无损写入**：将本轮消息写入 OpenViking session。
+1. **无损写入**：将本轮消息写入 AtomCtx session。
 2. **Compact 评估与触发**：判断是否需要调用 `session.commit()` 归档消息和提取记忆。
 两个职责顺序执行：先写入，再评估。评估结果可能导致同步或异步的 compact 调用，但不影响写入的完成。
 
 重构逻辑：
 管理一个OV的Session状态数组，每个Session对应一个OV的Session状态和信息：(下面涉及到的session都是指OV内部定义的session)
 0. Compact状态检查，检查Session数组的状态:
-   - 如果数组中没有本次会话期望的sessionId 则新建OV session;
+   - 如果数组中没有本次会话期望的sessionId 则新建CTX session;
    - 如果数组中有本次会话期望的session, 检查session状态:
      - 如果在Compact状态，则新建会话;
      - 如果在非Compact状态，则复用这个session;
@@ -123,7 +123,7 @@ Compact 评估与触发：
    - 最长间隔：interval >= 30min 且 turns >= 1？ → 异步后台 compact
    - 无条件满足 → 不触发
 8. 触发后执行 compact 提交：
-   - 调用 `session.commit(wait=false)` 提交 OpenViking session
+   - 调用 `session.commit(wait=false)` 提交 AtomCtx session
    - 异步：commit 在后台执行，afterTurn 立即返回，更新 session中 CompactState， 下一轮 Compact状态检查 中确认完成
 
 兜底 flush：进程退出时（service.stop() / SIGTERM / SIGINT），遍历所有 buffer 执行 commitAndReset，确保未提交的累积内容不丢失
@@ -176,7 +176,7 @@ Compact 评估与触发：
 
 1. 读取 stable profile，包括 `profile.md` 和稳定偏好类高质量记忆。
 2. 从最近 `assembleRecallWindow` 条 user turns 构造 recall query，并做轻量 skip 判断，跳过问候、无内容、纯短句。
-3. 并行检索 `viking://user/memories` 与 `viking://agent/memories`。
+3. 并行检索 `ctx://user/memories` 与 `ctx://agent/memories`。
 4. 复用当前 fallback recall 的本地约束：去重、`level === 2` 过滤、score threshold、query-aware ranking、摘要优先、单条截断、总 token budget。
 5. 读取 session context，包括最近 raw turns 和最近 compact summary / archive overview。
 6. 把 recalled memories、raw turns、compact summary 混合编排为最终注入消息。
@@ -194,7 +194,7 @@ Compact 评估与触发：
 
 ```text
 assistant: [tool_call] memory_recall_auto({"query":"..."})
-tool: [tool_result] {"memories":[...], "source":"openviking-auto-recall"}
+tool: [tool_result] {"memories":[...], "source":"atom_ctx-auto-recall"}
 ```
 
 ### 补充职责
@@ -207,15 +207,15 @@ tool: [tool_result] {"memories":[...], "source":"openviking-auto-recall"}
 
 ### 当前实现
 
-当前 `compact()` 仍调用 legacy context engine 的 compact，OpenViking 只是在其过程中附带参与记忆提取。
+当前 `compact()` 仍调用 legacy context engine 的 compact，AtomCtx 只是在其过程中附带参与记忆提取。
 
 ### 职责
 
-`compact()` 负责触发 OpenViking `session.commit()`，把 session 写入、归档、summary 生成和长期记忆提取统一收口到一个正式同步点。
+`compact()` 负责触发 AtomCtx `session.commit()`，把 session 写入、归档、summary 生成和长期记忆提取统一收口到一个正式同步点。
 
 ### 实施清单
 
-1. 调用 OpenViking `session.commit()`。
+1. 调用 AtomCtx `session.commit()`。
 2. 触发当前 session 消息归档。
 3. 读取并记录最新 session summary / archive summary。
 4. 触发长期记忆提取，并记录本次抽取出的 memory URI。
@@ -227,7 +227,7 @@ tool: [tool_result] {"memories":[...], "source":"openviking-auto-recall"}
 
 - 不再依赖 legacy compact
 - 自动记忆提取从 `afterTurn` 主路径迁移到 `compact` 主路径
-- `compact()` 成为 OpenViking 与 OpenClaw session 边界的正式同步点
+- `compact()` 成为 AtomCtx 与 OpenClaw session 边界的正式同步点
 
 ---
 
@@ -239,7 +239,7 @@ tool: [tool_result] {"memories":[...], "source":"openviking-auto-recall"}
 OpenClaw turn
   │
   ├─ afterTurn
-  │   └─ 将本轮真实上下文写入 OpenViking session（无损保存）
+  │   └─ 将本轮真实上下文写入 AtomCtx session（无损保存）
   │
   ├─ assemble
   │   ├─ 读取 profile / stable memories
@@ -248,7 +248,7 @@ OpenClaw turn
   │   └─ 组装成新的 messages 返回给 OpenClaw
   │
   └─ compact
-      ├─ 调用 OpenViking session.commit()
+      ├─ 调用 AtomCtx session.commit()
       ├─ 归档旧消息并生成 session summary
       ├─ 提取长期记忆
       └─ 返回压缩后的工作上下文
@@ -256,19 +256,19 @@ OpenClaw turn
 
 ### 4.2 存储分层
 
-本方案不引入新的顶层存储系统，直接复用 OpenViking：
+本方案不引入新的顶层存储系统，直接复用 AtomCtx：
 
-- `viking://session/{user_space}/{session_id}`：保存完整对话 turn、工具调用、上下文使用记录、compact history
-- `viking://user/.../memories`：用户画像、偏好、实体、事件等长期记忆
-- `viking://agent/.../memories`：cases、patterns 等 agent 记忆
-- `viking://agent/.../skills`：后续 skill memory Phase 3 的锚点
+- `ctx://session/{user_space}/{session_id}`：保存完整对话 turn、工具调用、上下文使用记录、compact history
+- `ctx://user/.../memories`：用户画像、偏好、实体、事件等长期记忆
+- `ctx://agent/.../memories`：cases、patterns 等 agent 记忆
+- `ctx://agent/.../skills`：后续 skill memory Phase 3 的锚点
 
 ### 4.3 关键设计决策
 
 1. 不引入插件侧独立 SQLite / DAG。
 2. 不再把自动召回主结果作为纯文本 prompt prepend。
 3. 自动 recall 的默认注入形态改为“模拟工具调用结果消息”。
-4. compact 的正式语义改为 OpenViking `session.commit()`，而不是 legacy compact + 附带提取。
+4. compact 的正式语义改为 AtomCtx `session.commit()`，而不是 legacy compact + 附带提取。
 5. `memory_store` 仍保留，但只是“显式强制写入”的辅助手段，不再承担主数据链路。
 
 ---
@@ -279,7 +279,7 @@ OpenClaw turn
 
 ### 5.1 TurnEnvelope
 
-每个进入 OpenViking session 的 turn 都按统一结构落盘。
+每个进入 AtomCtx session 的 turn 都按统一结构落盘。
 
 ```ts
 type TurnEnvelope = {
@@ -499,7 +499,7 @@ Phase 1 期间采用双轨兼容：
 1. `afterTurn` 改为持久化 `TurnEnvelope`
 2. `assemble()` 接管自动 recall 和上下文组装
 3. 自动 recall 注入形态改为合成工具消息
-4. `compact()` 改为调用 OpenViking `session.commit()`
+4. `compact()` 改为调用 AtomCtx `session.commit()`
 5. 保留原有 hook 链路，并明确它与 context engine 生命周期之间的边界、优先级和协同方式
 
 ### Phase 1 验收标准
@@ -534,7 +534,7 @@ Phase 1 期间采用双轨兼容：
 
 - skill memory 注入
 - tool memory 注入
-- `ov ls viking://` 目录预注入
+- `ctx ls ctx://` 目录预注入
 - 更细粒度的 recall intent analyzer
 - summary 质量治理与更复杂的层级压缩策略
 
@@ -544,18 +544,18 @@ Phase 1 期间采用双轨兼容：
 
 ### 9.1 插件侧
 
-- [examples/openclaw-plugin/context-engine.ts](/Users/quemingjian/Source/OpenViking/examples/openclaw-plugin/context-engine.ts)
+- [examples/openclaw-plugin/context-engine.ts](/Users/quemingjian/Source/AtomCtx/examples/openclaw-plugin/context-engine.ts)
   - 重写 `assemble()`
   - 重写 `afterTurn()`
   - 重写 `compact()`
-- [examples/openclaw-plugin/index.ts](/Users/quemingjian/Source/OpenViking/examples/openclaw-plugin/index.ts)
+- [examples/openclaw-plugin/index.ts](/Users/quemingjian/Source/AtomCtx/examples/openclaw-plugin/index.ts)
   - 将 `before_prompt_build` recall 降级为 fallback
   - 新增 `memory_expand`
   - 迁移自动 recall 辅助逻辑到 context-engine 内部
-- [examples/openclaw-plugin/client.ts](/Users/quemingjian/Source/OpenViking/examples/openclaw-plugin/client.ts)
+- [examples/openclaw-plugin/client.ts](/Users/quemingjian/Source/AtomCtx/examples/openclaw-plugin/client.ts)
   - 补充 session commit / summary / archive 相关读写接口
 
-### 9.2 OpenViking 服务端
+### 9.2 AtomCtx 服务端
 
 插件实现默认复用现有 session API，但以下能力若现有返回不够用，需要补充：
 
@@ -599,7 +599,7 @@ Phase 1 期间采用双轨兼容：
 必须验证：
 
 - 自动注入内容不会再次被 capture
-- OpenViking 服务不可用时，context-engine 优雅降级
+- AtomCtx 服务不可用时，context-engine 优雅降级
 - recall 注入不会导致明显上下文膨胀回归
 - 旧配置文件仍能启动插件
 
@@ -646,7 +646,7 @@ Phase 1 期间采用双轨兼容：
 
 1. 先实现 `afterTurn` 的 `TurnEnvelope` 持久化
 2. 再实现 `assemble()` 的 recall 注入与 session summary 读取
-3. 然后切换 `compact()` 到 OpenViking `session.commit()`
+3. 然后切换 `compact()` 到 AtomCtx `session.commit()`
 4. 最后补 `memory_expand` 与追溯元数据
 
 原因：
@@ -664,7 +664,7 @@ Phase 1 期间采用双轨兼容：
 1. 文本自动 recall 的默认注入方式为“模拟工具调用结果”，不是 prompt prepend。
 2. 自动长期记忆提取的正式触发边界为 `compact()`，不是每轮 `afterTurn`。
 3. `afterTurn` 的第一职责是无损保存，不是立即抽取。
-4. OpenViking Session 是主存储基座，不新增插件侧独立数据库。
+4. AtomCtx Session 是主存储基座，不新增插件侧独立数据库。
 5. skill memory / tool memory 不进入 Phase 1 验收范围。
 
 以上决策除非后续出现明确阻塞，否则实现阶段不再重新讨论。

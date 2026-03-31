@@ -5,8 +5,8 @@
 import time
 from unittest.mock import MagicMock
 
-from openviking.storage.transaction.lock_handle import LockHandle
-from openviking.storage.transaction.path_lock import (
+from atom_ctx.storage.transaction.lock_handle import LockHandle
+from atom_ctx.storage.transaction.path_lock import (
     LOCK_FILE_NAME,
     LOCK_TYPE_POINT,
     LOCK_TYPE_SUBTREE,

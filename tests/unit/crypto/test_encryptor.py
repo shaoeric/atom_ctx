@@ -10,8 +10,8 @@ import tempfile
 
 import pytest
 
-from openviking.crypto.encryptor import FileEncryptor
-from openviking.crypto.providers import LocalFileProvider
+from atom_ctx.crypto.encryptor import FileEncryptor
+from atom_ctx.crypto.providers import LocalFileProvider
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ async def encryptor():
 async def test_encrypt_decrypt_roundtrip(encryptor):
     """Test encryption and decryption roundtrip."""
     account_id = "test_account"
-    plaintext = b"Hello, OpenViking!"
+    plaintext = b"Hello, AtomCtx!"
 
     # Encrypt
     ciphertext = await encryptor.encrypt(account_id, plaintext)
@@ -66,7 +66,7 @@ async def test_decrypt_corrupted_ciphertext(encryptor):
     account_id = "test_account"
     corrupted = b"OVE1invalid"
 
-    from openviking.crypto.exceptions import CorruptedCiphertextError
+    from atom_ctx.crypto.exceptions import CorruptedCiphertextError
 
     with pytest.raises(CorruptedCiphertextError):
         await encryptor.decrypt(account_id, corrupted)
@@ -99,7 +99,7 @@ async def test_different_accounts(encryptor):
     decrypted1 = await encryptor.decrypt(account1, ciphertext)
     assert decrypted1 == plaintext
 
-    from openviking.crypto.exceptions import KeyMismatchError
+    from atom_ctx.crypto.exceptions import KeyMismatchError
 
     # Decrypt with account2 should fail
     with pytest.raises(KeyMismatchError):

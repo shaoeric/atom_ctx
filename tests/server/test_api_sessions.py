@@ -10,16 +10,16 @@ from unittest.mock import patch
 import httpx
 import pytest
 
-from openviking.message import Message
-from openviking.server.identity import RequestContext, Role
-from openviking_cli.session.user_id import UserIdentifier
-from openviking_cli.utils.config.open_viking_config import OpenVikingConfigSingleton
+from atom_ctx.message import Message
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx_cli.session.user_id import UserIdentifier
+from atom_ctx_cli.utils.config.ctx_config import AtomCtxConfigSingleton
 from tests.utils.mock_agfs import MockLocalAGFS
 
 
 @pytest.fixture(autouse=True)
 def _configure_test_env(monkeypatch, tmp_path):
-    config_path = tmp_path / "ov.conf"
+    config_path = tmp_path / "ctx.conf"
     config_path.write_text(
         json.dumps(
             {
@@ -44,13 +44,13 @@ def _configure_test_env(monkeypatch, tmp_path):
 
     mock_agfs = MockLocalAGFS(root_path=tmp_path / "mock_agfs_root")
 
-    monkeypatch.setenv("OPENVIKING_CONFIG_FILE", str(config_path))
-    OpenVikingConfigSingleton.reset_instance()
+    monkeypatch.setenv("CTX_CONFIG_FILE", str(config_path))
+    AtomCtxConfigSingleton.reset_instance()
 
-    with patch("openviking.utils.agfs_utils.create_agfs_client", return_value=mock_agfs):
+    with patch("atom_ctx.utils.agfs_utils.create_agfs_client", return_value=mock_agfs):
         yield
 
-    OpenVikingConfigSingleton.reset_instance()
+    AtomCtxConfigSingleton.reset_instance()
 
 
 async def _wait_for_task(client: httpx.AsyncClient, task_id: str, timeout: float = 10.0):
@@ -132,7 +132,7 @@ async def test_get_session_context_includes_incomplete_archive_messages(
         Message.create_user("Pending user message"),
         Message.create_assistant("Pending assistant response"),
     ]
-    await session._viking_fs.write_file(
+    await session._ctx_fs.write_file(
         uri=f"{session.uri}/history/archive_002/messages.jsonl",
         content="\n".join(msg.to_jsonl() for msg in pending_messages) + "\n",
         ctx=session.ctx,
@@ -278,7 +278,7 @@ async def test_extract_session_jsonable_regression(client: httpx.AsyncClient, se
             return {"uri": self.uri}
 
     async def fake_extract(_session_id: str, _ctx):
-        return [FakeMemory("viking://user/memories/mock.md")]
+        return [FakeMemory("ctx://user/memories/mock.md")]
 
     monkeypatch.setattr(service.sessions, "extract", fake_extract)
 
@@ -289,7 +289,7 @@ async def test_extract_session_jsonable_regression(client: httpx.AsyncClient, se
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
-    assert body["result"] == [{"uri": "viking://user/memories/mock.md"}]
+    assert body["result"] == [{"uri": "ctx://user/memories/mock.md"}]
 
 
 async def test_get_session_context_endpoint_returns_trimmed_latest_archive_and_messages(
@@ -316,7 +316,7 @@ async def test_get_session_context_endpoint_returns_trimmed_latest_archive_and_m
                     "type": "tool",
                     "tool_id": "tool_123",
                     "tool_name": "demo_tool",
-                    "tool_uri": f"viking://session/{session_id}/tools/tool_123",
+                    "tool_uri": f"ctx://session/{session_id}/tools/tool_123",
                     "tool_input": {"x": 1},
                     "tool_status": "running",
                 },

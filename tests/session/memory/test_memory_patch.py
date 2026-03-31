@@ -6,7 +6,7 @@ Tests for MemoryPatchHandler.
 
 import pytest
 
-from openviking.session.memory.merge_op import MemoryPatchHandler, PatchParseError
+from atom_ctx.session.memory.merge_op import MemoryPatchHandler, PatchParseError
 
 
 class TestMemoryPatchHandler:

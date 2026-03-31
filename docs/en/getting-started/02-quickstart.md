@@ -1,10 +1,10 @@
 # Quick Start
 
-Get started with OpenViking in 5 minutes.
+Get started with AtomCtx in 5 minutes.
 
 ## Prerequisites
 
-Before using OpenViking, ensure your environment meets the following requirements:
+Before using AtomCtx, ensure your environment meets the following requirements:
 
 - **Python Version**: 3.10 or higher
 - **Operating System**: Linux, macOS, Windows
@@ -12,37 +12,37 @@ Before using OpenViking, ensure your environment meets the following requirement
 
 ## Installation & Startup
 
-OpenViking can be installed via a Python Package to be used as a local library, or you can quickly launch it as an independent service using Docker.
+AtomCtx can be installed via a Python Package to be used as a local library, or you can quickly launch it as an independent service using Docker.
 
 ### Option 1: Install via pip (As a local library)
 
 ```bash
-pip install openviking --upgrade --force-reinstall
+pip install atom-ctx --upgrade --force-reinstall
 ```
 
 ### Option 2: Start via Docker (As an independent service)
 
-If you prefer to run OpenViking as a standalone service, Docker is recommended.
+If you prefer to run AtomCtx as a standalone service, Docker is recommended.
 
 1. **Prepare Configuration and Data Directories**
-   Create a data directory on your host machine and prepare the `ov.conf` configuration file (see the "Configuration" section below for details):
+   Create a data directory on your host machine and prepare the `ctx.conf` configuration file (see the "Configuration" section below for details):
    ```bash
-   mkdir -p ~/.openviking/data
-   touch ~/.openviking/ov.conf
+   mkdir -p ~/.ctx/data
+   touch ~/.ctx/ctx.conf
    ```
 
 2. **Start with Docker Compose**
    Create a `docker-compose.yml` file:
    ```yaml
    services:
-     openviking:
-       image: ghcr.io/volcengine/openviking:main
-       container_name: openviking
+     atom_ctx:
+       image: ghcr.io/volcengine/atom_ctx:main
+       container_name: atom_ctx
        ports:
          - "1933:1933"
        volumes:
-         - ~/.openviking/ov.conf:/app/ov.conf
-         - ~/.openviking/data:/app/data
+         - ~/.ctx/ctx.conf:/app/ctx.conf
+         - ~/.ctx/data:/app/data
        restart: unless-stopped
    ```
    Then run the following command in the same directory:
@@ -52,30 +52,30 @@ If you prefer to run OpenViking as a standalone service, Docker is recommended.
 
 > **💡 Mac Local Network Access Tip (Connection reset error):**
 >
-> By default, OpenViking only listens to `127.0.0.1` for security reasons. If you are using Docker on a Mac, your host machine may not be able to access it directly via `localhost:1933`.
+> By default, AtomCtx only listens to `127.0.0.1` for security reasons. If you are using Docker on a Mac, your host machine may not be able to access it directly via `localhost:1933`.
 > 
 > **Recommended Solution: Use socat for port forwarding (No config changes needed):**
 > Override the default startup command in your `docker-compose.yml` to use `socat` for internal port forwarding:
 > ```yaml
 > services:
->   openviking:
->     image: ghcr.io/volcengine/openviking:main
+>   atom_ctx:
+>     image: ghcr.io/volcengine/atom_ctx:main
 >     ports:
 >       - "1933:1934" # Map host 1933 to container 1934
 >     volumes:
->       - ~/.openviking/ov.conf:/app/ov.conf
->       - ~/.openviking/data:/app/data
->     command: /bin/sh -c "apt-get update && apt-get install -y socat && socat TCP-LISTEN:1934,fork,reuseaddr TCP:127.0.0.1:1933 & openviking-server"
+>       - ~/.ctx/ctx.conf:/app/ctx.conf
+>       - ~/.ctx/data:/app/data
+>     command: /bin/sh -c "apt-get update && apt-get install -y socat && socat TCP-LISTEN:1934,fork,reuseaddr TCP:127.0.0.1:1933 & ctx-server"
 > ```
 > This perfectly solves the access issue for Mac host machines.
 
 ## Model Preparation
 
-OpenViking requires the following model capabilities:
+AtomCtx requires the following model capabilities:
 - **VLM Model**: For image and content understanding
 - **Embedding Model**: For vectorization and semantic retrieval
 
-OpenViking supports multiple model services:
+AtomCtx supports multiple model services:
 - **Volcengine (Doubao Models)**: Recommended, cost-effective with good performance, free quota for new users. For purchase and activation, see: [Volcengine Purchase Guide](../guides/02-volcengine-purchase-guide.md)
 - **OpenAI Models**: Supports GPT-4V and other VLM models, plus OpenAI Embedding models
 - **Other Custom Model Services**: Supports model services compatible with OpenAI API format
@@ -84,7 +84,7 @@ OpenViking supports multiple model services:
 
 ### Configuration File Template
 
-Create a configuration file `~/.openviking/ov.conf`:
+Create a configuration file `~/.ctx/ctx.conf`:
 
 ```json
 {
@@ -110,12 +110,12 @@ For complete examples for each model provider, see [Configuration Guide - Exampl
 
 ### Environment Variables
 
-When the config file is at the default path `~/.openviking/ov.conf`, no additional setup is needed — OpenViking loads it automatically.
+When the config file is at the default path `~/.ctx/ctx.conf`, no additional setup is needed — AtomCtx loads it automatically.
 
 If the config file is at a different location, specify it via environment variable:
 
 ```bash
-export OPENVIKING_CONFIG_FILE=/path/to/your/ov.conf
+export CTX_CONFIG_FILE=/path/to/your/ctx.conf
 ```
 
 ## Run Your First Example
@@ -125,10 +125,10 @@ export OPENVIKING_CONFIG_FILE=/path/to/your/ov.conf
 Create `example.py`:
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-# Initialize OpenViking client with data directory
-client = ov.OpenViking(path="./data")
+# Initialize AtomCtx client with data directory
+client = ctx.AtomCtx(path="./data")
 
 try:
     # Initialize the client
@@ -136,7 +136,7 @@ try:
 
     # Add resource (supports URL, file, or directory)
     add_result = client.add_resource(
-        path="https://raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md"
+        path="https://raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md"
     )
     root_uri = add_result['root_uri']
 
@@ -160,7 +160,7 @@ try:
     print(f"Abstract:\n{abstract}\n\nOverview:\n{overview}\n")
 
     # Perform semantic search
-    results = client.find("what is openviking", target_uri=root_uri)
+    results = client.find("what is atom_ctx", target_uri=root_uri)
     print("Search results:")
     for r in results.resources:
         print(f"  {r.uri} (score: {r.score:.4f})")
@@ -194,15 +194,15 @@ Overview:
 ...
 
 Search results:
-  viking://resources/... (score: 0.8523)
+  ctx://resources/... (score: 0.8523)
   ...
 ```
 
-Congratulations! You have successfully run OpenViking.
+Congratulations! You have successfully run AtomCtx.
 
 ## Server Mode
 
-Want to run OpenViking as a shared service? See [Quick Start: Server Mode](03-quickstart-server.md).
+Want to run AtomCtx as a shared service? See [Quick Start: Server Mode](03-quickstart-server.md).
 
 ## Next Steps
 

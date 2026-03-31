@@ -1,10 +1,10 @@
-# Basic Usage Example: Getting Started with OpenViking Python SDK
+# Basic Usage Example: Getting Started with AtomCtx Python SDK
 
-This example demonstrates the core features of OpenViking using the Python SDK. It covers the essential operations for building AI Agent applications with persistent context management.
+This example demonstrates the core features of AtomCtx using the Python SDK. It covers the essential operations for building AI Agent applications with persistent context management.
 
 ## What You'll Learn
 
-- **Initializing OpenViking**: Embedded mode vs HTTP client mode
+- **Initializing AtomCtx**: Embedded mode vs HTTP client mode
 - **Adding Resources**: URLs, files, and directories
 - **Browsing the Virtual Filesystem**: Using `ls`, `tree`, `glob`
 - **Semantic Search**: Finding relevant context with `find` and `search`
@@ -14,11 +14,11 @@ This example demonstrates the core features of OpenViking using the Python SDK. 
 ## Prerequisites
 
 1. **Python 3.10+**
-2. **OpenViking installed**:
+2. **AtomCtx installed**:
    ```bash
-   pip install openviking --upgrade
+   pip install atom-ctx --upgrade
    ```
-3. **Configuration file** at `~/.openviking/ov.conf` (see [Configuration](#configuration) below)
+3. **Configuration file** at `~/.ctx/ctx.conf` (see [Configuration](#configuration) below)
 
 ## Quick Start
 
@@ -26,8 +26,8 @@ This example demonstrates the core features of OpenViking using the Python SDK. 
 
 ```bash
 # Clone the repository
-git clone https://github.com/volcengine/OpenViking.git
-cd OpenViking/examples/basic-usage
+git clone https://github.com/volcengine/atom-ctx.git
+cd AtomCtx/examples/basic-usage
 
 # Run the basic usage example
 python basic_usage.py
@@ -36,37 +36,37 @@ python basic_usage.py
 ### 2. Expected Output
 
 ```
-=== OpenViking Basic Usage Example ===
+=== AtomCtx Basic Usage Example ===
 
-1. Initializing OpenViking...
+1. Initializing AtomCtx...
    Status: healthy
 
 2. Adding a resource (URL)...
-   Root URI: viking://resources/raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md
+   Root URI: ctx://resources/raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md
    Files indexed: 1
 
 3. Browsing the virtual filesystem...
-   viking://resources/raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/
+   ctx://resources/raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/
    └── README.md
 
 4. Waiting for semantic processing...
 
 5. Tiered Context Loading:
-   L0 (Abstract): OpenViking is an open-source Context Database designed specifically for AI Agents...
+   L0 (Abstract): AtomCtx is an open-source Context Database designed specifically for AI Agents...
 
    L1 (Overview):
    [Contains key points and usage scenarios]
 
 6. Semantic Search:
-   Query: "what is openviking"
+   Query: "what is atom_ctx"
    Results:
-   - viking://resources/.../README.md (score: 0.8523)
+   - ctx://resources/.../README.md (score: 0.8523)
 
 7. Content search (grep):
    Pattern: "Agent"
    Found 15 matches
 
-8. Closing OpenViking...
+8. Closing AtomCtx...
    Done!
 ```
 
@@ -74,26 +74,26 @@ python basic_usage.py
 
 ### Initialization
 
-OpenViking supports two modes:
+AtomCtx supports two modes:
 
 **Embedded Mode** (default for local development):
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.OpenViking(path="./data")
+client = ctx.AtomCtx(path="./data")
 client.initialize()
 ```
 
 **HTTP Client Mode** (connect to remote server):
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(url="http://localhost:1933")
+client = ctx.SyncHTTPClient(url="http://localhost:1933")
 ```
 
 > **Multi-tenant auth**: If the server has authentication enabled, use a `user_key` (recommended):
 > ```python
-> client = ov.SyncHTTPClient(url="http://localhost:1933", api_key="<user-key>")
+> client = ctx.SyncHTTPClient(url="http://localhost:1933", api_key="<user-key>")
 > ```
 > A `root_key` cannot directly call tenant-scoped APIs like `add_resource` or `find` — it requires `account` and `user` parameters. See [Authentication](../../docs/en/guides/04-authentication.md) and [Server Quickstart](../../docs/en/getting-started/03-quickstart-server.md).
 
@@ -122,17 +122,17 @@ result = client.add_resource(
 
 ### Browsing the Filesystem
 
-OpenViking uses a virtual filesystem paradigm with `viking://` URIs:
+AtomCtx uses a virtual filesystem paradigm with `ctx://` URIs:
 
 ```python
 # List directory contents
-files = client.ls("viking://resources/")
+files = client.ls("ctx://resources/")
 
 # Show directory tree
-tree = client.tree("viking://resources/my-project", level_limit=3)
+tree = client.tree("ctx://resources/my-project", level_limit=3)
 
 # Find files by pattern
-matches = client.glob("**/*.md", uri="viking://resources/my-project")
+matches = client.glob("**/*.md", uri="ctx://resources/my-project")
 ```
 
 ### Semantic Search
@@ -143,24 +143,24 @@ Find context using natural language queries:
 # Quick semantic search
 results = client.find(
     query="how to handle API authentication",
-    target_uri="viking://resources/my-project",
+    target_uri="ctx://resources/my-project",
     limit=5
 )
 
 # Advanced search with intent analysis
 results = client.search(
     query="database connection configuration and error handling",
-    target_uri="viking://resources/",
+    target_uri="ctx://resources/",
     limit=10
 )
 ```
 
 ### Tiered Context Loading
 
-OpenViking processes content into three layers for efficient retrieval:
+AtomCtx processes content into three layers for efficient retrieval:
 
 ```python
-uri = "viking://resources/my-project/docs/api.md"
+uri = "ctx://resources/my-project/docs/api.md"
 
 # L0: Quick abstract (~100 tokens)
 abstract = client.abstract(uri)
@@ -191,18 +191,18 @@ client.commit_session(session_id)
 # Later, recall relevant memories
 memories = client.find(
     query="user programming preferences",
-    target_uri="viking://user/memories/"
+    target_uri="ctx://user/memories/"
 )
 ```
 
 ## Configuration
 
-Create `~/.openviking/ov.conf` with your model provider settings:
+Create `~/.ctx/ctx.conf` with your model provider settings:
 
 ```json
 {
   "storage": {
-    "workspace": "~/.openviking/data"
+    "workspace": "~/.ctx/data"
   },
   "embedding": {
     "dense": {
@@ -227,11 +227,11 @@ Create `~/.openviking/ov.conf` with your model provider settings:
 ### Building a Documentation-Aware Agent
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
 class DocumentationAgent:
     def __init__(self):
-        self.ov = ov.OpenViking(path="./data")
+        self.ov = ctx.AtomCtx(path="./data")
         self.ov.initialize()
     
     def ingest_docs(self, doc_path: str):
@@ -259,11 +259,11 @@ agent.ingest_docs("/path/to/your/project/docs")
 ### Creating a Memory-Aware Assistant
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
 class MemoryAssistant:
     def __init__(self, user_id: str):
-        self.ov = ov.SyncHTTPClient(url="http://localhost:1933")
+        self.ov = ctx.SyncHTTPClient(url="http://localhost:1933")
         self.user_id = user_id
         self.session_id = None
     
@@ -279,7 +279,7 @@ class MemoryAssistant:
     
     def recall(self, query: str) -> list:
         """Recall relevant memories."""
-        return self.ov.find(query, target_uri="viking://user/memories/")
+        return self.ov.find(query, target_uri="ctx://user/memories/")
     
     def end_conversation(self):
         """Extract long-term memories from session."""
@@ -298,8 +298,8 @@ class MemoryAssistant:
 | Issue | Solution |
 |-------|----------|
 | `ImportError: pyagfs not found` | Run: `pip install -e third_party/agfs/agfs-sdk/python` from source |
-| `Connection refused` | Ensure OpenViking server is running: `openviking-server` |
-| `API key error` | Check your `~/.openviking/ov.conf` configuration |
+| `Connection refused` | Ensure AtomCtx server is running: `ctx-server` |
+| `API key error` | Check your `~/.ctx/ctx.conf` configuration |
 | `Slow semantic processing` | Wait for `wait_processed()` or use `add_resource(..., wait=True)` |
 
 ## License

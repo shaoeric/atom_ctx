@@ -20,8 +20,8 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from openviking.crypto.encryptor import FileEncryptor
-from openviking.crypto.providers import (
+from atom_ctx.crypto.encryptor import FileEncryptor
+from atom_ctx.crypto.providers import (
     PROVIDER_LOCAL,
     PROVIDER_VAULT,
     PROVIDER_VOLCENGINE,

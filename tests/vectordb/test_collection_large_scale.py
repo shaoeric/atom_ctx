@@ -11,7 +11,7 @@ import shutil
 import time
 import unittest
 
-from openviking.storage.vectordb.collection.local_collection import get_or_create_local_collection
+from atom_ctx.storage.vectordb.collection.local_collection import get_or_create_local_collection
 
 # Test data path
 TEST_DB_PATH = "./test_data/test_large_scale_collection/"
@@ -967,7 +967,7 @@ def run_large_scale_tests():
 
 if __name__ == "__main__":
     print("\n" + "=" * 70)
-    print("OpenViking Collection - Large Scale Scenario Tests")
+    print("AtomCtx Collection - Large Scale Scenario Tests")
     print("=" * 70)
 
     success = run_large_scale_tests()

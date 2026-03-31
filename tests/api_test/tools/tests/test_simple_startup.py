@@ -1,5 +1,5 @@
-from openviking.server.app import create_app
-from openviking.server.config import load_server_config
+from atom_ctx.server.app import create_app
+from atom_ctx.server.config import load_server_config
 
 print("Testing simple startup...")
 print("=" * 80)
@@ -23,7 +23,7 @@ try:
     print("\n" + "=" * 80)
     print("Let's try to manually create APIKeyManager!")
 
-    from openviking.server.auth import APIKeyManager
+    from atom_ctx.server.auth import APIKeyManager
 
     manager = APIKeyManager(config.root_api_key, None)
     print("APIKeyManager created successfully!")

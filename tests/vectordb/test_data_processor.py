@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 from pydantic import ValidationError
 
-from openviking.storage.vectordb.utils.data_processor import DataProcessor
+from atom_ctx.storage.vectordb.utils.data_processor import DataProcessor
 
 DB_PATH = "./test_data/db_test_data_processor/"
 

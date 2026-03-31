@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "openviking.fullname" . }}
+  name: {{ include "atom_ctx.fullname" . }}
   labels:
-    {{- include "openviking.labels" . | nindent 4 }}
+    {{- include "atom_ctx.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "openviking.selectorLabels" . | nindent 6 }}
+      {{- include "atom_ctx.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "openviking.labels" . | nindent 8 }}
+        {{- include "atom_ctx.labels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
     spec:
@@ -24,10 +24,10 @@ spec:
             - /bin/sh
             - -c
             - |
-              exec uv run --with openviking openviking-server \
+              exec uv run --with atom_ctx ctx-server \
                 --host {{ .Values.server.host }} \
                 --port {{ .Values.server.port }} \
-                --config /etc/openviking/ov.conf
+                --config /etc/ctx/ctx.conf
           ports:
             - name: http
               containerPort: {{ .Values.server.port }}
@@ -50,9 +50,9 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: config
-              mountPath: /etc/openviking
+              mountPath: /etc/ctx
               readOnly: true
       volumes:
         - name: config
           secret:
-            secretName: {{ include "openviking.fullname" . }}-config
+            secretName: {{ include "atom_ctx.fullname" . }}-config

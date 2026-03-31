@@ -9,25 +9,25 @@ from pathlib import Path
 
 import pytest
 
-from openviking import AsyncOpenViking
-from openviking.storage.transaction import release_all_locks
+from atom_ctx import AsyncAtomCtx
+from atom_ctx.storage.transaction import release_all_locks
 
 
 class TestExportOvpack:
-    """Test export_ovpack"""
+    """Test export_ctxpack"""
 
     async def test_export_success(self, client_with_resource, temp_dir: Path):
         """Test successful export"""
         client, uri = client_with_resource
-        export_path = temp_dir / "export.ovpack"
+        export_path = temp_dir / "export.ctxpack"
 
-        result = await client.export_ovpack(uri, str(export_path))
+        result = await client.export_ctxpack(uri, str(export_path))
 
         assert isinstance(result, str)
         assert Path(result).exists()
 
     async def test_export_directory(
-        self, client: AsyncOpenViking, sample_directory: Path, temp_dir: Path
+        self, client: AsyncAtomCtx, sample_directory: Path, temp_dir: Path
     ):
         """Test exporting directory"""
         # Add files from directory
@@ -35,26 +35,26 @@ class TestExportOvpack:
             await client.add_resource(path=str(f), reason="Test export dir")
 
         # Export entire resource directory
-        export_path = temp_dir / "dir_export.ovpack"
-        result = await client.export_ovpack("viking://resources/", str(export_path))
+        export_path = temp_dir / "dir_export.ctxpack"
+        result = await client.export_ctxpack("ctx://resources/", str(export_path))
 
         assert isinstance(result, str)
 
 
 class TestImportOvpack:
-    """Test import_ovpack"""
+    """Test import_ctxpack"""
 
     async def test_import_success(self, client_with_resource, temp_dir: Path):
         """Test successful import"""
         client, uri = client_with_resource
 
         # Export first
-        export_path = temp_dir / "import_test.ovpack"
-        await client.export_ovpack(uri, str(export_path))
+        export_path = temp_dir / "import_test.ctxpack"
+        await client.export_ctxpack(uri, str(export_path))
 
         # Import to new location
-        import_uri = await client.import_ovpack(
-            str(export_path), "viking://resources/imported/", vectorize=False
+        import_uri = await client.import_ctxpack(
+            str(export_path), "ctx://resources/imported/", vectorize=False
         )
 
         assert isinstance(import_uri, str)
@@ -65,23 +65,23 @@ class TestImportOvpack:
         client, uri = client_with_resource
 
         # Export first
-        export_path = temp_dir / "force_test.ovpack"
-        await client.export_ovpack(uri, str(export_path))
+        export_path = temp_dir / "force_test.ctxpack"
+        await client.export_ctxpack(uri, str(export_path))
 
         # First import
-        await client.import_ovpack(
-            str(export_path), "viking://resources/force_test/", vectorize=False
+        await client.import_ctxpack(
+            str(export_path), "ctx://resources/force_test/", vectorize=False
         )
 
         # Second force import (overwrite)
-        import_uri = await client.import_ovpack(
-            str(export_path), "viking://resources/force_test/", force=True, vectorize=False
+        import_uri = await client.import_ctxpack(
+            str(export_path), "ctx://resources/force_test/", force=True, vectorize=False
         )
 
         assert isinstance(import_uri, str)
 
     async def test_import_export_roundtrip(
-        self, client: AsyncOpenViking, sample_markdown_file: Path, temp_dir: Path
+        self, client: AsyncAtomCtx, sample_markdown_file: Path, temp_dir: Path
     ):
         """Test export-import roundtrip"""
         # Add resource
@@ -96,16 +96,16 @@ class TestImportOvpack:
                 original_content = await client.read(e["uri"])
 
         # Export
-        export_path = temp_dir / "roundtrip.ovpack"
-        await client.export_ovpack(original_uri, str(export_path))
+        export_path = temp_dir / "roundtrip.ctxpack"
+        await client.export_ctxpack(original_uri, str(export_path))
 
         # Delete original resource
         await release_all_locks()
         await client.rm(original_uri, recursive=True)
 
         # Import
-        import_uri = await client.import_ovpack(
-            str(export_path), "viking://resources/roundtrip/", vectorize=False
+        import_uri = await client.import_ctxpack(
+            str(export_path), "ctx://resources/roundtrip/", vectorize=False
         )
 
         # Read imported content
@@ -119,7 +119,7 @@ class TestImportOvpack:
         assert original_content == imported_content
 
     @staticmethod
-    def _build_ovpack(zip_path: Path, entries: dict[str, str]) -> None:
+    def _build_ctxpack(zip_path: Path, entries: dict[str, str]) -> None:
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, "w") as zf:
             for name, content in entries.items():
@@ -131,48 +131,48 @@ class TestImportOvpack:
         [
             (
                 {
-                    "pkg/_._meta.json": '{"uri": "viking://resources/pkg"}',
+                    "pkg/_._meta.json": '{"uri": "ctx://resources/pkg"}',
                     "pkg/../../escape.txt": "pwned",
                 },
-                "Unsafe ovpack entry path",
+                "Unsafe ctxpack entry path",
             ),
             (
                 {
-                    "pkg/_._meta.json": '{"uri": "viking://resources/pkg"}',
+                    "pkg/_._meta.json": '{"uri": "ctx://resources/pkg"}',
                     "/abs/path.txt": "pwned",
                 },
-                "Unsafe ovpack entry path",
+                "Unsafe ctxpack entry path",
             ),
             (
                 {
-                    "pkg/_._meta.json": '{"uri": "viking://resources/pkg"}',
+                    "pkg/_._meta.json": '{"uri": "ctx://resources/pkg"}',
                     "C:/drive/path.txt": "pwned",
                 },
-                "Unsafe ovpack entry path",
+                "Unsafe ctxpack entry path",
             ),
             (
                 {
-                    "pkg/_._meta.json": '{"uri": "viking://resources/pkg"}',
+                    "pkg/_._meta.json": '{"uri": "ctx://resources/pkg"}',
                     "pkg\\windows\\path.txt": "pwned",
                 },
-                "Unsafe ovpack entry path",
+                "Unsafe ctxpack entry path",
             ),
             (
                 {
-                    "pkg/_._meta.json": '{"uri": "viking://resources/pkg"}',
+                    "pkg/_._meta.json": '{"uri": "ctx://resources/pkg"}',
                     "other/file.txt": "pwned",
                 },
-                "Invalid ovpack entry root",
+                "Invalid ctxpack entry root",
             ),
         ],
     )
     async def test_import_rejects_unsafe_entries(
-        self, client: AsyncOpenViking, temp_dir: Path, entries: dict[str, str], error_pattern: str
+        self, client: AsyncAtomCtx, temp_dir: Path, entries: dict[str, str], error_pattern: str
     ):
-        ovpack_path = temp_dir / "malicious.ovpack"
-        self._build_ovpack(ovpack_path, entries)
+        ctxpack_path = temp_dir / "malicious.ctxpack"
+        self._build_ctxpack(ctxpack_path, entries)
 
         with pytest.raises(ValueError, match=error_pattern):
-            await client.import_ovpack(
-                str(ovpack_path), "viking://resources/security/", vectorize=False
+            await client.import_ctxpack(
+                str(ctxpack_path), "ctx://resources/security/", vectorize=False
             )

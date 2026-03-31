@@ -41,7 +41,7 @@ def _normalize_x86_variants(raw_variants: Iterable[str]) -> tuple[str, ...]:
 
 def get_requested_x86_build_variants(raw_value: str | None = None) -> tuple[str, ...]:
     if raw_value is None:
-        raw_value = os.environ.get("OV_X86_BUILD_VARIANTS", "")
+        raw_value = os.environ.get("CTX_X86_BUILD_VARIANTS", "")
 
     if not raw_value.strip():
         return DEFAULT_X86_VARIANTS
@@ -53,12 +53,12 @@ def get_host_engine_build_config(machine: str | None) -> EngineBuildConfig:
     if is_x86_machine(machine):
         return EngineBuildConfig(
             is_x86=True,
-            primary_extension="openviking.storage.vectordb.engine._x86_sse3",
+            primary_extension="atom_ctx.storage.vectordb.engine._x86_sse3",
             cmake_variants=get_requested_x86_build_variants(),
         )
 
     return EngineBuildConfig(
         is_x86=False,
-        primary_extension="openviking.storage.vectordb.engine._native",
+        primary_extension="atom_ctx.storage.vectordb.engine._native",
         cmake_variants=(),
     )

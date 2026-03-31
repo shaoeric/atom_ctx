@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Resource Manager - Shared utilities for adding resources to OpenViking
+Resource Manager - Shared utilities for adding resources to AtomCtx
 """
 
 import json
@@ -9,42 +9,42 @@ from typing import Optional
 
 from rich.console import Console
 
-import openviking as ov
-from openviking_cli.utils.config.open_viking_config import OpenVikingConfig
+import atom_ctx as ctx
+from atom_ctx_cli.utils.config.ctx_config import AtomCtxConfig
 
 
-def create_client(config_path: str = "./ov.conf", data_path: str = "./data") -> ov.SyncOpenViking:
+def create_client(config_path: str = "./ctx.conf", data_path: str = "./data") -> ctx.SyncAtomCtx:
     """
-    Create and initialize OpenViking client
+    Create and initialize AtomCtx client
 
     Args:
         config_path: Path to config file
         data_path: Path to data directory
 
     Returns:
-        Initialized SyncOpenViking client
+        Initialized SyncAtomCtx client
     """
     with open(config_path, "r") as f:
         config_dict = json.load(f)
 
-    config = OpenVikingConfig.from_dict(config_dict)
-    client = ov.SyncOpenViking(path=data_path, config=config)
+    config = AtomCtxConfig.from_dict(config_dict)
+    client = ctx.SyncAtomCtx(path=data_path, config=config)
     client.initialize()
 
     return client
 
 
 def add_resource(
-    client: ov.SyncOpenViking,
+    client: ctx.SyncAtomCtx,
     resource_path: str,
     console: Optional[Console] = None,
     show_output: bool = True,
 ) -> bool:
     """
-    Add a resource to OpenViking database
+    Add a resource to AtomCtx database
 
     Args:
-        client: Initialized SyncOpenViking client
+        client: Initialized SyncAtomCtx client
         resource_path: Path to file/directory or URL
         console: Rich Console for output (creates new if None)
         show_output: Whether to print status messages

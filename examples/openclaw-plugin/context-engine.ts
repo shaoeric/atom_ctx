@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import type { OpenVikingClient, OVMessage } from "./client.js";
-import type { MemoryOpenVikingConfig } from "./config.js";
+import type { AtomCtxClient, OVMessage } from "./client.js";
+import type { MemoryAtomCtxConfig } from "./config.js";
 import {
   getCaptureDecision,
   extractNewTurnTexts,
@@ -89,7 +89,7 @@ type ContextEngine = {
 };
 
 export type ContextEngineWithCommit = ContextEngine & {
-  /** Commit (archive + extract) the OV session. Returns true on success. */
+  /** Commit (archive + extract) the CTX session. Returns true on success. */
   commitOVSession: (sessionId: string) => Promise<boolean>;
 };
 
@@ -146,7 +146,7 @@ function messageDigest(messages: AgentMessage[], maxCharsPerMsg = 2000): Array<{
 
 function emitDiag(log: typeof logger, stage: string, sessionId: string, data: Record<string, unknown>, enabled = true): void {
   if (!enabled) return;
-  log.info(`openviking: diag ${JSON.stringify({ ts: Date.now(), stage, sessionId, data })}`);
+  log.info(`atom_ctx: diag ${JSON.stringify({ ts: Date.now(), stage, sessionId, data })}`);
 }
 
 function totalExtractedMemories(memories?: Record<string, number>): number {
@@ -164,13 +164,13 @@ function validTokenBudget(raw: unknown): number | undefined {
 }
 
 /** OpenClaw session UUID (path-safe on Windows). */
-const OPENVIKING_OV_SESSION_UUID =
+const ATOM_CTX_SESSION_UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const WINDOWS_BAD_SESSION_SEGMENT = /[:<>"\\/|?\u0000-\u001f]/;
 
 /**
- * Map OpenClaw session identity to an OpenViking session_id that is safe as a single
+ * Map OpenClaw session identity to an AtomCtx session_id that is safe as a single
  * AGFS path segment on Windows (no `:` etc.). Prefer UUID sessionId when present;
  * otherwise derive a stable sha256 from sessionKey.
  */
@@ -181,7 +181,7 @@ export function openClawSessionToOvStorageId(
   const sid = typeof sessionId === "string" ? sessionId.trim() : "";
   const key = typeof sessionKey === "string" ? sessionKey.trim() : "";
 
-  if (sid && OPENVIKING_OV_SESSION_UUID.test(sid)) {
+  if (sid && ATOM_CTX_SESSION_UUID.test(sid)) {
     return sid.toLowerCase();
   }
   if (key) {
@@ -193,16 +193,16 @@ export function openClawSessionToOvStorageId(
     }
     return sid;
   }
-  throw new Error("openviking: need sessionId or sessionKey for OV session path");
+  throw new Error("atom_ctx: need sessionId or sessionKey for CTX session path");
 }
 
 /** Normalize a hook/tool session ref (uuid, sessionKey, or already-safe id) for OV storage. */
 export function openClawSessionRefToOvStorageId(ref: string): string {
   const t = ref.trim();
   if (!t) {
-    throw new Error("openviking: empty session ref");
+    throw new Error("atom_ctx: empty session ref");
   }
-  if (OPENVIKING_OV_SESSION_UUID.test(t)) {
+  if (ATOM_CTX_SESSION_UUID.test(t)) {
     return t.toLowerCase();
   }
   if (WINDOWS_BAD_SESSION_SEGMENT.test(t)) {
@@ -212,7 +212,7 @@ export function openClawSessionRefToOvStorageId(ref: string): string {
 }
 
 /**
- * Convert an OpenViking stored message (parts-based format) into one or more
+ * Convert an AtomCtx stored message (parts-based format) into one or more
  * OpenClaw AgentMessages (content-blocks format).
  *
  * For assistant messages with ToolParts, this produces:
@@ -373,7 +373,7 @@ function buildSystemPromptAddition(): string {
     "",
     "1. Review [Archive Index] to identify which archive likely contains",
     "   the information you need.",
-    "2. Call `ov_archive_expand` with that archive ID to retrieve the",
+    "2. Call `ctx_archive_expand` with that archive ID to retrieve the",
     "   archived conversation content.",
     "3. If multiple archives look relevant, try the most recent one first.",
     "4. Answer using the retrieved content together with active messages.",
@@ -411,7 +411,7 @@ const PHASE2_POLL_MAX_MS = 120_000;
  * so logs show memories_extracted (otherwise it looks like "nothing was saved").
  */
 async function pollPhase2ExtractionOutcome(
-  getClient: () => Promise<OpenVikingClient>,
+  getClient: () => Promise<AtomCtxClient>,
   taskId: string,
   agentId: string,
   logger: Logger,
@@ -423,7 +423,7 @@ async function pollPhase2ExtractionOutcome(
     while (Date.now() < deadline) {
       await sleep(PHASE2_POLL_INTERVAL_MS);
       const task = await client.getTask(taskId, agentId).catch((e) => {
-        logger.warn(`openviking: phase2 getTask failed task_id=${taskId}: ${String(e)}`);
+        logger.warn(`atom_ctx: phase2 getTask failed task_id=${taskId}: ${String(e)}`);
         return null;
       });
       if (!task) {
@@ -432,35 +432,35 @@ async function pollPhase2ExtractionOutcome(
       const { status } = task;
       if (status === "completed") {
         logger.info(
-          `openviking: phase2 completed task_id=${taskId} session=${sessionLabel} ` +
+          `atom_ctx: phase2 completed task_id=${taskId} session=${sessionLabel} ` +
             `result=${toJsonLog(task.result ?? {})}`,
         );
         return;
       }
       if (status === "failed") {
         logger.warn(
-          `openviking: phase2 failed task_id=${taskId} session=${sessionLabel} error=${task.error ?? "unknown"}`,
+          `atom_ctx: phase2 failed task_id=${taskId} session=${sessionLabel} error=${task.error ?? "unknown"}`,
         );
         return;
       }
     }
     logger.warn(
-      `openviking: phase2 poll timeout (${PHASE2_POLL_MAX_MS / 1000}s) task_id=${taskId} session=${sessionLabel} — ` +
+      `atom_ctx: phase2 poll timeout (${PHASE2_POLL_MAX_MS / 1000}s) task_id=${taskId} session=${sessionLabel} — ` +
         `check GET /api/v1/tasks/${taskId}`,
     );
   } catch (e) {
-    logger.warn(`openviking: phase2 poll exception task_id=${taskId}: ${String(e)}`);
+    logger.warn(`atom_ctx: phase2 poll exception task_id=${taskId}: ${String(e)}`);
   }
 }
 
-export function createMemoryOpenVikingContextEngine(params: {
+export function createMemoryAtomCtxContextEngine(params: {
   id: string;
   name: string;
   version?: string;
-  cfg: Required<MemoryOpenVikingConfig>;
+  cfg: Required<MemoryAtomCtxConfig>;
   logger: Logger;
-  getClient: () => Promise<OpenVikingClient>;
-  /** Extra args help match hook-populated routing when OpenClaw provides sessionKey / OV session id. */
+  getClient: () => Promise<AtomCtxClient>;
+  /** Extra args help match hook-populated routing when OpenClaw provides sessionKey / CTX session id. */
   resolveAgentId: (sessionId: string, sessionKey?: string, ovSessionId?: string) => string;
   rememberSessionAgentId?: (ctx: {
     agentId?: string;
@@ -497,19 +497,19 @@ export function createMemoryOpenVikingContextEngine(params: {
       const commitResult = await client.commitSession(ovId, { wait: true, agentId });
       const memCount = totalExtractedMemories(commitResult.memories_extracted);
       if (commitResult.status === "failed") {
-        warnOrInfo(logger, `openviking: commit Phase 2 failed for session=${sessionId}: ${commitResult.error ?? "unknown"}`);
+        warnOrInfo(logger, `atom_ctx: commit Phase 2 failed for session=${sessionId}: ${commitResult.error ?? "unknown"}`);
         return false;
       }
       if (commitResult.status === "timeout") {
-        warnOrInfo(logger, `openviking: commit Phase 2 timed out for session=${sessionId}, task_id=${commitResult.task_id ?? "none"}`);
+        warnOrInfo(logger, `atom_ctx: commit Phase 2 timed out for session=${sessionId}, task_id=${commitResult.task_id ?? "none"}`);
         return false;
       }
       logger.info(
-        `openviking: committed OV session=${sessionId} ovId=${ovId}, archived=${commitResult.archived ?? false}, memories=${memCount}, task_id=${commitResult.task_id ?? "none"}`,
+        `atom_ctx: committed CTX session=${sessionId} ovId=${ovId}, archived=${commitResult.archived ?? false}, memories=${memCount}, task_id=${commitResult.task_id ?? "none"}`,
       );
       return true;
     } catch (err) {
-      warnOrInfo(logger, `openviking: commit failed for session=${sessionId}: ${String(err)}`);
+      warnOrInfo(logger, `atom_ctx: commit failed for session=${sessionId}: ${String(err)}`);
       return false;
     }
   }
@@ -602,7 +602,7 @@ export function createMemoryOpenVikingContextEngine(params: {
 
         if (!ctx || (!hasArchives && activeCount === 0)) {
           diag("assemble_result", OVSessionId, {
-            passthrough: true, reason: "no_ov_data",
+            passthrough: true, reason: "no_ctx_data",
             archiveCount: 0, activeCount: 0,
             outputMessagesCount: messages.length,
             inputTokenEstimate: originalTokens,
@@ -614,7 +614,7 @@ export function createMemoryOpenVikingContextEngine(params: {
 
         if (!hasArchives && ctx.messages.length < messages.length) {
           diag("assemble_result", OVSessionId, {
-            passthrough: true, reason: "ov_msgs_fewer_than_input",
+            passthrough: true, reason: "ctx_msgs_fewer_than_input",
             archiveCount: 0, activeCount,
             outputMessagesCount: messages.length,
             inputTokenEstimate: originalTokens,
@@ -694,7 +694,7 @@ export function createMemoryOpenVikingContextEngine(params: {
       } catch (err) {
         warnOrInfo(
           logger,
-          `openviking: assemble failed for session=${OVSessionId}, ` +
+          `atom_ctx: assemble failed for session=${OVSessionId}, ` +
             `tokenBudget=${tokenBudget}, agentId=${resolveAgentId(OVSessionId)}: ${String(err)}`,
         );
         diag("assemble_error", OVSessionId, {
@@ -803,7 +803,7 @@ export function createMemoryOpenVikingContextEngine(params: {
           ? ` ${toJsonLog({ captured: [trimForLog(turnText, 260)] })}`
           : "";
         logger.info(
-          `openviking: committed session=${OVSessionId}, ` +
+          `atom_ctx: committed session=${OVSessionId}, ` +
             `status=${commitResult.status}, archived=${commitResult.archived ?? false}, ` +
             `task_id=${commitResult.task_id ?? "none"}${commitExtra}`,
         );
@@ -818,7 +818,7 @@ export function createMemoryOpenVikingContextEngine(params: {
         });
         if (commitResult.task_id && cfg.logFindRequests) {
           logger.info(
-            `openviking: Phase2 memory extraction runs asynchronously on the server (task_id=${commitResult.task_id}). ` +
+            `atom_ctx: Phase2 memory extraction runs asynchronously on the server (task_id=${commitResult.task_id}). ` +
               "memories_extracted appears only after that task completes — not in this immediate response.",
           );
           if (cfg.logFindRequests) {
@@ -832,7 +832,7 @@ export function createMemoryOpenVikingContextEngine(params: {
           }
         }
       } catch (err) {
-        warnOrInfo(logger, `openviking: afterTurn failed: ${String(err)}`);
+        warnOrInfo(logger, `atom_ctx: afterTurn failed: ${String(err)}`);
         diag("afterTurn_error", afterTurnParams.sessionId ?? "(unknown)", {
           error: String(err),
         });
@@ -866,7 +866,7 @@ export function createMemoryOpenVikingContextEngine(params: {
           }
         } catch (preCtxErr) {
           logger.info(
-            `openviking: compact pre-ctx fetch failed for session=${OVSessionId}, ` +
+            `atom_ctx: compact pre-ctx fetch failed for session=${OVSessionId}, ` +
               `tokenBudget=${tokenBudget}, agentId=${agentId}: ${String(preCtxErr)}`,
           );
         }
@@ -876,7 +876,7 @@ export function createMemoryOpenVikingContextEngine(params: {
 
       try {
         logger.info(
-          `openviking: compact committing session=${OVSessionId} (wait=true, tokenBudget=${tokenBudget})`,
+          `atom_ctx: compact committing session=${OVSessionId} (wait=true, tokenBudget=${tokenBudget})`,
         );
         const commitResult = await client.commitSession(OVSessionId, { wait: true, agentId });
         const memCount = totalExtractedMemories(commitResult.memories_extracted);
@@ -884,7 +884,7 @@ export function createMemoryOpenVikingContextEngine(params: {
         if (commitResult.status === "failed") {
           warnOrInfo(
             logger,
-            `openviking: compact commit Phase 2 failed for session=${OVSessionId}: ${commitResult.error ?? "unknown"}`,
+            `atom_ctx: compact commit Phase 2 failed for session=${OVSessionId}: ${commitResult.error ?? "unknown"}`,
           );
           diag("compact_result", OVSessionId, {
             ok: false,
@@ -914,7 +914,7 @@ export function createMemoryOpenVikingContextEngine(params: {
         if (commitResult.status === "timeout") {
           warnOrInfo(
             logger,
-            `openviking: compact commit Phase 2 timed out for session=${OVSessionId}, task_id=${commitResult.task_id ?? "none"}`,
+            `atom_ctx: compact commit Phase 2 timed out for session=${OVSessionId}, task_id=${commitResult.task_id ?? "none"}`,
           );
           diag("compact_result", OVSessionId, {
             ok: false,
@@ -941,12 +941,12 @@ export function createMemoryOpenVikingContextEngine(params: {
         }
 
         logger.info(
-          `openviking: compact committed session=${OVSessionId}, archived=${commitResult.archived ?? false}, memories=${memCount}, task_id=${commitResult.task_id ?? "none"}`,
+          `atom_ctx: compact committed session=${OVSessionId}, archived=${commitResult.archived ?? false}, memories=${memCount}, task_id=${commitResult.task_id ?? "none"}`,
         );
 
         if (!commitResult.archived) {
           logger.info(
-            `openviking: compact no archive for session=${OVSessionId}, ` +
+            `atom_ctx: compact no archive for session=${OVSessionId}, ` +
               `tokensBefore=${tokensBefore}, tokensAfter=${tokensBefore}`,
           );
           diag("compact_result", OVSessionId, {
@@ -993,13 +993,13 @@ export function createMemoryOpenVikingContextEngine(params: {
         } catch (ctxErr) {
           contextFetchError = String(ctxErr);
           logger.info(
-            `openviking: compact context fetch failed for session=${OVSessionId}, ` +
+            `atom_ctx: compact context fetch failed for session=${OVSessionId}, ` +
               `tokenBudget=${tokenBudget}, agentId=${agentId}: ${contextFetchError}`,
           );
         }
 
         logger.info(
-          `openviking: compact tokens session=${OVSessionId}, ` +
+          `atom_ctx: compact tokens session=${OVSessionId}, ` +
             `tokensBefore=${tokensBefore}, tokensAfter=${tokensAfter ?? "unknown"}, ` +
             `latestArchiveId=${firstKeptEntryId || "none"}`,
         );
@@ -1037,7 +1037,7 @@ export function createMemoryOpenVikingContextEngine(params: {
           },
         };
       } catch (err) {
-        warnOrInfo(logger, `openviking: compact commit failed for session=${OVSessionId}: ${String(err)}`);
+        warnOrInfo(logger, `atom_ctx: compact commit failed for session=${OVSessionId}: ${String(err)}`);
         diag("compact_error", OVSessionId, {
           error: String(err),
         });

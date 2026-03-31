@@ -5,21 +5,21 @@ import sys
 import unittest
 
 # Add paths to sys.path to ensure modules can be found
-# sys.path.insert(0, "/cloudide/workspace/viking_python_client")
+# sys.path.insert(0, "/cloudide/workspace/ctx_python_client")
 sys.path.insert(0, "/cloudide/workspace/open_test")
 
 import json
 import shutil
 import tempfile
 
-from openviking.storage.vectordb_adapters.factory import create_collection_adapter
-from openviking_cli.utils.config import OpenVikingConfigSingleton, get_openviking_config
+from atom_ctx.storage.vectordb_adapters.factory import create_collection_adapter
+from atom_ctx_cli.utils.config import AtomCtxConfigSingleton, get_atom_ctx_config
 
 
 class TestAdapterLoading(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
-        self.config_path = os.path.join(self.test_dir, "ov.conf")
+        self.config_path = os.path.join(self.test_dir, "ctx.conf")
 
         # Create a valid config file
         config_data = {
@@ -46,7 +46,7 @@ class TestAdapterLoading(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.test_dir)
         # Reset singleton to avoid side effects on other tests
-        OpenVikingConfigSingleton.reset_instance()
+        AtomCtxConfigSingleton.reset_instance()
 
     def test_dynamic_loading_mock_adapter(self):
         """
@@ -55,9 +55,9 @@ class TestAdapterLoading(unittest.TestCase):
         loaded from a real configuration file.
         """
         # Load config from the temporary file
-        OpenVikingConfigSingleton.initialize(config_path=self.config_path)
+        AtomCtxConfigSingleton.initialize(config_path=self.config_path)
 
-        config = get_openviking_config().storage.vectordb
+        config = get_atom_ctx_config().storage.vectordb
 
         # Verify that custom params are loaded
         # Since we use custom_params dict

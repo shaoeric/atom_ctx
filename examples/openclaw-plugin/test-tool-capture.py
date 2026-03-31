@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-测试 extractNewTurnTexts 改动：验证 toolUse/toolResult 内容是否被正确捕获到 OV session 中。
+测试 extractNewTurnTexts 改动：验证 toolUse/toolResult 内容是否被正确捕获到 CTX session 中。
 
 测试策略:
 1. 发送一条消息，触发模型使用工具（如 native_tool / code_execution）
 2. 等待 afterTurn 完成
-3. 从 OV session 中读取已存储的消息
+3. 从 CTX session 中读取已存储的消息
 4. 断言存储的消息中包含 toolUse 和 toolResult 相关内容
 
 用法:
     python test-tool-capture.py
     python test-tool-capture.py --verbose
-    python test-tool-capture.py --gateway http://127.0.0.1:18789 --openviking http://127.0.0.1:1933
+    python test-tool-capture.py --gateway http://127.0.0.1:18789 --atom_ctx http://127.0.0.1:1933
 
 依赖:
     pip install requests rich
@@ -32,7 +32,7 @@ from rich.table import Table
 # ── 常量 ──────────────────────────────────────────────────────────────────
 
 GATEWAY_URL = "http://127.0.0.1:18789"
-OPENVIKING_URL = "http://127.0.0.1:1933"
+ATOM_CTX_URL = "http://127.0.0.1:1933"
 AGENT_ID = "openclaw"
 
 console = Console()
@@ -107,7 +107,7 @@ class OVInspector:
     def _headers(self) -> dict:
         h: dict[str, str] = {"Content-Type": "application/json"}
         if self.agent_id:
-            h["X-OpenViking-Agent"] = self.agent_id
+            h["X-AtomCtx-Agent"] = self.agent_id
         return h
 
     def _get(self, path: str, timeout: int = 10):
@@ -185,19 +185,19 @@ TOOL_TRIGGER_MESSAGES = [
 
 def run_test(
     gateway_url: str,
-    openviking_url: str,
+    atom_ctx_url: str,
     user_id: str,
     delay: float,
     verbose: bool,
 ):
     token = load_gateway_token()
-    inspector = OVInspector(openviking_url)
+    inspector = OVInspector(atom_ctx_url)
 
     console.print(
         Panel(
             f"[bold]Tool Capture 测试[/bold]\n\n"
             f"Gateway: {gateway_url}\n"
-            f"OpenViking: {openviking_url}\n"
+            f"AtomCtx: {atom_ctx_url}\n"
             f"User ID: {user_id}\n"
             f"时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             title="测试信息",
@@ -247,42 +247,42 @@ def run_test(
 
     # ── Phase 2: 等待 afterTurn 写入 ───────────────────────────────────
 
-    console.rule("[bold]Phase 2: 检查 OV session 中的存储内容[/bold]")
-    console.print("[yellow]等待 afterTurn 写入 OV session...[/yellow]")
+    console.rule("[bold]Phase 2: 检查 CTX session 中的存储内容[/bold]")
+    console.print("[yellow]等待 afterTurn 写入 CTX session...[/yellow]")
     time.sleep(8)
 
     # Gateway 使用内部 UUID 作为 session ID，需要从 OV 列表中找到最新的
-    ov_session_id = inspector.find_latest_session()
-    if not ov_session_id:
+    ctx_session_id = inspector.find_latest_session()
+    if not ctx_session_id:
         console.print("[red]  OV 中没有找到任何 session[/red]")
-        check("OV session 存在", False, "no sessions found")
+        check("CTX session 存在", False, "no sessions found")
         print_summary()
         return
 
-    console.print(f"  [cyan]OV session ID: {ov_session_id}[/cyan]")
+    console.print(f"  [cyan]CTX session ID: {ctx_session_id}[/cyan]")
 
-    session_info = inspector.get_session(ov_session_id)
+    session_info = inspector.get_session(ctx_session_id)
     if session_info:
         msg_count = session_info.get("message_count", "?")
         console.print(f"  Session found: message_count={msg_count}")
-        check("OV session 存在", True, f"id={ov_session_id[:16]}...")
+        check("CTX session 存在", True, f"id={ctx_session_id[:16]}...")
     else:
-        console.print("[red]  OV session 详情获取失败[/red]")
-        check("OV session 存在", False, "session detail failed")
+        console.print("[red]  CTX session 详情获取失败[/red]")
+        check("CTX session 存在", False, "session detail failed")
         print_summary()
         return
 
     # 通过 context API 获取消息（包含 parts）
-    ctx = inspector.get_session_context(ov_session_id)
+    ctx = inspector.get_session_context(ctx_session_id)
     messages = ctx.get("messages", []) if ctx else []
     if not messages:
-        console.print("[red]  OV session 消息为空[/red]")
-        check("OV session 有消息", False, "context messages empty")
+        console.print("[red]  CTX session 消息为空[/red]")
+        check("CTX session 有消息", False, "context messages empty")
         print_summary()
         return
 
-    console.print(f"  [green]OV session 消息数: {len(messages)}[/green]")
-    check("OV session 有消息", len(messages) > 0, f"count={len(messages)}")
+    console.print(f"  [green]CTX session 消息数: {len(messages)}[/green]")
+    check("CTX session 有消息", len(messages) > 0, f"count={len(messages)}")
 
     # ── Phase 3: 分析存储的内容是否包含 tool 信息 ──────────────────────
 
@@ -412,7 +412,7 @@ def print_summary():
 def main():
     parser = argparse.ArgumentParser(description="测试 toolUse/toolResult 捕获")
     parser.add_argument("--gateway", default=GATEWAY_URL, help="Gateway 地址")
-    parser.add_argument("--openviking", default=OPENVIKING_URL, help="OpenViking 地址")
+    parser.add_argument("--atom_ctx", default=ATOM_CTX_URL, help="AtomCtx 地址")
     parser.add_argument("--delay", type=float, default=3.0, help="消息间延迟秒数")
     parser.add_argument("--verbose", "-v", action="store_true", help="详细输出")
     args = parser.parse_args()
@@ -421,7 +421,7 @@ def main():
 
     run_test(
         gateway_url=args.gateway.rstrip("/"),
-        openviking_url=args.openviking.rstrip("/"),
+        atom_ctx_url=args.ctx.rstrip("/"),
         user_id=user_id,
         delay=args.delay,
         verbose=args.verbose,

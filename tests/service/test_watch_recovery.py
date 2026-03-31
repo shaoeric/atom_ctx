@@ -11,11 +11,11 @@ from typing import AsyncGenerator
 import pytest
 import pytest_asyncio
 
-from openviking.resource.watch_manager import WatchManager
-from openviking.resource.watch_scheduler import WatchScheduler
-from openviking.server.identity import RequestContext, Role
-from openviking.service.resource_service import ResourceService
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.resource.watch_manager import WatchManager
+from atom_ctx.resource.watch_scheduler import WatchScheduler
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx.service.resource_service import ResourceService
+from atom_ctx_cli.session.user_id import UserIdentifier
 from tests.utils.mock_agfs import MockLocalAGFS
 
 
@@ -40,8 +40,8 @@ class MockVikingFS:
 
     def _uri_to_path(self, uri: str) -> str:
         """Convert URI to path."""
-        if uri.startswith("viking://"):
-            return uri.replace("viking://", "/local/default/")
+        if uri.startswith("ctx://"):
+            return uri.replace("ctx://", "/local/default/")
         return uri
 
 
@@ -55,7 +55,7 @@ class MockResourceProcessor:
     async def process_resource(self, **kwargs):
         self.call_count += 1
         self.processed_paths.append(kwargs.get("path"))
-        return {"root_uri": kwargs.get("to", "viking://resources/test")}
+        return {"root_uri": kwargs.get("to", "ctx://resources/test")}
 
 
 class MockSkillProcessor:
@@ -80,7 +80,7 @@ async def temp_storage(tmp_path: Path) -> AsyncGenerator[Path, None]:
 
 
 @pytest_asyncio.fixture
-async def mock_viking_fs(temp_storage: Path) -> MockVikingFS:
+async def mock_ctx_fs(temp_storage: Path) -> MockVikingFS:
     """Create mock VikingFS instance."""
     return MockVikingFS(root_path=str(temp_storage))
 
@@ -99,21 +99,21 @@ class TestServiceRestartRecovery:
 
     @pytest.mark.asyncio
     async def test_tasks_persisted_and_reloaded_after_restart(
-        self, mock_viking_fs: MockVikingFS, temp_storage: Path
+        self, mock_ctx_fs: MockVikingFS, temp_storage: Path
     ):
         """Test that tasks are persisted and correctly reloaded after service restart."""
-        manager1 = WatchManager(viking_fs=mock_viking_fs)
+        manager1 = WatchManager(ctx_fs=mock_ctx_fs)
         await manager1.initialize()
 
         task1 = await manager1.create_task(
             path="/test/path1",
-            to_uri="viking://resources/test1",
+            to_uri="ctx://resources/test1",
             reason="Task 1",
             watch_interval=30.0,
         )
         task2 = await manager1.create_task(
             path="/test/path2",
-            to_uri="viking://resources/test2",
+            to_uri="ctx://resources/test2",
             reason="Task 2",
             watch_interval=60.0,
         )
@@ -121,7 +121,7 @@ class TestServiceRestartRecovery:
         task1_id = task1.task_id
         task2_id = task2.task_id
 
-        manager2 = WatchManager(viking_fs=mock_viking_fs)
+        manager2 = WatchManager(ctx_fs=mock_ctx_fs)
         await manager2.initialize()
 
         loaded_task1 = await manager2.get_task(task1_id)
@@ -129,25 +129,25 @@ class TestServiceRestartRecovery:
 
         assert loaded_task1 is not None
         assert loaded_task1.path == "/test/path1"
-        assert loaded_task1.to_uri == "viking://resources/test1"
+        assert loaded_task1.to_uri == "ctx://resources/test1"
         assert loaded_task1.reason == "Task 1"
         assert loaded_task1.watch_interval == 30.0
         assert loaded_task1.is_active is True
 
         assert loaded_task2 is not None
         assert loaded_task2.path == "/test/path2"
-        assert loaded_task2.to_uri == "viking://resources/test2"
+        assert loaded_task2.to_uri == "ctx://resources/test2"
         assert loaded_task2.watch_interval == 60.0
 
     @pytest.mark.asyncio
     async def test_tasks_recovered_from_backup_when_primary_missing(
-        self, mock_viking_fs: MockVikingFS, temp_storage: Path
+        self, mock_ctx_fs: MockVikingFS, temp_storage: Path
     ):
         """Test that tasks can be recovered from backup storage when primary is missing."""
         task_data = {
             "task_id": "backup-task-id",
             "path": "/test/backup",
-            "to_uri": "viking://resources/backup",
+            "to_uri": "ctx://resources/backup",
             "reason": "Backup task",
             "instruction": "",
             "watch_interval": 60.0,
@@ -158,37 +158,37 @@ class TestServiceRestartRecovery:
         }
 
         storage_uri = WatchManager.STORAGE_URI
-        storage_path = mock_viking_fs._uri_to_path(storage_uri)
-        assert mock_viking_fs.agfs.exists(storage_path) is False
+        storage_path = mock_ctx_fs._uri_to_path(storage_uri)
+        assert mock_ctx_fs.agfs.exists(storage_path) is False
 
         bak_uri = WatchManager.STORAGE_BAK_URI
-        bak_path = mock_viking_fs._uri_to_path(bak_uri)
+        bak_path = mock_ctx_fs._uri_to_path(bak_uri)
         data = {"tasks": [task_data], "updated_at": datetime.now().isoformat()}
-        mock_viking_fs.agfs.write(bak_path, json.dumps(data).encode("utf-8"))
+        mock_ctx_fs.agfs.write(bak_path, json.dumps(data).encode("utf-8"))
 
-        manager = WatchManager(viking_fs=mock_viking_fs)
+        manager = WatchManager(ctx_fs=mock_ctx_fs)
         await manager.initialize()
 
         loaded_task = await manager.get_task("backup-task-id")
         assert loaded_task is not None
         assert loaded_task.path == "/test/backup"
-        assert loaded_task.to_uri == "viking://resources/backup"
+        assert loaded_task.to_uri == "ctx://resources/backup"
 
-        assert mock_viking_fs.agfs.exists(storage_path) is True
+        assert mock_ctx_fs.agfs.exists(storage_path) is True
 
     @pytest.mark.asyncio
     async def test_expired_tasks_executed_on_startup(
-        self, mock_viking_fs: MockVikingFS, temp_storage: Path, request_context: RequestContext
+        self, mock_ctx_fs: MockVikingFS, temp_storage: Path, request_context: RequestContext
     ):
         """Test that tasks with next_execution_time in the past are executed on startup."""
-        manager = WatchManager(viking_fs=mock_viking_fs)
+        manager = WatchManager(ctx_fs=mock_ctx_fs)
         await manager.initialize()
 
         past_time = datetime.now() - timedelta(minutes=10)
         task_data = {
             "task_id": "expired-task-id",
             "path": "/test/expired",
-            "to_uri": "viking://resources/expired",
+            "to_uri": "ctx://resources/expired",
             "reason": "Expired task",
             "instruction": "",
             "watch_interval": 60.0,
@@ -199,11 +199,11 @@ class TestServiceRestartRecovery:
         }
 
         storage_uri = WatchManager.STORAGE_URI
-        path = mock_viking_fs._uri_to_path(storage_uri)
+        path = mock_ctx_fs._uri_to_path(storage_uri)
         data = {"tasks": [task_data], "updated_at": datetime.now().isoformat()}
-        mock_viking_fs.agfs.write(path, json.dumps(data).encode("utf-8"))
+        mock_ctx_fs.agfs.write(path, json.dumps(data).encode("utf-8"))
 
-        manager2 = WatchManager(viking_fs=mock_viking_fs)
+        manager2 = WatchManager(ctx_fs=mock_ctx_fs)
         await manager2.initialize()
 
         due_tasks = await manager2.get_due_tasks()
@@ -213,17 +213,17 @@ class TestServiceRestartRecovery:
 
     @pytest.mark.asyncio
     async def test_future_tasks_not_executed_on_startup(
-        self, mock_viking_fs: MockVikingFS, temp_storage: Path
+        self, mock_ctx_fs: MockVikingFS, temp_storage: Path
     ):
         """Test that tasks with future next_execution_time are not executed immediately."""
-        manager = WatchManager(viking_fs=mock_viking_fs)
+        manager = WatchManager(ctx_fs=mock_ctx_fs)
         await manager.initialize()
 
         future_time = datetime.now() + timedelta(hours=1)
         task_data = {
             "task_id": "future-task-id",
             "path": "/test/future",
-            "to_uri": "viking://resources/future",
+            "to_uri": "ctx://resources/future",
             "reason": "Future task",
             "instruction": "",
             "watch_interval": 60.0,
@@ -234,11 +234,11 @@ class TestServiceRestartRecovery:
         }
 
         storage_uri = WatchManager.STORAGE_URI
-        path = mock_viking_fs._uri_to_path(storage_uri)
+        path = mock_ctx_fs._uri_to_path(storage_uri)
         data = {"tasks": [task_data], "updated_at": datetime.now().isoformat()}
-        mock_viking_fs.agfs.write(path, json.dumps(data).encode("utf-8"))
+        mock_ctx_fs.agfs.write(path, json.dumps(data).encode("utf-8"))
 
-        manager2 = WatchManager(viking_fs=mock_viking_fs)
+        manager2 = WatchManager(ctx_fs=mock_ctx_fs)
         await manager2.initialize()
 
         due_tasks = await manager2.get_due_tasks()
@@ -247,17 +247,17 @@ class TestServiceRestartRecovery:
 
     @pytest.mark.asyncio
     async def test_inactive_tasks_not_executed_after_restart(
-        self, mock_viking_fs: MockVikingFS, temp_storage: Path
+        self, mock_ctx_fs: MockVikingFS, temp_storage: Path
     ):
         """Test that inactive tasks are not executed after restart."""
-        manager = WatchManager(viking_fs=mock_viking_fs)
+        manager = WatchManager(ctx_fs=mock_ctx_fs)
         await manager.initialize()
 
         past_time = datetime.now() - timedelta(minutes=10)
         task_data = {
             "task_id": "inactive-task-id",
             "path": "/test/inactive",
-            "to_uri": "viking://resources/inactive",
+            "to_uri": "ctx://resources/inactive",
             "reason": "Inactive task",
             "instruction": "",
             "watch_interval": 60.0,
@@ -268,11 +268,11 @@ class TestServiceRestartRecovery:
         }
 
         storage_uri = WatchManager.STORAGE_URI
-        path = mock_viking_fs._uri_to_path(storage_uri)
+        path = mock_ctx_fs._uri_to_path(storage_uri)
         data = {"tasks": [task_data], "updated_at": datetime.now().isoformat()}
-        mock_viking_fs.agfs.write(path, json.dumps(data).encode("utf-8"))
+        mock_ctx_fs.agfs.write(path, json.dumps(data).encode("utf-8"))
 
-        manager2 = WatchManager(viking_fs=mock_viking_fs)
+        manager2 = WatchManager(ctx_fs=mock_ctx_fs)
         await manager2.initialize()
 
         due_tasks = await manager2.get_due_tasks()
@@ -292,7 +292,7 @@ class TestResourceExistenceCheck:
 
         resource_service = ResourceService(
             vikingdb=MockVikingDB(),
-            viking_fs=MockVikingFS(root_path=str(temp_storage)),
+            ctx_fs=MockVikingFS(root_path=str(temp_storage)),
             resource_processor=resource_processor,
             skill_processor=MockSkillProcessor(),
             watch_scheduler=None,
@@ -300,7 +300,7 @@ class TestResourceExistenceCheck:
 
         scheduler = WatchScheduler(
             resource_service=resource_service,
-            viking_fs=None,
+            ctx_fs=None,
         )
         await scheduler.start()
 
@@ -308,7 +308,7 @@ class TestResourceExistenceCheck:
 
         task = await watch_manager.create_task(
             path="/nonexistent/path/to/resource",
-            to_uri="viking://resources/deleted",
+            to_uri="ctx://resources/deleted",
             reason="Test deleted resource",
             watch_interval=30.0,
         )
@@ -333,7 +333,7 @@ class TestResourceExistenceCheck:
 
         resource_service = ResourceService(
             vikingdb=MockVikingDB(),
-            viking_fs=MockVikingFS(root_path=str(temp_storage)),
+            ctx_fs=MockVikingFS(root_path=str(temp_storage)),
             resource_processor=resource_processor,
             skill_processor=MockSkillProcessor(),
             watch_scheduler=None,
@@ -341,7 +341,7 @@ class TestResourceExistenceCheck:
 
         scheduler = WatchScheduler(
             resource_service=resource_service,
-            viking_fs=None,
+            ctx_fs=None,
         )
         await scheduler.start()
 
@@ -349,7 +349,7 @@ class TestResourceExistenceCheck:
 
         task = await watch_manager.create_task(
             path=str(test_file),
-            to_uri="viking://resources/existing",
+            to_uri="ctx://resources/existing",
             reason="Test existing resource",
             watch_interval=30.0,
         )
@@ -370,7 +370,7 @@ class TestResourceExistenceCheck:
 
         resource_service = ResourceService(
             vikingdb=MockVikingDB(),
-            viking_fs=MockVikingFS(root_path=str(temp_storage)),
+            ctx_fs=MockVikingFS(root_path=str(temp_storage)),
             resource_processor=resource_processor,
             skill_processor=MockSkillProcessor(),
             watch_scheduler=None,
@@ -378,7 +378,7 @@ class TestResourceExistenceCheck:
 
         scheduler = WatchScheduler(
             resource_service=resource_service,
-            viking_fs=None,
+            ctx_fs=None,
         )
         await scheduler.start()
 
@@ -386,7 +386,7 @@ class TestResourceExistenceCheck:
 
         task = await watch_manager.create_task(
             path="https://example.com/resource",
-            to_uri="viking://resources/url",
+            to_uri="ctx://resources/url",
             reason="Test URL resource",
             watch_interval=30.0,
         )
@@ -414,7 +414,7 @@ class TestSchedulerIntegration:
 
         resource_service = ResourceService(
             vikingdb=MockVikingDB(),
-            viking_fs=MockVikingFS(root_path=str(temp_storage)),
+            ctx_fs=MockVikingFS(root_path=str(temp_storage)),
             resource_processor=resource_processor,
             skill_processor=MockSkillProcessor(),
             watch_scheduler=None,
@@ -422,7 +422,7 @@ class TestSchedulerIntegration:
 
         scheduler = WatchScheduler(
             resource_service=resource_service,
-            viking_fs=None,
+            ctx_fs=None,
             check_interval=0.1,
         )
         await scheduler.start()
@@ -431,7 +431,7 @@ class TestSchedulerIntegration:
 
         await watch_manager.create_task(
             path=str(test_file),
-            to_uri="viking://resources/test",
+            to_uri="ctx://resources/test",
             reason="Test task",
             watch_interval=0.001,
         )
@@ -456,7 +456,7 @@ class TestSchedulerIntegration:
 
         resource_service = ResourceService(
             vikingdb=MockVikingDB(),
-            viking_fs=MockVikingFS(root_path=str(temp_storage)),
+            ctx_fs=MockVikingFS(root_path=str(temp_storage)),
             resource_processor=resource_processor,
             skill_processor=MockSkillProcessor(),
             watch_scheduler=None,
@@ -464,7 +464,7 @@ class TestSchedulerIntegration:
 
         scheduler = WatchScheduler(
             resource_service=resource_service,
-            viking_fs=None,
+            ctx_fs=None,
             check_interval=0.1,
         )
         await scheduler.start()
@@ -473,13 +473,13 @@ class TestSchedulerIntegration:
 
         await watch_manager.create_task(
             path=str(test_file1),
-            to_uri="viking://resources/test1",
+            to_uri="ctx://resources/test1",
             reason="Task 1",
             watch_interval=0.001,
         )
         await watch_manager.create_task(
             path=str(test_file2),
-            to_uri="viking://resources/test2",
+            to_uri="ctx://resources/test2",
             reason="Task 2",
             watch_interval=0.001,
         )
@@ -502,7 +502,7 @@ class TestSchedulerIntegration:
 
         resource_service = ResourceService(
             vikingdb=MockVikingDB(),
-            viking_fs=MockVikingFS(root_path=str(temp_storage)),
+            ctx_fs=MockVikingFS(root_path=str(temp_storage)),
             resource_processor=resource_processor,
             skill_processor=MockSkillProcessor(),
             watch_scheduler=None,
@@ -510,7 +510,7 @@ class TestSchedulerIntegration:
 
         scheduler = WatchScheduler(
             resource_service=resource_service,
-            viking_fs=None,
+            ctx_fs=None,
             check_interval=0.1,
         )
         await scheduler.start()
@@ -519,7 +519,7 @@ class TestSchedulerIntegration:
 
         task = await watch_manager.create_task(
             path=str(test_file),
-            to_uri="viking://resources/test",
+            to_uri="ctx://resources/test",
             reason="Inactive task",
             watch_interval=0.001,
         )
@@ -544,15 +544,15 @@ class TestTaskExecutionTimeRecovery:
 
     @pytest.mark.asyncio
     async def test_execution_times_preserved_after_restart(
-        self, mock_viking_fs: MockVikingFS, temp_storage: Path
+        self, mock_ctx_fs: MockVikingFS, temp_storage: Path
     ):
         """Test that execution times are preserved after restart."""
-        manager1 = WatchManager(viking_fs=mock_viking_fs)
+        manager1 = WatchManager(ctx_fs=mock_ctx_fs)
         await manager1.initialize()
 
         task = await manager1.create_task(
             path="/test/path",
-            to_uri="viking://resources/test",
+            to_uri="ctx://resources/test",
             watch_interval=30.0,
         )
 
@@ -563,7 +563,7 @@ class TestTaskExecutionTimeRecovery:
         original_last_exec = task_after_exec.last_execution_time
         original_next_exec = task_after_exec.next_execution_time
 
-        manager2 = WatchManager(viking_fs=mock_viking_fs)
+        manager2 = WatchManager(ctx_fs=mock_ctx_fs)
         await manager2.initialize()
 
         loaded_task = await manager2.get_task(task.task_id)
@@ -575,17 +575,17 @@ class TestTaskExecutionTimeRecovery:
 
     @pytest.mark.asyncio
     async def test_next_execution_time_calculated_correctly_after_restart(
-        self, mock_viking_fs: MockVikingFS, temp_storage: Path
+        self, mock_ctx_fs: MockVikingFS, temp_storage: Path
     ):
         """Test that next execution time is calculated correctly for loaded tasks."""
-        manager = WatchManager(viking_fs=mock_viking_fs)
+        manager = WatchManager(ctx_fs=mock_ctx_fs)
         await manager.initialize()
 
         last_exec = datetime.now() - timedelta(minutes=15)
         task_data = {
             "task_id": "test-task-id",
             "path": "/test/path",
-            "to_uri": "viking://resources/test",
+            "to_uri": "ctx://resources/test",
             "reason": "Test",
             "instruction": "",
             "watch_interval": 30.0,
@@ -596,11 +596,11 @@ class TestTaskExecutionTimeRecovery:
         }
 
         storage_uri = WatchManager.STORAGE_URI
-        path = mock_viking_fs._uri_to_path(storage_uri)
+        path = mock_ctx_fs._uri_to_path(storage_uri)
         data = {"tasks": [task_data], "updated_at": datetime.now().isoformat()}
-        mock_viking_fs.agfs.write(path, json.dumps(data).encode("utf-8"))
+        mock_ctx_fs.agfs.write(path, json.dumps(data).encode("utf-8"))
 
-        manager2 = WatchManager(viking_fs=mock_viking_fs)
+        manager2 = WatchManager(ctx_fs=mock_ctx_fs)
         await manager2.initialize()
 
         loaded_task = await manager2.get_task("test-task-id")

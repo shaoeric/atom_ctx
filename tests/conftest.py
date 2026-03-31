@@ -11,14 +11,14 @@ from typing import AsyncGenerator, Generator
 import pytest
 import pytest_asyncio
 
-from openviking import AsyncOpenViking
+from atom_ctx import AsyncAtomCtx
 
 
 # ── Workaround: local .so may lack AGFS_Grep symbol (new in latest source) ──
 def _patch_agfs_grep_if_missing():
     """Wrap _setup_functions to catch missing AGFS_Grep and skip its binding."""
     try:
-        from openviking.pyagfs.binding_client import BindingLib
+        from atom_ctx.pyagfs.binding_client import BindingLib
 
         _orig_setup = BindingLib._setup_functions
 
@@ -106,7 +106,7 @@ def test_data_dir(temp_dir: Path) -> Path:
 def sample_text_file(temp_dir: Path) -> Path:
     """Create sample text file"""
     file_path = temp_dir / "sample.txt"
-    file_path.write_text("This is a sample text file for testing OpenViking.")
+    file_path.write_text("This is a sample text file for testing AtomCtx.")
     return file_path
 
 
@@ -118,7 +118,7 @@ def sample_markdown_file(temp_dir: Path) -> Path:
         """# Sample Document
 
 ## Introduction
-This is a sample markdown document for testing OpenViking.
+This is a sample markdown document for testing AtomCtx.
 
 ## Features
 - Feature 1: Resource management
@@ -126,7 +126,7 @@ This is a sample markdown document for testing OpenViking.
 - Feature 3: Session management
 
 ## Usage
-Use this document to test various OpenViking functionalities.
+Use this document to test various AtomCtx functionalities.
 """
     )
     return file_path
@@ -139,7 +139,7 @@ def sample_skill_file(temp_dir: Path) -> Path:
     file_path.write_text(
         """---
 name: sample-skill
-description: A sample skill for testing OpenViking skill management
+description: A sample skill for testing AtomCtx skill management
 tags:
   - test
   - sample
@@ -148,7 +148,7 @@ tags:
 # Sample Skill
 
 ## Description
-A sample skill for testing OpenViking skill management.
+A sample skill for testing AtomCtx skill management.
 
 ## Usage
 Use this skill when you need to test skill functionality.
@@ -204,25 +204,25 @@ This is batch file number {i} for testing batch operations.
 
 
 @pytest_asyncio.fixture(scope="function")
-async def client(test_data_dir: Path) -> AsyncGenerator[AsyncOpenViking, None]:
-    """Create initialized OpenViking client"""
-    await AsyncOpenViking.reset()
+async def client(test_data_dir: Path) -> AsyncGenerator[AsyncAtomCtx, None]:
+    """Create initialized AtomCtx client"""
+    await AsyncAtomCtx.reset()
 
-    client = AsyncOpenViking(path=str(test_data_dir))
+    client = AsyncAtomCtx(path=str(test_data_dir))
     await client.initialize()
 
     yield client
 
     await client.close()
-    await AsyncOpenViking.reset()
+    await AsyncAtomCtx.reset()
 
 
 @pytest_asyncio.fixture(scope="function")
-async def uninitialized_client(test_data_dir: Path) -> AsyncGenerator[AsyncOpenViking, None]:
-    """Create uninitialized OpenViking client (for testing initialization flow)"""
-    await AsyncOpenViking.reset()
+async def uninitialized_client(test_data_dir: Path) -> AsyncGenerator[AsyncAtomCtx, None]:
+    """Create uninitialized AtomCtx client (for testing initialization flow)"""
+    await AsyncAtomCtx.reset()
 
-    client = AsyncOpenViking(path=str(test_data_dir))
+    client = AsyncAtomCtx(path=str(test_data_dir))
 
     yield client
 
@@ -230,13 +230,13 @@ async def uninitialized_client(test_data_dir: Path) -> AsyncGenerator[AsyncOpenV
         await client.close()
     except Exception:
         pass
-    await AsyncOpenViking.reset()
+    await AsyncAtomCtx.reset()
 
 
 @pytest_asyncio.fixture(scope="function")
 async def client_with_resource_sync(
-    client: AsyncOpenViking, sample_markdown_file: Path
-) -> AsyncGenerator[tuple[AsyncOpenViking, str], None]:
+    client: AsyncAtomCtx, sample_markdown_file: Path
+) -> AsyncGenerator[tuple[AsyncAtomCtx, str], None]:
     """Create client with resource (sync mode, wait for vectorization)"""
     result = await client.add_resource(
         path=str(sample_markdown_file), reason="Test resource", wait=True
@@ -248,8 +248,8 @@ async def client_with_resource_sync(
 
 @pytest_asyncio.fixture(scope="function")
 async def client_with_resource(
-    client: AsyncOpenViking, sample_markdown_file: Path
-) -> AsyncGenerator[tuple[AsyncOpenViking, str], None]:
+    client: AsyncAtomCtx, sample_markdown_file: Path
+) -> AsyncGenerator[tuple[AsyncAtomCtx, str], None]:
     """Create client with resource (async mode, no wait for vectorization)"""
     result = await client.add_resource(path=str(sample_markdown_file), reason="Test resource")
     uri = result.get("root_uri", "")

@@ -1,4 +1,4 @@
-config_path = "/usr/local/lib/python3.11/site-packages/openviking/server/config.py"
+config_path = "/usr/local/lib/python3.11/site-packages/atom_ctx/server/config.py"
 print(f"Reading {config_path}...")
 print("=" * 80)
 

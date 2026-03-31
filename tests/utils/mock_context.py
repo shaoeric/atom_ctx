@@ -3,8 +3,8 @@
 
 """Mock context utilities for testing"""
 
-from openviking.server.identity import RequestContext, Role
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 def make_test_user(

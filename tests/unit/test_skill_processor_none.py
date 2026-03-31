@@ -9,7 +9,7 @@ skill data is None, instead of falling through to the generic
 
 import pytest
 
-from openviking.utils.skill_processor import SkillProcessor
+from atom_ctx.utils.skill_processor import SkillProcessor
 
 
 class TestParseSkillNoneData:

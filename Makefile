@@ -1,10 +1,10 @@
-# Makefile for OpenViking
+# Makefile for AtomCtx
 
 # Variables
 PYTHON ?= python3
 SETUP_PY := setup.py
 AGFS_SERVER_DIR := third_party/agfs/agfs-server
-OV_CLI_DIR := crates/ov_cli
+CTX_CLI_DIR := crates/ctx_cli
 
 # Dependency Versions
 MIN_PYTHON_VERSION := 3.10
@@ -19,10 +19,10 @@ CLEAN_DIRS := \
 	build/ \
 	dist/ \
 	*.egg-info/ \
-	openviking/bin/ \
-	openviking/lib/ \
+	atom_ctx/bin/ \
+	atom_ctx/lib/ \
 	$(AGFS_SERVER_DIR)/build/ \
-	$(OV_CLI_DIR)/target/ \
+	$(CTX_CLI_DIR)/target/ \
 	src/cmake_build/ \
 	.pytest_cache/ \
 	.coverage \
@@ -35,7 +35,7 @@ all: build
 
 help:
 	@echo "Available targets:"
-	@echo "  build       - Build AGFS, ov CLI, and C++ extensions using setup.py"
+	@echo "  build       - Build AGFS, ctx CLI, and C++ extensions using setup.py"
 	@echo "  clean       - Remove build artifacts and temporary files"
 	@echo "  check-deps  - Check if required dependencies (Go, Rust, CMake, etc.) are installed"
 	@echo "  help        - Show this help message"

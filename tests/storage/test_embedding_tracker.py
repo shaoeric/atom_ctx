@@ -8,7 +8,7 @@ import time
 
 import pytest
 
-from openviking.storage.queuefs.embedding_tracker import EmbeddingTaskTracker
+from atom_ctx.storage.queuefs.embedding_tracker import EmbeddingTaskTracker
 
 
 class _LoopThread:

@@ -37,7 +37,7 @@ curl -X POST http://localhost:1933/api/v1/sessions \
 **CLI**
 
 ```bash
-openviking session new
+atom_ctx session new
 ```
 
 **响应**
@@ -62,7 +62,7 @@ openviking session new
 **Python SDK (Embedded / HTTP)**
 
 ```python
-sessions = client.ls("viking://session/")
+sessions = client.ls("ctx://session/")
 for s in sessions:
     print(f"{s['name']}")
 ```
@@ -81,7 +81,7 @@ curl -X GET http://localhost:1933/api/v1/sessions \
 **CLI**
 
 ```bash
-openviking session list
+atom_ctx session list
 ```
 
 **响应**
@@ -135,7 +135,7 @@ curl -X GET http://localhost:1933/api/v1/sessions/a1b2c3d4 \
 **CLI**
 
 ```bash
-openviking session get a1b2c3d4
+atom_ctx session get a1b2c3d4
 ```
 
 **响应**
@@ -228,7 +228,7 @@ curl -X GET "http://localhost:1933/api/v1/sessions/a1b2c3d4/context?token_budget
 **CLI**
 
 ```bash
-ov session get-session-context a1b2c3d4 --token-budget 128000
+ctx session get-session-context a1b2c3d4 --token-budget 128000
 ```
 
 **响应**
@@ -323,7 +323,7 @@ curl -X GET "http://localhost:1933/api/v1/sessions/a1b2c3d4/archives/archive_002
 **CLI**
 
 ```bash
-ov session get-session-archive a1b2c3d4 archive_002
+ctx session get-session-archive a1b2c3d4 archive_002
 ```
 
 **响应**
@@ -374,7 +374,7 @@ ov session get-session-archive a1b2c3d4 archive_002
 **Python SDK (Embedded / HTTP)**
 
 ```python
-client.rm("viking://session/a1b2c3d4/", recursive=True)
+client.rm("ctx://session/a1b2c3d4/", recursive=True)
 ```
 
 **HTTP API**
@@ -391,7 +391,7 @@ curl -X DELETE http://localhost:1933/api/v1/sessions/a1b2c3d4 \
 **CLI**
 
 ```bash
-openviking session delete a1b2c3d4
+atom_ctx session delete a1b2c3d4
 ```
 
 **响应**
@@ -429,14 +429,14 @@ openviking session delete a1b2c3d4
 **Part 类型（Python SDK）**
 
 ```python
-from openviking.message import TextPart, ContextPart, ToolPart
+from atom_ctx.message import TextPart, ContextPart, ToolPart
 
 # 文本内容
 TextPart(text="Hello, how can I help?")
 
 # 上下文引用
 ContextPart(
-    uri="viking://resources/docs/auth/",
+    uri="ctx://resources/docs/auth/",
     context_type="resource",  # "resource"、"memory" 或 "skill"
     abstract="Authentication guide..."
 )
@@ -445,7 +445,7 @@ ContextPart(
 ToolPart(
     tool_id="call_123",
     tool_name="search_web",
-    skill_uri="viking://skills/search-web/",
+    skill_uri="ctx://skills/search-web/",
     tool_input={"query": "OAuth best practices"},
     tool_output="",
     tool_status="pending"  # "pending"、"running"、"completed"、"error"
@@ -455,7 +455,7 @@ ToolPart(
 **Python SDK (Embedded / HTTP)**
 
 ```python
-from openviking.message import TextPart
+from atom_ctx.message import TextPart
 
 session = client.session()
 
@@ -500,7 +500,7 @@ curl -X POST http://localhost:1933/api/v1/sessions/a1b2c3d4/messages \
     "role": "assistant",
     "parts": [
       {"type": "text", "text": "Based on the authentication guide..."},
-      {"type": "context", "uri": "viking://resources/docs/auth/", "context_type": "resource", "abstract": "Auth guide"}
+      {"type": "context", "uri": "ctx://resources/docs/auth/", "context_type": "resource", "abstract": "Auth guide"}
     ]
   }'
 
@@ -520,7 +520,7 @@ curl -X POST http://localhost:1933/api/v1/sessions/a1b2c3d4/messages \
 **CLI**
 
 ```bash
-openviking session add-message a1b2c3d4 --role user --content "How do I authenticate users?"
+atom_ctx session add-message a1b2c3d4 --role user --content "How do I authenticate users?"
 ```
 
 **响应**
@@ -556,11 +556,11 @@ session = client.session(session_id="a1b2c3d4")
 session.load()
 
 # 记录使用的上下文
-session.used(contexts=["viking://resources/docs/auth/"])
+session.used(contexts=["ctx://resources/docs/auth/"])
 
 # 记录使用的技能
 session.used(skill={
-    "uri": "viking://skills/search-web/",
+    "uri": "ctx://skills/search-web/",
     "input": {"query": "OAuth"},
     "output": "Results...",
     "success": True
@@ -578,13 +578,13 @@ POST /api/v1/sessions/{session_id}/used
 curl -X POST http://localhost:1933/api/v1/sessions/a1b2c3d4/used \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
-  -d '{"contexts": ["viking://resources/docs/auth/"]}'
+  -d '{"contexts": ["ctx://resources/docs/auth/"]}'
 
 # 记录使用的技能
 curl -X POST http://localhost:1933/api/v1/sessions/a1b2c3d4/used \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
-  -d '{"skill": {"uri": "viking://skills/search-web/", "input": {"query": "OAuth"}, "output": "Results...", "success": true}}'
+  -d '{"skill": {"uri": "ctx://skills/search-web/", "input": {"query": "OAuth"}, "output": "Results...", "success": true}}'
 ```
 
 **响应**
@@ -655,7 +655,7 @@ curl -X GET http://localhost:1933/api/v1/tasks/{task_id} \
 **CLI**
 
 ```bash
-openviking session commit a1b2c3d4
+atom_ctx session commit a1b2c3d4
 ```
 
 **响应**
@@ -667,7 +667,7 @@ openviking session commit a1b2c3d4
     "session_id": "a1b2c3d4",
     "status": "accepted",
     "task_id": "uuid-xxx",
-    "archive_uri": "viking://session/a1b2c3d4/history/archive_001",
+    "archive_uri": "ctx://session/a1b2c3d4/history/archive_001",
     "archived": true
   }
 }
@@ -727,7 +727,7 @@ curl -X GET http://localhost:1933/api/v1/tasks/uuid-xxx \
     "status": "completed",
     "result": {
       "session_id": "a1b2c3d4",
-      "archive_uri": "viking://session/a1b2c3d4/history/archive_001",
+      "archive_uri": "ctx://session/a1b2c3d4/history/archive_001",
       "memories_extracted": 5,
       "active_count_updated": 2
     }
@@ -741,7 +741,7 @@ curl -X GET http://localhost:1933/api/v1/tasks/uuid-xxx \
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
-| uri | str | 会话 Viking URI（`viking://session/{session_id}/`） |
+| uri | str | 会话 Ctx URI（`ctx://session/{session_id}/`） |
 | messages | List[Message] | 会话中的当前消息 |
 | stats | SessionStats | 会话统计信息 |
 | summary | str | 压缩摘要 |
@@ -752,7 +752,7 @@ curl -X GET http://localhost:1933/api/v1/tasks/uuid-xxx \
 ## 会话存储结构
 
 ```
-viking://session/{session_id}/
+ctx://session/{session_id}/
 +-- .abstract.md              # L0：会话概览
 +-- .overview.md              # L1：关键决策
 +-- messages.jsonl            # 当前消息
@@ -790,11 +790,11 @@ viking://session/{session_id}/
 **Python SDK (Embedded / HTTP)**
 
 ```python
-import openviking as ov
-from openviking.message import TextPart, ContextPart
+import atom_ctx as ctx
+from atom_ctx.message import TextPart, ContextPart
 
 # 初始化客户端
-client = ov.OpenViking(path="./my_data")
+client = ctx.AtomCtx(path="./my_data")
 client.initialize()
 
 # 创建新会话
@@ -864,7 +864,7 @@ curl -X POST http://localhost:1933/api/v1/sessions/a1b2c3d4/messages \
 curl -X POST http://localhost:1933/api/v1/sessions/a1b2c3d4/used \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
-  -d '{"contexts": ["viking://resources/docs/embedding/"]}'
+  -d '{"contexts": ["ctx://resources/docs/embedding/"]}'
 
 # 步骤 6：提交会话（立即返回 task_id）
 curl -X POST http://localhost:1933/api/v1/sessions/a1b2c3d4/commit \

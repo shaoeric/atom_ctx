@@ -4,15 +4,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from openviking.async_client import AsyncOpenViking
-from openviking_cli.utils.config.open_viking_config import OpenVikingConfigSingleton
+from atom_ctx.async_client import AsyncAtomCtx
+from atom_ctx_cli.utils.config.ctx_config import AtomCtxConfigSingleton
 from tests.utils.mock_agfs import MockLocalAGFS
 
 
 @pytest.fixture
 def test_config(tmp_path):
     """Create a temporary config file."""
-    config_path = tmp_path / "ov.conf"
+    config_path = tmp_path / "ctx.conf"
     workspace = tmp_path / "workspace"
     workspace.mkdir()
 
@@ -33,30 +33,30 @@ def test_config(tmp_path):
 
 @pytest.fixture
 async def client(test_config, tmp_path):
-    """Initialize AsyncOpenViking client with mocks."""
+    """Initialize AsyncAtomCtx client with mocks."""
 
     # Set config env var
-    os.environ["OPENVIKING_CONFIG_FILE"] = str(test_config)
+    os.environ["CTX_CONFIG_FILE"] = str(test_config)
 
     # Reset Singletons
-    OpenVikingConfigSingleton._instance = None
-    await AsyncOpenViking.reset()
+    AtomCtxConfigSingleton._instance = None
+    await AsyncAtomCtx.reset()
 
     mock_agfs = MockLocalAGFS(root_path=tmp_path / "mock_agfs_root")
 
     # Mock LLM/VLM services AND AGFS
     with (
-        patch("openviking.utils.summarizer.Summarizer.summarize") as mock_summarize,
-        patch("openviking.utils.index_builder.IndexBuilder.build_index") as mock_build_index,
-        patch("openviking.utils.agfs_utils.create_agfs_client", return_value=mock_agfs),
-        patch("openviking.agfs_manager.AGFSManager.start"),
-        patch("openviking.agfs_manager.AGFSManager.stop"),
+        patch("atom_ctx.utils.summarizer.Summarizer.summarize") as mock_summarize,
+        patch("atom_ctx.utils.index_builder.IndexBuilder.build_index") as mock_build_index,
+        patch("atom_ctx.utils.agfs_utils.create_agfs_client", return_value=mock_agfs),
+        patch("atom_ctx.agfs_manager.AGFSManager.start"),
+        patch("atom_ctx.agfs_manager.AGFSManager.stop"),
     ):
         # Make mocks return success
         mock_summarize.return_value = {"status": "success"}
         mock_build_index.return_value = {"status": "success"}
 
-        client = AsyncOpenViking(path=str(test_config.parent))
+        client = AsyncAtomCtx(path=str(test_config.parent))
         await client.initialize()
 
         yield client
@@ -64,9 +64,9 @@ async def client(test_config, tmp_path):
         await client.close()
 
         # Cleanup
-        OpenVikingConfigSingleton._instance = None
-        if "OPENVIKING_CONFIG_FILE" in os.environ:
-            del os.environ["OPENVIKING_CONFIG_FILE"]
+        AtomCtxConfigSingleton._instance = None
+        if "CTX_CONFIG_FILE" in os.environ:
+            del os.environ["CTX_CONFIG_FILE"]
 
 
 @pytest.mark.asyncio
@@ -76,9 +76,9 @@ async def test_add_resource_indexing_logic(test_config, tmp_path):
     Uses Mock AGFS but tests the client logic.
     """
     # Set config env var
-    os.environ["OPENVIKING_CONFIG_FILE"] = str(test_config)
-    OpenVikingConfigSingleton._instance = None
-    await AsyncOpenViking.reset()
+    os.environ["CTX_CONFIG_FILE"] = str(test_config)
+    AtomCtxConfigSingleton._instance = None
+    await AsyncAtomCtx.reset()
 
     # Create dummy resource
     resource_file = tmp_path / "test_doc.md"
@@ -97,31 +97,31 @@ async def test_add_resource_indexing_logic(test_config, tmp_path):
     # Create mock context tree for Phase 2/3 (tree builder)
     mock_context_tree = MagicMock()
     mock_context_tree.root = MagicMock()
-    mock_context_tree.root.uri = "viking://resources/test_doc"
+    mock_context_tree.root.uri = "ctx://resources/test_doc"
     mock_context_tree.root.temp_uri = None
 
     # Patch the Summarizer and IndexBuilder to verify calls
     with (
         patch(
-            "openviking.utils.summarizer.Summarizer.summarize", new_callable=AsyncMock
+            "atom_ctx.utils.summarizer.Summarizer.summarize", new_callable=AsyncMock
         ) as mock_summarize,
-        patch("openviking.utils.agfs_utils.create_agfs_client", return_value=mock_agfs),
-        patch("openviking.agfs_manager.AGFSManager.start"),
-        patch("openviking.agfs_manager.AGFSManager.stop"),
+        patch("atom_ctx.utils.agfs_utils.create_agfs_client", return_value=mock_agfs),
+        patch("atom_ctx.agfs_manager.AGFSManager.start"),
+        patch("atom_ctx.agfs_manager.AGFSManager.stop"),
         patch(
-            "openviking.utils.media_processor.UnifiedResourceProcessor.process",
+            "atom_ctx.utils.media_processor.UnifiedResourceProcessor.process",
             new_callable=AsyncMock,
             return_value=mock_parse_result,
         ),
         patch(
-            "openviking.parse.tree_builder.TreeBuilder.finalize_from_temp",
+            "atom_ctx.parse.tree_builder.TreeBuilder.finalize_from_temp",
             new_callable=AsyncMock,
             return_value=mock_context_tree,
         ),
     ):
         mock_summarize.return_value = {"status": "success"}
 
-        client = AsyncOpenViking(path=str(test_config.parent))
+        client = AsyncAtomCtx(path=str(test_config.parent))
         await client.initialize()
 
         try:
@@ -157,6 +157,6 @@ async def test_add_resource_indexing_logic(test_config, tmp_path):
 
         finally:
             await client.close()
-            OpenVikingConfigSingleton._instance = None
-            if "OPENVIKING_CONFIG_FILE" in os.environ:
-                del os.environ["OPENVIKING_CONFIG_FILE"]
+            AtomCtxConfigSingleton._instance = None
+            if "CTX_CONFIG_FILE" in os.environ:
+                del os.environ["CTX_CONFIG_FILE"]

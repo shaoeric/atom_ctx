@@ -1,10 +1,10 @@
 # 快速开始
 
-5 分钟上手 OpenViking。
+5 分钟上手 AtomCtx。
 
 ## 前置要求
 
-在开始使用 OpenViking 之前，请确保您的环境满足以下要求：
+在开始使用 AtomCtx 之前，请确保您的环境满足以下要求：
 
 - **Python 版本**：3.10 或更高版本
 - **操作系统**：Linux、macOS、Windows
@@ -12,37 +12,37 @@
 
 ## 安装与启动
 
-OpenViking 支持通过 Python Package 安装作为本地库使用，也支持通过 Docker 快速启动独立服务。
+AtomCtx 支持通过 Python Package 安装作为本地库使用，也支持通过 Docker 快速启动独立服务。
 
 ### 方式一：通过 pip 安装 (作为本地库)
 
 ```bash
-pip install openviking --upgrade --force-reinstall
+pip install atom-ctx --upgrade --force-reinstall
 ```
 
 ### 方式二：通过 Docker 启动 (作为独立服务)
 
-如果你希望将 OpenViking 作为独立的服务运行，推荐使用 Docker。
+如果你希望将 AtomCtx 作为独立的服务运行，推荐使用 Docker。
 
 1. **准备配置文件与数据目录**
-   在宿主机上创建数据目录，并准备好 `ov.conf` 配置文件（配置项参考下方“配置环境”章节）：
+   在宿主机上创建数据目录，并准备好 `ctx.conf` 配置文件（配置项参考下方“配置环境”章节）：
    ```bash
-   mkdir -p ~/.openviking/data
-   touch ~/.openviking/ov.conf
+   mkdir -p ~/.ctx/data
+   touch ~/.ctx/ctx.conf
    ```
 
 2. **使用 Docker Compose 启动**
    创建 `docker-compose.yml` 文件：
    ```yaml
    services:
-     openviking:
-       image: ghcr.io/volcengine/openviking:main
-       container_name: openviking
+     atom_ctx:
+       image: ghcr.io/volcengine/atom_ctx:main
+       container_name: atom_ctx
        ports:
          - "1933:1933"
        volumes:
-         - ~/.openviking/ov.conf:/app/ov.conf
-         - ~/.openviking/data:/app/data
+         - ~/.ctx/ctx.conf:/app/ctx.conf
+         - ~/.ctx/data:/app/data
        restart: unless-stopped
    ```
    然后在同目录下执行启动命令：
@@ -52,30 +52,30 @@ pip install openviking --upgrade --force-reinstall
 
 > **💡 Mac 本地网络访问提示 (Connection reset 报错)：**
 >
-> 默认情况下，OpenViking 为了安全仅监听 `127.0.0.1`。如果你在 Mac 上使用 Docker，宿主机可能无法直接通过 `localhost:1933` 访问。
+> 默认情况下，AtomCtx 为了安全仅监听 `127.0.0.1`。如果你在 Mac 上使用 Docker，宿主机可能无法直接通过 `localhost:1933` 访问。
 > 
 > **推荐解决方案：使用 socat 端口转发（无需修改配置）：**
 > 在你的 `docker-compose.yml` 中覆盖默认启动命令，利用 `socat` 在容器内部进行端口转发：
 > ```yaml
 > services:
->   openviking:
->     image: ghcr.io/volcengine/openviking:main
+>   atom_ctx:
+>     image: ghcr.io/volcengine/atom_ctx:main
 >     ports:
 >       - "1933:1934" # 将宿主机 1933 映射到容器 1934
 >     volumes:
->       - ~/.openviking/ov.conf:/app/ov.conf
->       - ~/.openviking/data:/app/data
->     command: /bin/sh -c "apt-get update && apt-get install -y socat && socat TCP-LISTEN:1934,fork,reuseaddr TCP:127.0.0.1:1933 & openviking-server"
+>       - ~/.ctx/ctx.conf:/app/ctx.conf
+>       - ~/.ctx/data:/app/data
+>     command: /bin/sh -c "apt-get update && apt-get install -y socat && socat TCP-LISTEN:1934,fork,reuseaddr TCP:127.0.0.1:1933 & ctx-server"
 > ```
 > 这样即可完美解决 Mac 宿主机的访问问题。
 
 ## 模型准备
 
-OpenViking 需要以下模型能力：
+AtomCtx 需要以下模型能力：
 - **VLM 模型**：用于图像和内容理解
 - **Embedding 模型**：用于向量化和语义检索
 
-OpenViking 支持多种模型服务：
+AtomCtx 支持多种模型服务：
 - **火山引擎（豆包模型）**：推荐使用，成本低、性能好，新用户有免费额度。如需购买和开通，请参考：[火山引擎购买指南](../guides/02-volcengine-purchase-guide.md)
 - **OpenAI 模型**：支持 GPT-4V 等 VLM 模型和 OpenAI Embedding 模型
 - **其他自定义模型服务**：支持兼容 OpenAI API 格式的模型服务
@@ -84,7 +84,7 @@ OpenViking 支持多种模型服务：
 
 ### 配置文件模版
 
-创建配置文件 `~/.openviking/ov.conf`：
+创建配置文件 `~/.ctx/ctx.conf`：
 
 ```json
 {
@@ -110,12 +110,12 @@ OpenViking 支持多种模型服务：
 
 ### 设置环境变量
 
-配置文件放在默认路径 `~/.openviking/ov.conf` 时，无需额外设置，OpenViking 会自动加载。
+配置文件放在默认路径 `~/.ctx/ctx.conf` 时，无需额外设置，AtomCtx 会自动加载。
 
 如果配置文件放在其他位置，需要通过环境变量指定：
 
 ```bash
-export OPENVIKING_CONFIG_FILE=/path/to/your/ov.conf
+export CTX_CONFIG_FILE=/path/to/your/ctx.conf
 ```
 
 ## 运行第一个示例
@@ -125,10 +125,10 @@ export OPENVIKING_CONFIG_FILE=/path/to/your/ov.conf
 创建 `example.py`：
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-# Initialize OpenViking client with data directory
-client = ov.OpenViking(path="./data")
+# Initialize AtomCtx client with data directory
+client = ctx.AtomCtx(path="./data")
 
 try:
     # Initialize the client
@@ -136,7 +136,7 @@ try:
 
     # Add resource (supports URL, file, or directory)
     add_result = client.add_resource(
-        path="https://raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md"
+        path="https://raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md"
     )
     root_uri = add_result['root_uri']
 
@@ -160,7 +160,7 @@ try:
     print(f"Abstract:\n{abstract}\n\nOverview:\n{overview}\n")
 
     # Perform semantic search
-    results = client.find("what is openviking", target_uri=root_uri)
+    results = client.find("what is atom_ctx", target_uri=root_uri)
     print("Search results:")
     for r in results.resources:
         print(f"  {r.uri} (score: {r.score:.4f})")
@@ -194,15 +194,15 @@ Overview:
 ...
 
 Search results:
-  viking://resources/... (score: 0.8523)
+  ctx://resources/... (score: 0.8523)
   ...
 ```
 
-恭喜！你已成功运行 OpenViking。
+恭喜！你已成功运行 AtomCtx。
 
 ## 服务端模式
 
-想要将 OpenViking 作为共享服务运行？请参见 [快速开始：服务端模式](03-quickstart-server.md)。
+想要将 AtomCtx 作为共享服务运行？请参见 [快速开始：服务端模式](03-quickstart-server.md)。
 
 ## 下一步
 

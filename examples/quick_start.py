@@ -1,14 +1,14 @@
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.OpenViking(path="./data")
-# client = ov.SyncHTTPClient(url="http://localhost:1933")  # HTTP mode: connect to OpenViking Server
+client = ctx.AtomCtx(path="./data")
+# client = ctx.SyncHTTPClient(url="http://localhost:1933")  # HTTP mode: connect to AtomCtx Server
 
 try:
     client.initialize()
 
     # Add resource (URL, file, or directory)
     res = client.add_resource(
-        path="https://raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md"
+        path="https://raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md"
     )
     root_uri = res["root_uri"]
     res = client.ls(root_uri)  # Explore resource tree
@@ -26,7 +26,7 @@ try:
     overview = client.overview(root_uri)  # Get overview
     print(f"Abstract:\n{abstract}\n\nOverview:\n{overview}\n")
 
-    results = client.find("what is openviking", target_uri=root_uri)  # Semantic search
+    results = client.find("what is atom_ctx", target_uri=root_uri)  # Semantic search
     print("Search results:")
     for r in results.resources:
         print(f"  {r.uri} (score: {r.score:.4f})")

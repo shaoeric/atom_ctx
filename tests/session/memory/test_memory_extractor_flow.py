@@ -18,8 +18,8 @@ from dataclasses import dataclass
 import logging
 import pytest
 
-# 让 openviking logger 的日志 propagate 到 pytest
-for logger_name in ["openviking", "openviking.session.memory"]:
+# 让 atom_ctx logger 的日志 propagate 到 pytest
+for logger_name in ["atom_ctx", "atom_ctx.session.memory"]:
     logger = logging.getLogger(logger_name)
     logger.propagate = True
     logger.setLevel(logging.DEBUG)
@@ -27,16 +27,16 @@ for logger_name in ["openviking", "openviking.session.memory"]:
 # Module logger for this test
 logger = logging.getLogger(__name__)
 
-from openviking.message import Message, TextPart
-from openviking.server.identity import RequestContext, Role
-from openviking.session.memory import (
+from atom_ctx.message import Message, TextPart
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx.session.memory import (
     MemoryOperations,
     ExtractLoop,
     MemoryUpdater,
     MemoryUpdateResult,
 )
-from openviking_cli.session.user_id import UserIdentifier
-from openviking_cli.utils.config import get_openviking_config, initialize_openviking_config
+from atom_ctx_cli.session.user_id import UserIdentifier
+from atom_ctx_cli.utils.config import get_atom_ctx_config, initialize_atom_ctx_config
 
 
 class MockVikingFS:
@@ -49,7 +49,7 @@ class MockVikingFS:
 
     def _get_parent_uri(self, uri: str) -> str:
         """Get parent directory URI."""
-        # Handle URIs like "viking://agent/default/memories/cards/file.md"
+        # Handle URIs like "ctx://agent/default/memories/cards/file.md"
         parts = uri.split("/")
         if len(parts) <= 3:
             return uri  # Root or protocol level
@@ -344,7 +344,7 @@ def create_test_conversation() -> List[Message]:
     msg1 = Message(
         id="msg1",
         role="user",
-        parts=[TextPart("We're starting the memory extraction feature for the OpenViking project today. This project is an Agent-native context database.")],
+        parts=[TextPart("We're starting the memory extraction feature for the AtomCtx project today. This project is an Agent-native context database.")],
     )
     messages.append(msg1)
 
@@ -380,8 +380,8 @@ def create_test_conversation() -> List[Message]:
         id="msg5",
         role="user",
         parts=[TextPart(
-            "Cards are stored in viking://agent/{agent_space}/memories/cards, each card has name and content fields. "
-            "Events are stored in viking://user/{user_space}/memories/events, each event has event_name, event_time, and content fields. "
+            "Cards are stored in ctx://agent/{agent_space}/memories/cards, each card has name and content fields. "
+            "Events are stored in ctx://user/{user_space}/memories/events, each event has event_name, event_time, and content fields. "
             "Just now, we also decided to add diff-match-patch to print memory modification differences."
         )],
     )
@@ -393,10 +393,10 @@ def create_test_conversation() -> List[Message]:
 def create_existing_memories_content() -> Dict[str, str]:
     """Create existing memory content for update test with cards and events."""
     return {
-        "viking://agent/default/memories/cards/openviking_project.md": """# OpenViking Project
+        "ctx://agent/default/memories/cards/atom_ctx_project.md": """# AtomCtx Project
 
 ## Overview
-OpenViking is an Agent-native context database.
+AtomCtx is an Agent-native context database.
 
 ## Technical Approach
 - Uses ExtractLoop pattern
@@ -405,10 +405,10 @@ OpenViking is an Agent-native context database.
 
 <!-- MEMORY_FIELDS
 {
-  "name": "openviking_project"
+  "name": "atom_ctx_project"
 }
 -->""",
-        "viking://agent/default/memories/cards/extract_loop.md": """# ExtractLoop Pattern
+        "ctx://agent/default/memories/cards/extract_loop.md": """# ExtractLoop Pattern
 
 ## Overview
 ExtractLoop is an orchestrator pattern for memory extraction.
@@ -423,7 +423,7 @@ ExtractLoop is an orchestrator pattern for memory extraction.
   "name": "extract_loop"
 }
 -->""",
-        "viking://user/default/memories/events/2026-03-20_Started_memory_extraction_feature_development.md": """# Event: Started memory extraction feature development
+        "ctx://user/default/memories/events/2026-03-20_Started_memory_extraction_feature_development.md": """# Event: Started memory extraction feature development
 
 ## Event Name
 Started memory extraction feature development
@@ -432,7 +432,7 @@ Started memory extraction feature development
 2026-03-20
 
 ## Content
-Today we started working on the memory extraction feature for the OpenViking project. Decided to use the ExtractLoop pattern.
+Today we started working on the memory extraction feature for the AtomCtx project. Decided to use the ExtractLoop pattern.
 
 
 <!-- MEMORY_FIELDS
@@ -451,13 +451,13 @@ def create_update_conversation() -> List[Message]:
 
     messages = []
 
-    # Message 1: User corrects and adds details to existing OpenViking project card
+    # Message 1: User corrects and adds details to existing AtomCtx project card
     msg1 = Message(
         id="msg1",
         role="user",
         parts=[TextPart(
-            "I just looked at our OpenViking project card and need to correct it: "
-            "OpenViking is not just a context database, it's an Agent-native memory system, "
+            "I just looked at our AtomCtx project card and need to correct it: "
+            "AtomCtx is not just a context database, it's an Agent-native memory system, "
             "supporting multi-level memory (L0/L1/L2) and incremental updates. "
             "Also, in the technical approach section, we not only use the ExtractLoop pattern, "
             "but also need to support schema-driven memory extraction."
@@ -500,9 +500,9 @@ class TestMemoryExtractorFlow:
 
 
         # Only mock VikingFS, everything else is real!
-        viking_fs = MockVikingFS()
-        initialize_openviking_config()
-        config = get_openviking_config()
+        ctx_fs = MockVikingFS()
+        initialize_atom_ctx_config()
+        config = get_atom_ctx_config()
         vlm = config.vlm.get_vlm_instance()
         print(f'vlm={vlm}')
         user = UserIdentifier.the_default_user()
@@ -526,12 +526,12 @@ class TestMemoryExtractorFlow:
         # Initialize orchestrator with real VLM!
         orchestrator = ExtractLoop(
             vlm=vlm,
-            viking_fs=viking_fs,
+            ctx_fs=ctx_fs,
             ctx=ctx,
         )
 
         # Take snapshot BEFORE running orchestrator to capture all changes
-        viking_fs.snapshot()
+        ctx_fs.snapshot()
 
         # Actually run the orchestrator with real LLM calls!
         operations, tools_used = await orchestrator.run(
@@ -550,8 +550,8 @@ class TestMemoryExtractorFlow:
         print(f"  使用的工具：{len(tools_used)}")
         print("-" * 60)
 
-        # Now test MemoryUpdater with the operations, mock get_viking_fs
-        with patch('openviking.session.memory.memory_updater.get_viking_fs', return_value=viking_fs):
+        # Now test MemoryUpdater with the operations, mock get_ctx_fs
+        with patch('atom_ctx.session.memory.memory_updater.get_ctx_fs', return_value=ctx_fs):
             updater = MemoryUpdater()
             # Pass the registry from orchestrator
             result = await updater.apply_operations(operations, ctx, registry=orchestrator.registry)
@@ -566,7 +566,7 @@ class TestMemoryExtractorFlow:
             print("-" * 60)
 
             # Print diff since snapshot
-            diff = viking_fs.diff_since_snapshot()
+            diff = ctx_fs.diff_since_snapshot()
             print_diff(diff)
 
         # Check that at least something happened (could be write/edit/delete depending on LLM)
@@ -580,19 +580,19 @@ class TestMemoryExtractorFlow:
     async def test_update_existing_memories_with_real_llm(self):
         """Test updating existing cards and events with real LLM (only VikingFS is mocked)."""
         # Check if VLM is available
-        initialize_openviking_config()
-        config = get_openviking_config()
+        initialize_atom_ctx_config()
+        config = get_atom_ctx_config()
         vlm = config.vlm.get_vlm_instance()
         print(f'vlm={vlm}')
 
         # Only mock VikingFS, everything else is real!
-        viking_fs = MockVikingFS()
+        ctx_fs = MockVikingFS()
         user = UserIdentifier.the_default_user()
         ctx = RequestContext(user=user, role=Role.ROOT)
 
         existing_memories = create_existing_memories_content()
         for uri, content in existing_memories.items():
-            await viking_fs.write_file(uri, content)
+            await ctx_fs.write_file(uri, content)
 
         # Create test conversation for updating
         messages = create_update_conversation()
@@ -618,12 +618,12 @@ class TestMemoryExtractorFlow:
         # Initialize orchestrator with real VLM!
         orchestrator = ExtractLoop(
             vlm=vlm,
-            viking_fs=viking_fs,
+            ctx_fs=ctx_fs,
             ctx=ctx,
         )
 
         # Take snapshot BEFORE running orchestrator to capture all changes
-        viking_fs.snapshot()
+        ctx_fs.snapshot()
 
         # Actually run the orchestrator with real LLM calls!
         operations, tools_used = await orchestrator.run(
@@ -669,8 +669,8 @@ class TestMemoryExtractorFlow:
 
         print("=" * 60)
 
-        # Now test MemoryUpdater with the operations, mock get_viking_fs
-        with patch('openviking.session.memory.memory_updater.get_viking_fs', return_value=viking_fs):
+        # Now test MemoryUpdater with the operations, mock get_ctx_fs
+        with patch('atom_ctx.session.memory.memory_updater.get_ctx_fs', return_value=ctx_fs):
             updater = MemoryUpdater()
             # Pass the registry from orchestrator
             result = await updater.apply_operations(operations, ctx, registry=orchestrator.registry)
@@ -685,13 +685,13 @@ class TestMemoryExtractorFlow:
             print("=" * 60)
 
             # Print diff since snapshot
-            diff = viking_fs.diff_since_snapshot()
+            diff = ctx_fs.diff_since_snapshot()
             print_diff(diff)
 
         # Check updated content
         print("\n更新后的记忆内容：")
         for uri in existing_memories.keys():
-            new_content = await viking_fs.read_file(uri)
+            new_content = await ctx_fs.read_file(uri)
             if new_content != existing_memories.get(uri, ""):
                 print(f"\n--- {uri} (已更新) ---")
                 print(new_content[:500] + "..." if len(new_content) > 500 else new_content)
@@ -700,14 +700,14 @@ class TestMemoryExtractorFlow:
         # Also check if new cards/events were created
         print("\n--- cards 目录内容 ---")
         try:
-            card_files = await viking_fs.ls("viking://agent/default/memories/cards")
+            card_files = await ctx_fs.ls("ctx://agent/default/memories/cards")
             for f in card_files:
                 print(f"  - {f.get('name', 'unknown')}")
         except Exception as e:
             print(f"  无法列出目录: {e}")
         print("\n--- events 目录内容 ---")
         try:
-            event_files = await viking_fs.ls("viking://user/default/memories/events")
+            event_files = await ctx_fs.ls("ctx://user/default/memories/events")
             for f in event_files:
                 print(f"  - {f.get('name', 'unknown')}")
         except Exception as e:
@@ -726,7 +726,7 @@ class TestMemoryExtractorFlow:
 
         assert len(messages) == 5
         assert messages[0].role == "user"
-        assert "OpenViking" in messages[0].content
+        assert "AtomCtx" in messages[0].content
         assert "memory extraction" in messages[0].content
 
 

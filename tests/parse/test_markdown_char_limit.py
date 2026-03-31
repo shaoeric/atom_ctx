@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from openviking.parse.parsers.markdown import MarkdownParser
-from openviking_cli.utils.config.parser_config import ParserConfig, load_parser_configs_from_dict
+from atom_ctx.parse.parsers.markdown import MarkdownParser
+from atom_ctx_cli.utils.config.parser_config import ParserConfig, load_parser_configs_from_dict
 
 # ---------------------------------------------------------------------------
 # ParserConfig
@@ -141,7 +141,7 @@ class TestSaveSectionCharLimit:
         config = ParserConfig(max_section_size=1000, max_section_chars=max_section_chars)
         return MarkdownParser(config=config)
 
-    def _mock_viking_fs(self):
+    def _mock_ctx_fs(self):
         vfs = MagicMock()
         vfs.write_file = AsyncMock()
         vfs.mkdir = AsyncMock()
@@ -151,7 +151,7 @@ class TestSaveSectionCharLimit:
     async def test_section_within_both_limits_saved_as_file(self):
         """Section under token AND char limit → single .md file."""
         parser = self._make_parser(max_section_chars=500)
-        mock_vfs = self._mock_viking_fs()
+        mock_vfs = self._mock_ctx_fs()
 
         section = {
             "name": "intro",
@@ -160,8 +160,8 @@ class TestSaveSectionCharLimit:
             "has_children": False,
         }
 
-        with patch.object(parser, "_get_viking_fs", return_value=mock_vfs):
-            await parser._save_section("", [], "viking://tmp/root", section, 1000, 512)
+        with patch.object(parser, "_get_ctx_fs", return_value=mock_vfs):
+            await parser._save_section("", [], "ctx://tmp/root", section, 1000, 512)
 
         mock_vfs.write_file.assert_called_once()
         call_path = mock_vfs.write_file.call_args[0][0]
@@ -171,7 +171,7 @@ class TestSaveSectionCharLimit:
     async def test_section_exceeding_char_limit_is_split_even_if_tokens_ok(self):
         """Section within token limit but over char limit must NOT be written as single file."""
         parser = self._make_parser(max_section_chars=50)
-        mock_vfs = self._mock_viking_fs()
+        mock_vfs = self._mock_ctx_fs()
 
         long_content = "word " * 30  # 150 chars, ~14 estimated tokens (under 1000)
         section = {
@@ -181,8 +181,8 @@ class TestSaveSectionCharLimit:
             "has_children": False,
         }
 
-        with patch.object(parser, "_get_viking_fs", return_value=mock_vfs):
-            await parser._save_section("", [], "viking://tmp/root", section, 1000, 512)
+        with patch.object(parser, "_get_ctx_fs", return_value=mock_vfs):
+            await parser._save_section("", [], "ctx://tmp/root", section, 1000, 512)
 
         # Must have written at least one file
         mock_vfs.write_file.assert_called()
@@ -206,7 +206,7 @@ class TestSaveMergedCharLimit:
         config = ParserConfig(max_section_size=1000, max_section_chars=max_section_chars)
         return MarkdownParser(config=config)
 
-    def _mock_viking_fs(self):
+    def _mock_ctx_fs(self):
         vfs = MagicMock()
         vfs.write_file = AsyncMock()
         return vfs
@@ -214,11 +214,11 @@ class TestSaveMergedCharLimit:
     @pytest.mark.asyncio
     async def test_merged_within_char_limit_saved_as_single_file(self):
         parser = self._make_parser(max_section_chars=500)
-        mock_vfs = self._mock_viking_fs()
+        mock_vfs = self._mock_ctx_fs()
 
         sections = [("s1", "hello", 5), ("s2", "world", 5)]
-        with patch.object(parser, "_get_viking_fs", return_value=mock_vfs):
-            await parser._save_merged(mock_vfs, "viking://tmp/root", sections)
+        with patch.object(parser, "_get_ctx_fs", return_value=mock_vfs):
+            await parser._save_merged(mock_vfs, "ctx://tmp/root", sections)
 
         mock_vfs.write_file.assert_called_once()
         path, content = mock_vfs.write_file.call_args[0]
@@ -229,12 +229,12 @@ class TestSaveMergedCharLimit:
     async def test_merged_exceeding_char_limit_is_split_into_multiple_files(self):
         """When joined content exceeds max_section_chars, _save_merged must split it."""
         parser = self._make_parser(max_section_chars=60)
-        mock_vfs = self._mock_viking_fs()
+        mock_vfs = self._mock_ctx_fs()
 
         # Each section is 40 chars; joined = 40 + "\n\n" + 40 = 82 chars > 60
         sections = [("a", "A" * 40, 12), ("b", "B" * 40, 12)]
-        with patch.object(parser, "_get_viking_fs", return_value=mock_vfs):
-            await parser._save_merged(mock_vfs, "viking://tmp/root", sections)
+        with patch.object(parser, "_get_ctx_fs", return_value=mock_vfs):
+            await parser._save_merged(mock_vfs, "ctx://tmp/root", sections)
 
         # Should have written multiple files
         assert mock_vfs.write_file.call_count > 1
@@ -248,12 +248,12 @@ class TestSaveMergedCharLimit:
     async def test_many_small_sections_merged_correctly_split(self):
         """Many token-small but char-large sections that accumulate past the limit."""
         parser = self._make_parser(max_section_chars=100)
-        mock_vfs = self._mock_viking_fs()
+        mock_vfs = self._mock_ctx_fs()
 
         # 10 sections × 30 chars = 300 chars + separators >> 100 chars
         sections = [(f"s{i}", "z" * 30, 9) for i in range(10)]
-        with patch.object(parser, "_get_viking_fs", return_value=mock_vfs):
-            await parser._save_merged(mock_vfs, "viking://tmp/root", sections)
+        with patch.object(parser, "_get_ctx_fs", return_value=mock_vfs):
+            await parser._save_merged(mock_vfs, "ctx://tmp/root", sections)
 
         # Every written part must respect the char limit
         mock_vfs.write_file.assert_called()
@@ -276,7 +276,7 @@ class TestParseAndCreateStructureCharLimit:
         )
         return MarkdownParser(config=config)
 
-    def _mock_viking_fs(self):
+    def _mock_ctx_fs(self):
         vfs = MagicMock()
         vfs.write_file = AsyncMock()
         vfs.mkdir = AsyncMock()
@@ -285,11 +285,11 @@ class TestParseAndCreateStructureCharLimit:
     @pytest.mark.asyncio
     async def test_small_doc_within_both_limits_saved_as_single_file(self):
         parser = self._make_parser(max_section_size=1000, max_section_chars=500)
-        mock_vfs = self._mock_viking_fs()
+        mock_vfs = self._mock_ctx_fs()
         content = "# Title\n\nShort body."  # well under both limits
 
-        with patch.object(parser, "_get_viking_fs", return_value=mock_vfs):
-            await parser._parse_and_create_structure(content, [], "viking://tmp/root")
+        with patch.object(parser, "_get_ctx_fs", return_value=mock_vfs):
+            await parser._parse_and_create_structure(content, [], "ctx://tmp/root")
 
         mock_vfs.write_file.assert_called_once()
         written_content = mock_vfs.write_file.call_args[0][1]
@@ -299,13 +299,13 @@ class TestParseAndCreateStructureCharLimit:
     async def test_small_doc_exceeding_char_limit_is_not_saved_as_single_file(self):
         """Even if token estimate is tiny, a doc over max_section_chars must be split."""
         parser = self._make_parser(max_section_size=1000, max_section_chars=30)
-        mock_vfs = self._mock_viking_fs()
+        mock_vfs = self._mock_ctx_fs()
 
         # 200 chars but NO headings → no sections, falls back to paragraph split
         content = "a" * 200
 
-        with patch.object(parser, "_get_viking_fs", return_value=mock_vfs):
-            await parser._parse_and_create_structure(content, [], "viking://tmp/root")
+        with patch.object(parser, "_get_ctx_fs", return_value=mock_vfs):
+            await parser._parse_and_create_structure(content, [], "ctx://tmp/root")
 
         # Must have been split: each written chunk ≤ max_section_chars
         assert mock_vfs.write_file.call_count > 1
@@ -317,15 +317,15 @@ class TestParseAndCreateStructureCharLimit:
     async def test_doc_with_headings_exceeding_char_limit_is_not_saved_as_single_file(self):
         """Small-document fast-path with headings: char limit must still be enforced."""
         parser = self._make_parser(max_section_size=1000, max_section_chars=50)
-        mock_vfs = self._mock_viking_fs()
+        mock_vfs = self._mock_ctx_fs()
 
         # 200 chars WITH a heading — exercises the char-check at the
         # "estimated_tokens <= max_size AND len(content) <= max_chars" guard
         content = "# Heading\n\n" + "b" * 189  # total > 50 chars, token estimate << 1000
 
-        with patch.object(parser, "_get_viking_fs", return_value=mock_vfs):
+        with patch.object(parser, "_get_ctx_fs", return_value=mock_vfs):
             headings = parser._find_headings(content)
-            await parser._parse_and_create_structure(content, headings, "viking://tmp/root")
+            await parser._parse_and_create_structure(content, headings, "ctx://tmp/root")
 
         # Must not have been saved as a single file equal to the full content
         for call in mock_vfs.write_file.call_args_list:

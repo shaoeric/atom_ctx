@@ -1,9 +1,9 @@
 {
-  "openviking-memory": {
+  "atom_ctx-memory": {
     "command": "node",
     "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/start-memory-server.mjs"],
     "env": {
-      "OPENVIKING_CONFIG_FILE": "${OPENVIKING_CONFIG_FILE:-}"
+      "CTX_CONFIG_FILE": "${CTX_CONFIG_FILE:-}"
     }
   }
 }

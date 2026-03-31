@@ -1,8 +1,8 @@
 # Copyright (c) 2026 Beijing Volcano Engine Technology Co., Ltd.
 # SPDX-License-Identifier: Apache-2.0
 
-from openviking.message.part import ToolPart
-from openviking.session.tool_skill_utils import (
+from atom_ctx.message.part import ToolPart
+from atom_ctx.session.tool_skill_utils import (
     calibrate_skill_name,
     calibrate_tool_name,
     collect_skill_stats,
@@ -47,7 +47,7 @@ class TestToolSkillUtils:
         assert stats["completion_tokens"] == 9
 
     def test_calibrate_skill_name_matches_by_skill_uri_suffix(self):
-        tool_parts = [ToolPart(skill_uri="viking://agent/skills/weather", tool_status="error")]
+        tool_parts = [ToolPart(skill_uri="ctx://agent/skills/weather", tool_status="error")]
         tool_name, status = calibrate_skill_name("weather", tool_parts)
         assert tool_name == "weather"
         assert status == "error"
@@ -55,14 +55,14 @@ class TestToolSkillUtils:
     def test_collect_skill_stats_aggregates_by_skill_name(self):
         tool_parts = [
             ToolPart(
-                skill_uri="viking://agent/skills/weather",
+                skill_uri="ctx://agent/skills/weather",
                 tool_status="completed",
                 duration_ms=3,
                 prompt_tokens=2,
                 completion_tokens=4,
             ),
             ToolPart(
-                skill_uri="viking://agent/skills/weather",
+                skill_uri="ctx://agent/skills/weather",
                 tool_status="error",
                 duration_ms=7,
                 prompt_tokens=1,

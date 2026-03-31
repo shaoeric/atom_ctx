@@ -1,6 +1,6 @@
 # Context Layers (L0/L1/L2)
 
-OpenViking uses a three-layer information model to balance retrieval efficiency and content completeness.
+AtomCtx uses a three-layer information model to balance retrieval efficiency and content completeness.
 
 ## Overview
 
@@ -28,7 +28,7 @@ API authentication guide covering OAuth 2.0, JWT tokens, and API keys for secure
 ### API
 
 ```python
-abstract = client.abstract("viking://resources/docs/auth")
+abstract = client.abstract("ctx://resources/docs/auth")
 ```
 
 ## L1: Overview
@@ -57,13 +57,13 @@ This guide covers three authentication methods for the API:
 - JWT for service-to-service communication
 
 ## Access
-Use `read("viking://resources/docs/auth/oauth.md")` for full documentation.
+Use `read("ctx://resources/docs/auth/oauth.md")` for full documentation.
 ```
 
 ### API
 
 ```python
-overview = client.overview("viking://resources/docs/auth")
+overview = client.overview("ctx://resources/docs/auth")
 ```
 
 ## L2: Detail
@@ -79,7 +79,7 @@ Complete original content, loaded only when needed.
 ### API
 
 ```python
-content = client.read("viking://resources/docs/auth/oauth.md")
+content = client.read("ctx://resources/docs/auth/oauth.md")
 ```
 
 ## Generation Mechanism
@@ -109,7 +109,7 @@ Child directory L0s are aggregated into parent L1, forming hierarchical navigati
 Each directory follows a unified file structure:
 
 ```
-viking://resources/docs/auth/
+ctx://resources/docs/auth/
 ├── .abstract.md          # L0: ~100 tokens
 ├── .overview.md          # L1: ~1k tokens
 ├── .relations.json       # Related resources
@@ -183,6 +183,6 @@ if needs_more_detail(overview):
 
 - [Architecture Overview](./01-architecture.md) - System architecture
 - [Context Types](./02-context-types.md) - Three context types
-- [Viking URI](./04-viking-uri.md) - URI specification
+- [Ctx URI](./04-ctx-uri.md) - URI specification
 - [Retrieval Mechanism](./07-retrieval.md) - Retrieval process details
 - [Context Extraction](./06-extraction.md) - L0/L1 generation details

@@ -6,24 +6,24 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from openviking.core.context import Context
-from openviking.message import Message
-from openviking.server.identity import RequestContext, Role
-from openviking.session.compressor import SessionCompressor
-from openviking.session.memory_deduplicator import (
+from atom_ctx.core.context import Context
+from atom_ctx.message import Message
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx.session.compressor import SessionCompressor
+from atom_ctx.session.memory_deduplicator import (
     DedupDecision,
     DedupResult,
     ExistingMemoryAction,
     MemoryActionDecision,
     MemoryDeduplicator,
 )
-from openviking.session.memory_extractor import (
+from atom_ctx.session.memory_extractor import (
     CandidateMemory,
     MemoryCategory,
     MemoryExtractor,
     MergedMemoryPayload,
 )
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx_cli.session.user_id import UserIdentifier
 from tests.utils.mock_context import make_test_ctx
 
 ctx = make_test_ctx()
@@ -78,7 +78,7 @@ def _make_dedup(vikingdb=None, embedder=None) -> MemoryDeduplicator:
 def _make_compressor(vikingdb=None, embedder=None) -> SessionCompressor:
     """Create SessionCompressor without config dependency."""
     vikingdb = vikingdb or MagicMock()
-    with patch("openviking.session.memory_deduplicator.get_openviking_config") as mock_config:
+    with patch("atom_ctx.session.memory_deduplicator.get_atom_ctx_config") as mock_config:
         mock_config.return_value.embedding.get_embedder.return_value = embedder
         compressor = SessionCompressor(vikingdb=vikingdb)
     return compressor
@@ -87,8 +87,8 @@ def _make_compressor(vikingdb=None, embedder=None) -> SessionCompressor:
 def _make_existing(uri_suffix: str = "existing.md") -> Context:
     user_space = _make_user().user_space_name()
     return Context(
-        uri=f"viking://user/{user_space}/memories/preferences/{uri_suffix}",
-        parent_uri=f"viking://user/{user_space}/memories/preferences",
+        uri=f"ctx://user/{user_space}/memories/preferences/{uri_suffix}",
+        parent_uri=f"ctx://user/{user_space}/memories/preferences",
         is_leaf=True,
         abstract="Existing preference memory",
         context_type="memory",
@@ -201,7 +201,7 @@ class TestMemoryDeduplicatorPayload:
         # does not pass account_id to search_similar_memories.
         assert call["owner_space"] == _make_user().user_space_name()
         assert call["category_uri_prefix"] == (
-            f"viking://user/{_make_user().user_space_name()}/memories/preferences/"
+            f"ctx://user/{_make_user().user_space_name()}/memories/preferences/"
         )
         assert call["limit"] == 5
 
@@ -213,7 +213,7 @@ class TestMemoryDeduplicatorPayload:
             return_value=[
                 {
                     "id": "uri_low",
-                    "uri": f"viking://user/{_make_user().user_space_name()}/memories/preferences/low.md",
+                    "uri": f"ctx://user/{_make_user().user_space_name()}/memories/preferences/low.md",
                     "context_type": "memory",
                     "level": 2,
                     "account_id": "acc1",
@@ -251,11 +251,11 @@ class TestMemoryDeduplicatorPayload:
 
         with (
             patch(
-                "openviking.session.memory_deduplicator.get_openviking_config",
+                "atom_ctx.session.memory_deduplicator.get_atom_ctx_config",
                 return_value=_DummyConfig(),
             ),
             patch(
-                "openviking.session.memory_deduplicator.render_prompt",
+                "atom_ctx.session.memory_deduplicator.render_prompt",
                 side_effect=_fake_render_prompt,
             ),
         ):
@@ -285,7 +285,7 @@ class TestMemoryDeduplicatorPayload:
             vlm = _DummyVLM()
 
         with patch(
-            "openviking.session.memory_deduplicator.get_openviking_config",
+            "atom_ctx.session.memory_deduplicator.get_atom_ctx_config",
             return_value=_DummyConfig(),
         ):
             decision, reason, actions = await dedup._llm_decision(_make_candidate(), [])
@@ -310,7 +310,7 @@ class TestMemoryDeduplicatorPayload:
 
         with (
             patch(
-                "openviking.session.memory_deduplicator.get_openviking_config",
+                "atom_ctx.session.memory_deduplicator.get_atom_ctx_config",
                 return_value=_DummyConfig(),
             ),
             pytest.raises(asyncio.CancelledError),
@@ -432,7 +432,7 @@ class TestMemoryMergeBundle:
             vlm = _DummyVLM()
 
         with patch(
-            "openviking.session.memory_extractor.get_openviking_config",
+            "atom_ctx.session.memory_extractor.get_atom_ctx_config",
             return_value=_DummyConfig(),
         ):
             payload = await extractor._merge_memory_bundle(
@@ -464,7 +464,7 @@ class TestMemoryMergeBundle:
             vlm = _DummyVLM()
 
         with patch(
-            "openviking.session.memory_extractor.get_openviking_config",
+            "atom_ctx.session.memory_extractor.get_atom_ctx_config",
             return_value=_DummyConfig(),
         ):
             payload = await extractor._merge_memory_bundle(
@@ -518,7 +518,7 @@ class TestProfileMergeSafety:
         )
         extractor._append_to_profile = AsyncMock(return_value=None)
 
-        with patch("openviking.session.memory_extractor.get_viking_fs", return_value=MagicMock()):
+        with patch("atom_ctx.session.memory_extractor.get_ctx_fs", return_value=MagicMock()):
             memory = await extractor.create_memory(
                 candidate,
                 user=_make_user(),
@@ -556,7 +556,7 @@ class TestSessionCompressorDedupActions:
         fs = MagicMock()
         fs.rm = AsyncMock()
 
-        with patch("openviking.session.compressor.get_viking_fs", return_value=fs):
+        with patch("atom_ctx.session.compressor.get_ctx_fs", return_value=fs):
             memories = await compressor.extract_long_term_memories(
                 [Message.create_user("test message")],
                 user=_make_user(),
@@ -609,7 +609,7 @@ class TestSessionCompressorDedupActions:
         fs.write_file = AsyncMock()
         fs.rm = AsyncMock()
 
-        with patch("openviking.session.compressor.get_viking_fs", return_value=fs):
+        with patch("atom_ctx.session.compressor.get_ctx_fs", return_value=fs):
             memories = await compressor.extract_long_term_memories(
                 [Message.create_user("test message")],
                 user=_make_user(),
@@ -656,7 +656,7 @@ class TestSessionCompressorDedupActions:
         fs.write_file = AsyncMock()
         fs.rm = AsyncMock()
 
-        with patch("openviking.session.compressor.get_viking_fs", return_value=fs):
+        with patch("atom_ctx.session.compressor.get_ctx_fs", return_value=fs):
             memories = await compressor.extract_long_term_memories(
                 [Message.create_user("test message")],
                 user=_make_user(),
@@ -710,7 +710,7 @@ class TestSessionCompressorDedupActions:
 
         fs.rm = AsyncMock(side_effect=_rm)
 
-        with patch("openviking.session.compressor.get_viking_fs", return_value=fs):
+        with patch("atom_ctx.session.compressor.get_ctx_fs", return_value=fs):
             memories = await compressor.extract_long_term_memories(
                 [Message.create_user("test message")],
                 user=_make_user(),
@@ -775,7 +775,7 @@ class TestSessionCompressorDedupActions:
         fs = MagicMock()
         fs.rm = AsyncMock()
 
-        with patch("openviking.session.compressor.get_viking_fs", return_value=fs):
+        with patch("atom_ctx.session.compressor.get_ctx_fs", return_value=fs):
             memories = await compressor.extract_long_term_memories(
                 [Message.create_user("test message")],
                 user=_make_user(),
@@ -833,9 +833,9 @@ class TestSessionCompressorDedupActions:
         fs.rm = AsyncMock()
 
         with (
-            patch("openviking.session.compressor.get_viking_fs", return_value=fs),
+            patch("atom_ctx.session.compressor.get_ctx_fs", return_value=fs),
             patch(
-                "openviking.session.memory_deduplicator.get_openviking_config",
+                "atom_ctx.session.memory_deduplicator.get_atom_ctx_config",
                 return_value=_NoVLMConfig(),
             ),
         ):

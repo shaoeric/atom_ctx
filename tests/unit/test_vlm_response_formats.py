@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from openviking.models.vlm.base import VLMBase
+from atom_ctx.models.vlm.base import VLMBase
 
 
 class TestVLMBaseResponseFormats:

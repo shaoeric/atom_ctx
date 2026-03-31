@@ -3,12 +3,12 @@ import uuid
 
 
 class TestPack:
-    def test_export_ovpack(self, api_client):
+    def test_export_ctxpack(self, api_client):
         random_id = str(uuid.uuid4())[:8]
-        test_export_path = f"./exports/export-{random_id}.ovpack"
+        test_export_path = f"./exports/export-{random_id}.ctxpack"
 
         try:
-            response = api_client.fs_ls("viking://")
+            response = api_client.fs_ls("ctx://")
             print(f"\nList root directory API status code: {response.status_code}")
             assert response.status_code == 200, (
                 f"Failed to list root directory: {response.status_code}"
@@ -24,8 +24,8 @@ class TestPack:
             test_uri = result[0].get("uri")
             assert test_uri is not None, "No suitable file found"
 
-            response = api_client.export_ovpack(uri=test_uri, to=test_export_path)
-            print(f"\nExport ovpack API status code: {response.status_code}")
+            response = api_client.export_ctxpack(uri=test_uri, to=test_export_path)
+            print(f"\nExport ctxpack API status code: {response.status_code}")
 
             data = response.json()
             print("\n" + "=" * 80)

@@ -8,14 +8,14 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-ENGINE_INIT = REPO_ROOT / "openviking" / "storage" / "vectordb" / "engine" / "__init__.py"
+ENGINE_INIT = REPO_ROOT / "atom_ctx" / "storage" / "vectordb" / "engine" / "__init__.py"
 
 
 def _install_package_stubs(monkeypatch):
     packages = {
-        "openviking": REPO_ROOT / "openviking",
-        "openviking.storage": REPO_ROOT / "openviking" / "storage",
-        "openviking.storage.vectordb": REPO_ROOT / "openviking" / "storage" / "vectordb",
+        "atom_ctx": REPO_ROOT / "atom_ctx",
+        "atom_ctx.storage": REPO_ROOT / "atom_ctx" / "storage",
+        "atom_ctx.storage.vectordb": REPO_ROOT / "atom_ctx" / "storage" / "vectordb",
     }
     for name, path in packages.items():
         module = types.ModuleType(name)
@@ -30,7 +30,7 @@ def _load_engine_module(
     for backend_name in available_backends:
         monkeypatch.setitem(
             sys.modules,
-            f"openviking.storage.vectordb.engine._{backend_name}",
+            f"atom_ctx.storage.vectordb.engine._{backend_name}",
             types.SimpleNamespace(
                 BACKEND_NAME=backend_name,
                 IndexEngine=f"IndexEngine:{backend_name}",
@@ -41,21 +41,21 @@ def _load_engine_module(
 
     monkeypatch.setitem(
         sys.modules,
-        "openviking.storage.vectordb.engine._x86_caps",
+        "atom_ctx.storage.vectordb.engine._x86_caps",
         types.SimpleNamespace(get_supported_variants=lambda: list(cpu_variants)),
     )
 
     monkeypatch.setattr(platform, "machine", lambda: machine)
     if env_variant is None:
-        monkeypatch.delenv("OV_ENGINE_VARIANT", raising=False)
+        monkeypatch.delenv("CTX_ENGINE_VARIANT", raising=False)
     else:
-        monkeypatch.setenv("OV_ENGINE_VARIANT", env_variant)
+        monkeypatch.setenv("CTX_ENGINE_VARIANT", env_variant)
 
     original_import_module = importlib.import_module
     original_find_spec = importlib.util.find_spec
 
     def fake_import_module(name, package=None):
-        if package == "openviking.storage.vectordb.engine" and name.startswith("._"):
+        if package == "atom_ctx.storage.vectordb.engine" and name.startswith("._"):
             qualified_name = importlib.util.resolve_name(name, package)
             if qualified_name in sys.modules:
                 return sys.modules[qualified_name]
@@ -65,9 +65,9 @@ def _load_engine_module(
 
     def fake_find_spec(name, package=None):
         fullname = importlib.util.resolve_name(name, package) if name.startswith(".") else name
-        if fullname == "openviking.storage.vectordb.engine._x86_caps":
+        if fullname == "atom_ctx.storage.vectordb.engine._x86_caps":
             return object()
-        if fullname.startswith("openviking.storage.vectordb.engine."):
+        if fullname.startswith("atom_ctx.storage.vectordb.engine."):
             backend_name = fullname.rsplit(".", 1)[-1].lstrip("_")
             if backend_name in available_backends:
                 return object()
@@ -78,12 +78,12 @@ def _load_engine_module(
     monkeypatch.setattr(importlib.util, "find_spec", fake_find_spec)
 
     spec = importlib.util.spec_from_file_location(
-        "openviking.storage.vectordb.engine",
+        "atom_ctx.storage.vectordb.engine",
         ENGINE_INIT,
         submodule_search_locations=[str(ENGINE_INIT.parent)],
     )
     module = importlib.util.module_from_spec(spec)
-    monkeypatch.setitem(sys.modules, "openviking.storage.vectordb.engine", module)
+    monkeypatch.setitem(sys.modules, "atom_ctx.storage.vectordb.engine", module)
     assert spec.loader is not None
     spec.loader.exec_module(module)
     return module
@@ -92,10 +92,10 @@ def _load_engine_module(
 def _load_engine_module_with_backend(monkeypatch, *, machine, backend_name, backend_module):
     _install_package_stubs(monkeypatch)
     monkeypatch.setattr(platform, "machine", lambda: machine)
-    monkeypatch.delenv("OV_ENGINE_VARIANT", raising=False)
+    monkeypatch.delenv("CTX_ENGINE_VARIANT", raising=False)
     monkeypatch.setitem(
         sys.modules,
-        f"openviking.storage.vectordb.engine._{backend_name}",
+        f"atom_ctx.storage.vectordb.engine._{backend_name}",
         backend_module,
     )
 
@@ -103,13 +103,13 @@ def _load_engine_module_with_backend(monkeypatch, *, machine, backend_name, back
     original_find_spec = importlib.util.find_spec
 
     def fake_import_module(name, package=None):
-        if package == "openviking.storage.vectordb.engine" and name == f"._{backend_name}":
+        if package == "atom_ctx.storage.vectordb.engine" and name == f"._{backend_name}":
             return backend_module
         return original_import_module(name, package)
 
     def fake_find_spec(name, package=None):
         fullname = importlib.util.resolve_name(name, package) if name.startswith(".") else name
-        if fullname == f"openviking.storage.vectordb.engine._{backend_name}":
+        if fullname == f"atom_ctx.storage.vectordb.engine._{backend_name}":
             return object()
         return original_find_spec(name, package)
 
@@ -117,12 +117,12 @@ def _load_engine_module_with_backend(monkeypatch, *, machine, backend_name, back
     monkeypatch.setattr(importlib.util, "find_spec", fake_find_spec)
 
     spec = importlib.util.spec_from_file_location(
-        "openviking.storage.vectordb.engine",
+        "atom_ctx.storage.vectordb.engine",
         ENGINE_INIT,
         submodule_search_locations=[str(ENGINE_INIT.parent)],
     )
     module = importlib.util.module_from_spec(spec)
-    monkeypatch.setitem(sys.modules, "openviking.storage.vectordb.engine", module)
+    monkeypatch.setitem(sys.modules, "atom_ctx.storage.vectordb.engine", module)
     assert spec.loader is not None
     spec.loader.exec_module(module)
     return module

@@ -4,7 +4,7 @@ import json
 class TestFsReadWrite:
     def test_fs_read(self, api_client):
         try:
-            response = api_client.fs_ls("viking://")
+            response = api_client.fs_ls("ctx://")
             print(f"\nList root directory API status code: {response.status_code}")
             assert response.status_code == 200, (
                 f"Failed to list root directory: {response.status_code}"

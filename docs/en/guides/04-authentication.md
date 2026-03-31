@@ -1,10 +1,10 @@
 # Authentication
 
-OpenViking Server supports two authentication modes with role-based access control: `api_key` and `trusted`.
+AtomCtx Server supports two authentication modes with role-based access control: `api_key` and `trusted`.
 
 ## Overview
 
-OpenViking uses a two-layer API key system:
+AtomCtx uses a two-layer API key system:
 
 | Key Type | Created By | Role | Purpose |
 |----------|-----------|------|---------|
@@ -18,11 +18,11 @@ All API keys are plain random tokens with no embedded identity. The server resol
 | Mode | `server.auth_mode` | Identity Source | Typical Use |
 |------|--------------------|-----------------|-------------|
 | API key mode | `"api_key"` | API key, with optional tenant headers for root requests | Standard multi-tenant deployment |
-| Trusted mode | `"trusted"` | `X-OpenViking-Account` / `X-OpenViking-User` / optional `X-OpenViking-Agent` headers | Behind a trusted gateway or internal network boundary |
+| Trusted mode | `"trusted"` | `X-AtomCtx-Account` / `X-AtomCtx-User` / optional `X-AtomCtx-Agent` headers | Behind a trusted gateway or internal network boundary |
 
 ## Setting Up (Server Side)
 
-Configure the authentication mode in the `server` section of `ov.conf`:
+Configure the authentication mode in the `server` section of `ctx.conf`:
 
 ```json
 {
@@ -36,7 +36,7 @@ Configure the authentication mode in the `server` section of `ov.conf`:
 Start the server:
 
 ```bash
-openviking-server
+ctx-server
 ```
 
 ## Managing Accounts and Users
@@ -61,35 +61,35 @@ curl -X POST http://localhost:1933/api/v1/admin/accounts/acme/users \
 
 ## Using API Keys (Client Side)
 
-OpenViking accepts API keys via two headers:
+AtomCtx accepts API keys via two headers:
 
 **X-API-Key header**
 
 ```bash
-curl http://localhost:1933/api/v1/fs/ls?uri=viking:// \
+curl http://localhost:1933/api/v1/fs/ls?uri=ctx:// \
   -H "X-API-Key: <user-key>"
 ```
 
 **Authorization: Bearer header**
 
 ```bash
-curl http://localhost:1933/api/v1/fs/ls?uri=viking:// \
+curl http://localhost:1933/api/v1/fs/ls?uri=ctx:// \
   -H "Authorization: Bearer <user-key>"
 ```
 
 **Python SDK (HTTP)**
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(
+client = ctx.SyncHTTPClient(
     url="http://localhost:1933",
     api_key="<user-key>",
     agent_id="my-agent"
 )
 ```
 
-**CLI (via ovcli.conf)**
+**CLI (via ctx-cli.conf)**
 
 ```json
 {
@@ -106,7 +106,7 @@ When you use a regular user key, `account` and `user` are optional because the s
 **CLI override flags**
 
 ```bash
-openviking --account acme --user alice --agent-id my-agent ls viking://
+atom_ctx --account acme --user alice --agent-id my-agent ls ctx://
 ```
 
 ### Accessing Tenant Data with Root Key
@@ -116,18 +116,18 @@ When using the root key to access tenant-scoped data APIs (e.g. `ls`, `find`, `s
 **curl**
 
 ```bash
-curl http://localhost:1933/api/v1/fs/ls?uri=viking:// \
+curl http://localhost:1933/api/v1/fs/ls?uri=ctx:// \
   -H "X-API-Key: your-secret-root-key" \
-  -H "X-OpenViking-Account: acme" \
-  -H "X-OpenViking-User: alice"
+  -H "X-AtomCtx-Account: acme" \
+  -H "X-AtomCtx-User: alice"
 ```
 
 **Python SDK**
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(
+client = ctx.SyncHTTPClient(
     url="http://localhost:1933",
     api_key="your-secret-root-key",
     account="acme",
@@ -135,7 +135,7 @@ client = ov.SyncHTTPClient(
 )
 ```
 
-**ovcli.conf**
+**ctx-cli.conf**
 
 ```json
 {
@@ -162,26 +162,26 @@ Trusted mode skips user-key lookup and instead trusts explicit identity headers 
 
 Rules in trusted mode:
 
-- `X-OpenViking-Account` and `X-OpenViking-User` are required on tenant-scoped requests.
-- `X-OpenViking-Agent` is optional and defaults to `default`.
+- `X-AtomCtx-Account` and `X-AtomCtx-User` are required on tenant-scoped requests.
+- `X-AtomCtx-Agent` is optional and defaults to `default`.
 - If `root_api_key` is also configured, every request must still provide a matching API key.
 - Only expose this mode behind a trusted network boundary or an identity-injecting gateway.
 
 **curl**
 
 ```bash
-curl http://localhost:1933/api/v1/fs/ls?uri=viking:// \
-  -H "X-OpenViking-Account: acme" \
-  -H "X-OpenViking-User: alice" \
-  -H "X-OpenViking-Agent: my-agent"
+curl http://localhost:1933/api/v1/fs/ls?uri=ctx:// \
+  -H "X-AtomCtx-Account: acme" \
+  -H "X-AtomCtx-User: alice" \
+  -H "X-AtomCtx-Agent: my-agent"
 ```
 
 **Python SDK**
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(
+client = ctx.SyncHTTPClient(
     url="http://localhost:1933",
     account="acme",
     user="alice",

@@ -1,8 +1,8 @@
 # Introduction
 
-**OpenViking** is an open-source context database designed specifically for AI Agents. OpenViking unifies the management of context (memory, resources, and skills) that Agents need through a **file system paradigm**, enabling **hierarchical context delivery** and **self-iteration**. The ultimate goal is to lower the barrier for Agent development, allowing developers to focus on business innovation rather than underlying context management.
+**AtomCtx** is an open-source context database designed specifically for AI Agents. AtomCtx unifies the management of context (memory, resources, and skills) that Agents need through a **file system paradigm**, enabling **hierarchical context delivery** and **self-iteration**. The ultimate goal is to lower the barrier for Agent development, allowing developers to focus on business innovation rather than underlying context management.
 
-## Why OpenViking
+## Why AtomCtx
 
 In the AI era, data is abundant, but high-quality context is scarce. When building AI Agents, developers often face these challenges:
 
@@ -12,7 +12,7 @@ In the AI era, data is abundant, but high-quality context is scarce. When buildi
 - **Context Opacity**: Traditional RAG's implicit retrieval pipeline is like a black box, making debugging difficult
 - **Limited Memory Iteration**: Current memory systems only record user memories, lacking Agent-related task memories
 
-OpenViking is designed to solve these pain points.
+AtomCtx is designed to solve these pain points.
 
 ## Core Features
 
@@ -20,10 +20,10 @@ OpenViking is designed to solve these pain points.
 
 Moving away from traditional flat database thinking, all context is organized as a virtual file system. Agents no longer rely solely on vector search to find data — they can locate and browse data through deterministic paths and standard file system commands.
 
-**Unified URI Identification**: Each context is assigned a unique `viking://` URI, enabling precise location and access to resources stored in different locations.
+**Unified URI Identification**: Each context is assigned a unique `ctx://` URI, enabling precise location and access to resources stored in different locations.
 
 ```
-viking://
+ctx://
 ├── resources/              # Resources: project docs, code repos, web pages
 │   └── my_project/
 ├── user/                   # User: preferences, habits
@@ -45,15 +45,15 @@ viking://
 
 ```python
 client.find("user authentication")       # Semantic search
-client.ls("viking://resources/")         # List directory
-client.read("viking://resources/doc")    # Read content
-client.abstract("viking://...")          # Get L0 abstract
-client.overview("viking://...")          # Get L1 overview
+client.ls("ctx://resources/")         # List directory
+client.read("ctx://resources/doc")    # Read content
+client.abstract("ctx://...")          # Get L0 abstract
+client.overview("ctx://...")          # Get L1 overview
 ```
 
 ### 2. Hierarchical Context On-Demand Loading
 
-Stuffing massive context into prompts all at once is not only expensive but also risks exceeding model windows and introducing noise. OpenViking automatically processes context into three levels upon ingestion:
+Stuffing massive context into prompts all at once is not only expensive but also risks exceeding model windows and introducing noise. AtomCtx automatically processes context into three levels upon ingestion:
 
 | Level | Name | Token Limit | Purpose |
 |-------|------|-------------|---------|
@@ -62,7 +62,7 @@ Stuffing massive context into prompts all at once is not only expensive but also
 | **L2** | Detail | Unlimited | Full content, on-demand loading |
 
 ```
-viking://resources/my_project/
+ctx://resources/my_project/
 ├── .abstract.md               # L0 layer: abstract
 ├── .overview.md               # L1 layer: overview
 ├── docs/
@@ -74,7 +74,7 @@ viking://resources/my_project/
 
 ### 3. Directory Recursive Retrieval
 
-Single vector retrieval struggles with complex query intents. OpenViking implements an innovative **directory recursive retrieval strategy**:
+Single vector retrieval struggles with complex query intents. AtomCtx implements an innovative **directory recursive retrieval strategy**:
 
 1. **Intent Analysis**: Generate multiple retrieval conditions through intent analysis
 2. **Initial Positioning**: Use vector retrieval to quickly locate high-scoring directories
@@ -86,13 +86,13 @@ This "lock onto high-scoring directories first, then explore content in detail" 
 
 ### 4. Visualized Retrieval Traces
 
-OpenViking's organization uses a hierarchical virtual file system structure, with all context integrated in a unified format and each entry corresponding to a unique URI, breaking away from traditional flat black-box management.
+AtomCtx's organization uses a hierarchical virtual file system structure, with all context integrated in a unified format and each entry corresponding to a unique URI, breaking away from traditional flat black-box management.
 
 The retrieval process uses directory recursive strategy, with complete traces of directory browsing and file positioning preserved for each retrieval, enabling clear observation of problem sources and guiding retrieval logic optimization.
 
 ### 5. Automatic Session Management
 
-OpenViking has built-in memory self-iteration loops. At the end of each session, developers can trigger memory extraction, and the system asynchronously analyzes task execution results and user feedback, automatically updating User and Agent memory directories.
+AtomCtx has built-in memory self-iteration loops. At the end of each session, developers can trigger memory extraction, and the system asynchronously analyzes task execution results and user feedback, automatically updating User and Agent memory directories.
 
 **6 Memory Categories**:
 

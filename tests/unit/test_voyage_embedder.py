@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openviking.models.embedder import VoyageDenseEmbedder
-from openviking.models.embedder.voyage_embedders import VOYAGE_MODEL_DIMENSIONS
+from atom_ctx.models.embedder import VoyageDenseEmbedder
+from atom_ctx.models.embedder.voyage_embedders import VOYAGE_MODEL_DIMENSIONS
 
 
 class TestVoyageDenseEmbedder:
@@ -48,7 +48,7 @@ class TestVoyageDenseEmbedder:
                 dimension=1536,
             )
 
-    @patch("openviking.models.embedder.voyage_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.voyage_embedders.openai.OpenAI")
     def test_embed_single_text(self, mock_openai_class):
         mock_client = MagicMock()
         mock_openai_class.return_value = mock_client
@@ -73,7 +73,7 @@ class TestVoyageDenseEmbedder:
         assert "dimensions" not in call_kwargs
         assert "extra_body" not in call_kwargs
 
-    @patch("openviking.models.embedder.voyage_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.voyage_embedders.openai.OpenAI")
     def test_embed_uses_voyage_output_dimension(self, mock_openai_class):
         mock_client = MagicMock()
         mock_openai_class.return_value = mock_client
@@ -97,7 +97,7 @@ class TestVoyageDenseEmbedder:
         assert call_kwargs["extra_body"]["output_dimension"] == 512
         assert "dimensions" not in call_kwargs
 
-    @patch("openviking.models.embedder.voyage_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.voyage_embedders.openai.OpenAI")
     def test_embed_batch(self, mock_openai_class):
         mock_client = MagicMock()
         mock_openai_class.return_value = mock_client
@@ -119,7 +119,7 @@ class TestVoyageDenseEmbedder:
         assert len(results[0].dense_vector) == 1024
         assert len(results[1].dense_vector) == 1024
 
-    @patch("openviking.models.embedder.voyage_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.voyage_embedders.openai.OpenAI")
     def test_embed_batch_empty(self, mock_openai_class):
         mock_client = MagicMock()
         mock_openai_class.return_value = mock_client
@@ -131,7 +131,7 @@ class TestVoyageDenseEmbedder:
         assert embedder.embed_batch([]) == []
         mock_client.embeddings.create.assert_not_called()
 
-    @patch("openviking.models.embedder.voyage_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.voyage_embedders.openai.OpenAI")
     def test_embed_api_error(self, mock_openai_class):
         import openai
 

@@ -9,7 +9,7 @@ import tempfile
 
 import pytest
 
-from openviking.crypto.providers import LocalFileProvider
+from atom_ctx.crypto.providers import LocalFileProvider
 
 
 @pytest.fixture

@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from openviking.parse.directory_scan import (
+from atom_ctx.parse.directory_scan import (
     CLASS_PROCESSABLE,
     ClassifiedFile,
     DirectoryScanResult,
     scan_directory,
 )
-from openviking.parse.registry import ParserRegistry
-from openviking_cli.exceptions import UnsupportedDirectoryFilesError
+from atom_ctx.parse.registry import ParserRegistry
+from atom_ctx_cli.exceptions import UnsupportedDirectoryFilesError
 
 # ---------------------------------------------------------------------------
 # Fixtures

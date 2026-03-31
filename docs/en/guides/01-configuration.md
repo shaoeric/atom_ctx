@@ -1,10 +1,10 @@
 # Configuration
 
-OpenViking uses a JSON configuration file (`~/.openviking/ov.conf`) for settings.
+AtomCtx uses a JSON configuration file (`~/.ctx/ctx.conf`) for settings.
 
 ## Configuration File
 
-Create `~/.openviking/ov.conf` in your project directory:
+Create `~/.ctx/ctx.conf` in your project directory:
 
 ```json
 {
@@ -129,7 +129,7 @@ Embedding model configuration for vector search, supporting dense, sparse, and h
 | `doubao-embedding-vision-250615` | 1024 | multimodal | Recommended |
 | `doubao-embedding-250615` | 1024 | text | Text only |
 
-With `input: "multimodal"`, OpenViking can embed text, images (PNG, JPG, etc.), and mixed content.
+With `input: "multimodal"`, AtomCtx can embed text, images (PNG, JPG, etc.), and mixed content.
 
 **Supported providers:**
 - `openai`: OpenAI Embedding API
@@ -226,9 +226,9 @@ Supported Voyage text embedding models include:
 - `voyage-finance-2`
 - `voyage-law-2`
 
-If `dimension` is omitted, OpenViking uses the model's default output dimension when creating the vector schema.
+If `dimension` is omitted, AtomCtx uses the model's default output dimension when creating the vector schema.
 
-OpenViking also expects dense float vectors throughout storage and retrieval, so Voyage quantized output dtypes are not exposed in config.
+AtomCtx also expects dense float vectors throughout storage and retrieval, so Voyage quantized output dtypes are not exposed in config.
 
 **Local deployment (GGUF/MLX):** Jina embedding models are open-weight and available in GGUF and MLX formats on [Hugging Face](https://huggingface.co/jinaai). You can run them locally with any OpenAI-compatible server (e.g. llama.cpp, MLX, vLLM) and point the `api_base` to your local endpoint:
 
@@ -248,7 +248,7 @@ OpenViking also expects dense float vectors throughout storage and retrieval, so
 
 **gemini provider example:**
 
-> **Note:** Requires `pip install "google-genai>=1.0.0"`. For async batching: `pip install "openviking[gemini-async]"`.
+> **Note:** Requires `pip install "google-genai>=1.0.0"`. For async batching: `pip install "atom-ctx[gemini-async]"`.
 
 ```json
 {
@@ -452,7 +452,7 @@ Configuration for Feishu/Lark cloud document parsing. See [Resources](../api/02-
 | `max_rows_per_sheet` | int | Maximum rows to import per spreadsheet sheet (default: `1000`) |
 | `max_records_per_table` | int | Maximum records to import per bitable table (default: `1000`) |
 
-**Dependency**: `pip install 'openviking[bot-feishu]'`
+**Dependency**: `pip install 'atom-ctx[bot-feishu]'`
 
 **Lark international**: For Lark URLs (`*.larksuite.com`), set `domain` to `https://open.larksuite.com`.
 
@@ -734,31 +734,31 @@ Supports cloud-deployed VikingDB on Volcengine
 
 ## Config Files
 
-OpenViking uses two config files:
+AtomCtx uses two config files:
 
 | File | Purpose | Default Path |
 |------|---------|-------------|
-| `ov.conf` | SDK embedded mode + server config | `~/.openviking/ov.conf` |
-| `ovcli.conf` | HTTP client and CLI connection to remote server | `~/.openviking/ovcli.conf` |
+| `ctx.conf` | SDK embedded mode + server config | `~/.ctx/ctx.conf` |
+| `ctx-cli.conf` | HTTP client and CLI connection to remote server | `~/.ctx/ctx-cli.conf` |
 
-When config files are at the default path, OpenViking loads them automatically — no additional setup needed.
+When config files are at the default path, AtomCtx loads them automatically — no additional setup needed.
 
 If config files are at a different location, there are two ways to specify:
 
 ```bash
 # Option 1: Environment variable
-export OPENVIKING_CONFIG_FILE=/path/to/ov.conf
-export OPENVIKING_CLI_CONFIG_FILE=/path/to/ovcli.conf
+export CTX_CONFIG_FILE=/path/to/ctx.conf
+export CTX_CLI_CONFIG_FILE=/path/to/ctx-cli.conf
 
 # Option 2: Command-line argument (serve command only)
-openviking-server --config /path/to/ov.conf
+ctx-server --config /path/to/ctx.conf
 ```
 
-### ov.conf
+### ctx.conf
 
-The config sections documented above (embedding, vlm, rerank, storage) all belong to `ov.conf`. SDK embedded mode and server share this file.
+The config sections documented above (embedding, vlm, rerank, storage) all belong to `ctx.conf`. SDK embedded mode and server share this file.
 
-For memory-related settings, add a `memory` section in `ov.conf`:
+For memory-related settings, add a `memory` section in `ctx.conf`:
 
 ```json
 {
@@ -772,9 +772,9 @@ For memory-related settings, add a `memory` section in `ov.conf`:
 |-------|-------------|---------|
 | `agent_scope_mode` | Agent memory namespace mode: `"user+agent"` isolates by `(user_id, agent_id)`, while `"agent"` isolates only by `agent_id` and shares agent memories across users of the same agent | `"user+agent"` |
 
-`agent_scope_mode` only affects agent-level namespaces such as `viking://agent/{agent_space}/memories/...`. User memories under `viking://user/{user_space}/memories/...` are not affected.
+`agent_scope_mode` only affects agent-level namespaces such as `ctx://agent/{agent_space}/memories/...`. User memories under `ctx://user/{user_space}/memories/...` are not affected.
 
-### ovcli.conf
+### ctx-cli.conf
 
 Config file for the HTTP client (`SyncHTTPClient` / `AsyncHTTPClient`) and CLI to connect to a remote server:
 
@@ -793,22 +793,22 @@ Config file for the HTTP client (`SyncHTTPClient` / `AsyncHTTPClient`) and CLI t
 |-------|-------------|---------|
 | `url` | Server address | (required) |
 | `api_key` | API key for authentication (root key or user key) | `null` (no auth) |
-| `account` | Default account sent as `X-OpenViking-Account` | `null` |
-| `user` | Default user sent as `X-OpenViking-User` | `null` |
+| `account` | Default account sent as `X-AtomCtx-Account` | `null` |
+| `user` | Default user sent as `X-AtomCtx-User` | `null` |
 | `agent_id` | Agent identifier for agent space isolation | `null` |
 | `output` | Default output format: `"table"` or `"json"` | `"table"` |
 
 CLI flags can override these identity fields per command:
 
 ```bash
-openviking --account acme --user alice --agent-id assistant-2 ls viking://
+atom_ctx --account acme --user alice --agent-id assistant-2 ls ctx://
 ```
 
 See [Deployment](./03-deployment.md) for details.
 
 ## server Section
 
-When running OpenViking as an HTTP service, add a `server` section to `ov.conf`:
+When running AtomCtx as an HTTP service, add a `server` section to `ctx.conf`:
 
 ```json
 {
@@ -830,7 +830,7 @@ When running OpenViking as an HTTP service, add a `server` section to `ov.conf`:
 | `root_api_key` | str | Root API key for multi-tenant auth in `api_key` mode | `null` |
 | `cors_origins` | list | Allowed CORS origins | `["*"]` |
 
-`api_key` mode uses API keys. `trusted` mode trusts `X-OpenViking-Account` / `X-OpenViking-User` headers from a trusted gateway or internal caller.
+`api_key` mode uses API keys. `trusted` mode trusts `X-AtomCtx-Account` / `X-AtomCtx-User` headers from a trusted gateway or internal caller.
 
 When `root_api_key` is configured, the server enables multi-tenant authentication. Use the Admin API to create accounts and user keys. Development mode only applies when `auth_mode = "api_key"` and `root_api_key` is not set.
 
@@ -886,7 +886,7 @@ Suitable for development environments and single-node deployments:
     "enabled": true,
     "provider": "local",
     "local": {
-      "key_file": "~/.openviking/master.key"
+      "key_file": "~/.ctx/master.key"
     }
   }
 }
@@ -894,7 +894,7 @@ Suitable for development environments and single-node deployments:
 
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
-| `local.key_file` | str | Root key file path | `~/.openviking/master.key` |
+| `local.key_file` | str | Root key file path | `~/.ctx/master.key` |
 
 ### Vault (HashiCorp Vault)
 
@@ -909,7 +909,7 @@ Suitable for production and multi-cloud deployments:
       "address": "https://vault.example.com:8200",
       "token": "vault-token-xxx",
       "mount_point": "transit",
-      "key_name": "openviking-root"
+      "key_name": "atom_ctx-root"
     }
   }
 }
@@ -920,7 +920,7 @@ Suitable for production and multi-cloud deployments:
 | `vault.address` | str | Vault service address | - |
 | `vault.token` | str | Vault access token | - |
 | `vault.mount_point` | str | Transit engine mount point | `"transit"` |
-| `vault.key_name` | str | Root key name | `"openviking-root"` |
+| `vault.key_name` | str | Root key name | `"atom_ctx-root"` |
 
 ### Volcengine KMS
 
@@ -985,13 +985,13 @@ For detailed encryption explanations, see [Data Encryption](../concepts/10-encry
     "enabled": false,
     "provider": "local|vault|volcengine_kms",
     "local": {
-      "key_file": "~/.openviking/master.key"
+      "key_file": "~/.ctx/master.key"
     },
     "vault": {
       "address": "https://vault.example.com:8200",
       "token": "string",
       "mount_point": "transit",
-      "key_name": "openviking-root"
+      "key_name": "atom_ctx-root"
     },
     "volcengine_kms": {
       "key_id": "string",

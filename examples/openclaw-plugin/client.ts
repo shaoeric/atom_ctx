@@ -25,13 +25,13 @@ export type RuntimeIdentity = {
   agentId: string;
 };
 export type LocalClientCacheEntry = {
-  client: OpenVikingClient;
+  client: AtomCtxClient;
   process: ReturnType<typeof spawn> | null;
 };
 
 export type PendingClientEntry = {
-  promise: Promise<OpenVikingClient>;
-  resolve: (c: OpenVikingClient) => void;
+  promise: Promise<AtomCtxClient>;
+  resolve: (c: AtomCtxClient) => void;
   reject: (err: unknown) => void;
 };
 
@@ -119,8 +119,8 @@ export const localClientCache = new Map<string, LocalClientCacheEntry>();
 export const localClientPendingPromises = new Map<string, PendingClientEntry>();
 
 const MEMORY_URI_PATTERNS = [
-  /^viking:\/\/user\/(?:[^/]+\/)?memories(?:\/|$)/,
-  /^viking:\/\/agent\/(?:[^/]+\/)?memories(?:\/|$)/,
+  /^ctx:\/\/user\/(?:[^/]+\/)?memories(?:\/|$)/,
+  /^ctx:\/\/agent\/(?:[^/]+\/)?memories(?:\/|$)/,
 ];
 const USER_STRUCTURE_DIRS = new Set(["memories"]);
 const AGENT_STRUCTURE_DIRS = new Set(["memories", "skills", "instructions", "workspaces"]);
@@ -133,7 +133,7 @@ export function isMemoryUri(uri: string): boolean {
   return MEMORY_URI_PATTERNS.some((pattern) => pattern.test(uri));
 }
 
-export class OpenVikingClient {
+export class AtomCtxClient {
   private spaceCache = new Map<string, Partial<Record<ScopeName, string>>>();
   private identityCache = new Map<string, RuntimeIdentity>();
 
@@ -164,15 +164,15 @@ export class OpenVikingClient {
     const effectiveAgentId = agentId ?? this.defaultAgentId;
     const identity = await this.getRuntimeIdentity(agentId);
     this.routingDebugLog(
-      `openviking: ${label} ` +
+      `atom_ctx: ${label} ` +
         JSON.stringify({
           ...detail,
-          X_OpenViking_Agent: effectiveAgentId,
-          X_OpenViking_Account: this.accountId.trim() || "default",
-          X_OpenViking_User: this.userId.trim() || "default",
+          X_AtomCtx_Agent: effectiveAgentId,
+          X_AtomCtx_Account: this.accountId.trim() || "default",
+          X_AtomCtx_User: this.userId.trim() || "default",
           resolved_user_id: identity.userId,
           session_vfs_hint: detail.sessionId
-            ? `viking://session/${identity.userId}/${String(detail.sessionId)}`
+            ? `ctx://session/${identity.userId}/${String(detail.sessionId)}`
             : undefined,
         }),
     );
@@ -187,10 +187,10 @@ export class OpenVikingClient {
       if (this.apiKey) {
         headers.set("X-API-Key", this.apiKey);
       }
-      headers.set("X-OpenViking-Account", this.accountId.trim() || "default");
-      headers.set("X-OpenViking-User", this.userId.trim() || "default");
+      headers.set("X-AtomCtx-Account", this.accountId.trim() || "default");
+      headers.set("X-AtomCtx-User", this.userId.trim() || "default");
       if (effectiveAgentId) {
-        headers.set("X-OpenViking-Agent", effectiveAgentId);
+        headers.set("X-AtomCtx-Agent", effectiveAgentId);
       }
       if (init.body && !headers.has("Content-Type")) {
         headers.set("Content-Type", "application/json");
@@ -211,7 +211,7 @@ export class OpenVikingClient {
       if (!response.ok || payload.status === "error") {
         const code = payload.error?.code ? ` [${payload.error.code}]` : "";
         const message = payload.error?.message ?? `HTTP ${response.status}`;
-        throw new Error(`OpenViking request failed${code}: ${message}`);
+        throw new Error(`AtomCtx request failed${code}: ${message}`);
       }
 
       return (payload.result ?? payload) as T;
@@ -274,7 +274,7 @@ export class OpenVikingClient {
     };
 
     try {
-      const entries = await this.ls(`viking://${scope}`, agentId);
+      const entries = await this.ls(`ctx://${scope}`, agentId);
       const spaces = entries
         .filter((entry) => entry?.isDir === true)
         .map((entry) => (typeof entry.name === "string" ? entry.name.trim() : ""))
@@ -304,7 +304,7 @@ export class OpenVikingClient {
 
   private async normalizeTargetUri(targetUri: string, agentId?: string): Promise<string> {
     const trimmed = targetUri.trim().replace(/\/+$/, "");
-    const match = trimmed.match(/^viking:\/\/(user|agent)(?:\/(.*))?$/);
+    const match = trimmed.match(/^ctx:\/\/(user|agent)(?:\/(.*))?$/);
     if (!match) {
       return trimmed;
     }
@@ -324,7 +324,7 @@ export class OpenVikingClient {
     }
 
     const space = await this.resolveScopeSpace(scope, agentId);
-    return `viking://${scope}/${space}/${parts.join("/")}`;
+    return `ctx://${scope}/${space}/${parts.join("/")}`;
   }
 
   async find(
@@ -346,11 +346,11 @@ export class OpenVikingClient {
     const effectiveAgentId = agentId ?? this.defaultAgentId;
     const identity = await this.getRuntimeIdentity(agentId);
     this.routingDebugLog?.(
-      `openviking: find POST ${this.baseUrl}/api/v1/search/find ` +
+      `atom_ctx: find POST ${this.baseUrl}/api/v1/search/find ` +
         JSON.stringify({
-          X_OpenViking_Agent: effectiveAgentId,
-          X_OpenViking_Account: this.accountId.trim() || "default",
-          X_OpenViking_User: this.userId.trim() || "default",
+          X_AtomCtx_Agent: effectiveAgentId,
+          X_AtomCtx_Account: this.accountId.trim() || "default",
+          X_AtomCtx_User: this.userId.trim() || "default",
           resolved_user_id: identity.userId,
           target_uri: normalizedTargetUri,
           target_uri_input: options.targetUri,

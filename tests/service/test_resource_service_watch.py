@@ -8,11 +8,11 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 import pytest_asyncio
 
-from openviking.resource.watch_manager import WatchManager
-from openviking.server.identity import RequestContext, Role
-from openviking.service.resource_service import ResourceService
-from openviking_cli.exceptions import ConflictError, InvalidArgumentError
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.resource.watch_manager import WatchManager
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx.service.resource_service import ResourceService
+from atom_ctx_cli.exceptions import ConflictError, InvalidArgumentError
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 async def get_task_by_uri(service: ResourceService, to_uri: str, ctx: RequestContext):
@@ -29,7 +29,7 @@ class MockResourceProcessor:
     """Mock ResourceProcessor for testing."""
 
     async def process_resource(self, **kwargs):
-        return {"root_uri": kwargs.get("to", "viking://resources/test")}
+        return {"root_uri": kwargs.get("to", "ctx://resources/test")}
 
 
 class MockSkillProcessor:
@@ -54,7 +54,7 @@ class MockVikingDB:
 @pytest_asyncio.fixture
 async def watch_manager() -> AsyncGenerator[WatchManager, None]:
     """Create WatchManager instance without VikingFS for testing."""
-    manager = WatchManager(viking_fs=None)
+    manager = WatchManager(ctx_fs=None)
     await manager.initialize()
     yield manager
     await manager.clear_all_tasks()
@@ -67,7 +67,7 @@ async def resource_service(watch_manager: WatchManager) -> AsyncGenerator[Resour
     scheduler.watch_manager = watch_manager
     service = ResourceService(
         vikingdb=MockVikingDB(),
-        viking_fs=MockVikingFS(),
+        ctx_fs=MockVikingFS(),
         resource_processor=MockResourceProcessor(),
         skill_processor=MockSkillProcessor(),
         watch_scheduler=scheduler,
@@ -92,7 +92,7 @@ class TestWatchTaskCreation:
         self, resource_service: ResourceService, request_context: RequestContext
     ):
         """Test creating a watch task when watch_interval > 0."""
-        to_uri = "viking://resources/test_resource"
+        to_uri = "ctx://resources/test_resource"
 
         result = await resource_service.add_resource(
             path="/test/path",
@@ -131,7 +131,7 @@ class TestWatchTaskCreation:
     async def test_watch_task_aligns_processor_params(
         self, resource_service: ResourceService, request_context: RequestContext
     ):
-        to_uri = "viking://resources/align_processor_params"
+        to_uri = "ctx://resources/align_processor_params"
 
         await resource_service.add_resource(
             path="/test/path",
@@ -154,7 +154,7 @@ class TestWatchTaskCreation:
         self, resource_service: ResourceService, request_context: RequestContext
     ):
         """Test creating a watch task with default interval."""
-        to_uri = "viking://resources/default_interval"
+        to_uri = "ctx://resources/default_interval"
 
         await resource_service.add_resource(
             path="/test/path",
@@ -172,7 +172,7 @@ class TestWatchTaskCreation:
         self, resource_service: ResourceService, request_context: RequestContext
     ):
         """Test that no watch task is created when watch_interval is 0."""
-        to_uri = "viking://resources/no_watch"
+        to_uri = "ctx://resources/no_watch"
 
         await resource_service.add_resource(
             path="/test/path",
@@ -189,7 +189,7 @@ class TestWatchTaskCreation:
         self, resource_service: ResourceService, request_context: RequestContext
     ):
         """Test that no watch task is created when watch_interval is negative."""
-        to_uri = "viking://resources/negative_watch"
+        to_uri = "ctx://resources/negative_watch"
 
         await resource_service.add_resource(
             path="/test/path",
@@ -210,7 +210,7 @@ class TestWatchTaskConflict:
         self, resource_service: ResourceService, request_context: RequestContext
     ):
         """Test that ConflictError is raised when an active task already exists."""
-        to_uri = "viking://resources/conflict_test"
+        to_uri = "ctx://resources/conflict_test"
 
         await resource_service.add_resource(
             path="/test/path1",
@@ -234,7 +234,7 @@ class TestWatchTaskConflict:
     async def test_conflict_when_task_exists_but_hidden_by_permission(
         self, resource_service: ResourceService, request_context: RequestContext
     ):
-        to_uri = "viking://resources/cross_user_conflict"
+        to_uri = "ctx://resources/cross_user_conflict"
         other_user_ctx = RequestContext(
             user=UserIdentifier("test_account", "other_user", "other_agent"),
             role=Role.USER,
@@ -268,7 +268,7 @@ class TestWatchTaskConflict:
     async def test_conflict_when_task_exists_but_hidden_by_other_agent(
         self, resource_service: ResourceService, request_context: RequestContext
     ):
-        to_uri = "viking://resources/cross_agent_conflict"
+        to_uri = "ctx://resources/cross_agent_conflict"
         other_agent_ctx = RequestContext(
             user=UserIdentifier("test_account", "test_user", "other_agent"),
             role=Role.USER,
@@ -303,7 +303,7 @@ class TestWatchTaskConflict:
         self, resource_service: ResourceService, request_context: RequestContext
     ):
         """Test reactivating an inactive task."""
-        to_uri = "viking://resources/reactivate_test"
+        to_uri = "ctx://resources/reactivate_test"
 
         await resource_service.add_resource(
             path="/test/path1",
@@ -350,7 +350,7 @@ class TestWatchTaskCancellation:
         self, resource_service: ResourceService, request_context: RequestContext
     ):
         """Test cancelling a watch task by setting watch_interval to 0."""
-        to_uri = "viking://resources/cancel_test"
+        to_uri = "ctx://resources/cancel_test"
 
         await resource_service.add_resource(
             path="/test/path",
@@ -379,7 +379,7 @@ class TestWatchTaskCancellation:
         self, resource_service: ResourceService, request_context: RequestContext
     ):
         """Test cancelling a watch task by setting watch_interval to negative."""
-        to_uri = "viking://resources/cancel_negative"
+        to_uri = "ctx://resources/cancel_negative"
 
         await resource_service.add_resource(
             path="/test/path",
@@ -404,7 +404,7 @@ class TestWatchTaskCancellation:
         self, resource_service: ResourceService, request_context: RequestContext
     ):
         """Test that cancelling a nonexistent task does not raise an error."""
-        to_uri = "viking://resources/nonexistent"
+        to_uri = "ctx://resources/nonexistent"
 
         result = await resource_service.add_resource(
             path="/test/path",
@@ -419,7 +419,7 @@ class TestWatchTaskCancellation:
     async def test_cancel_does_not_touch_other_agent_task(
         self, resource_service: ResourceService, request_context: RequestContext
     ):
-        to_uri = "viking://resources/cancel_other_agent"
+        to_uri = "ctx://resources/cancel_other_agent"
         other_agent_ctx = RequestContext(
             user=UserIdentifier("test_account", "test_user", "other_agent"),
             role=Role.USER,
@@ -452,7 +452,7 @@ class TestWatchTaskUpdate:
         self, resource_service: ResourceService, request_context: RequestContext
     ):
         """Test updating watch task parameters."""
-        to_uri = "viking://resources/update_test"
+        to_uri = "ctx://resources/update_test"
 
         await resource_service.add_resource(
             path="/test/path1",
@@ -508,7 +508,7 @@ class TestResourceProcessingIndependence:
 
         service = ResourceService(
             vikingdb=MockVikingDB(),
-            viking_fs=MockVikingFS(),
+            ctx_fs=MockVikingFS(),
             resource_processor=MockResourceProcessor(),
             skill_processor=MockSkillProcessor(),
             watch_scheduler=scheduler,
@@ -517,7 +517,7 @@ class TestResourceProcessingIndependence:
         result = await service.add_resource(
             path="/test/path",
             ctx=request_context,
-            to="viking://resources/test",
+            to="ctx://resources/test",
             watch_interval=30.0,
         )
 
@@ -529,7 +529,7 @@ class TestResourceProcessingIndependence:
         """Test that resource is added when watch_manager is None."""
         service = ResourceService(
             vikingdb=MockVikingDB(),
-            viking_fs=MockVikingFS(),
+            ctx_fs=MockVikingFS(),
             resource_processor=MockResourceProcessor(),
             skill_processor=MockSkillProcessor(),
             watch_scheduler=None,
@@ -538,7 +538,7 @@ class TestResourceProcessingIndependence:
         result = await service.add_resource(
             path="/test/path",
             ctx=request_context,
-            to="viking://resources/test",
+            to="ctx://resources/test",
             watch_interval=30.0,
         )
 

@@ -4,7 +4,7 @@
 
 import pytest
 
-from openviking_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
+from atom_ctx_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
 
 
 def _cfg(**kwargs):

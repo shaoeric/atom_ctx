@@ -1,6 +1,6 @@
 # 监控与健康检查
 
-OpenViking Server 提供了用于监控系统健康状态和组件状态的端点。
+AtomCtx Server 提供了用于监控系统健康状态和组件状态的端点。
 
 ## 健康检查
 
@@ -83,7 +83,7 @@ curl http://localhost:1933/api/v1/debug/health \
 每个 API 响应都包含一个 `X-Process-Time` 请求头，其中包含服务端处理时间（单位为秒）：
 
 ```bash
-curl -v http://localhost:1933/api/v1/fs/ls?uri=viking:// \
+curl -v http://localhost:1933/api/v1/fs/ls?uri=ctx:// \
   -H "X-API-Key: your-key" 2>&1 | grep X-Process-Time
 # < X-Process-Time: 0.0023
 ```

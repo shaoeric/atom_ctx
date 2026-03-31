@@ -8,7 +8,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "openviking"
+name = "atom-ctx"
 dynamic = ["version"]
 description = "An Agent-native context database"
 readme = "README.md"
@@ -119,7 +119,7 @@ build = [
     "wheel",
     "build",
 ]
-# vikingbot core dependencies
+# bot core dependencies
 bot = [
     "pydantic-settings>=2.0.0",
     "websockets>=12.0",
@@ -141,7 +141,7 @@ bot = [
     "gradio>=6.6.0",
     "py-machineid>=1.0.0",
 ]
-# vikingbot optional features
+# bot optional features
 bot-langfuse = ["langfuse>=3.0.0"]
 bot-telegram = ["python-telegram-bot[socks]>=21.0"]
 bot-feishu = ["lark-oapi>=1.0.0"]
@@ -156,41 +156,39 @@ bot-sandbox = [
 bot-fuse = ["fusepy>=3.0.1"]
 bot-opencode = ["opencode-ai>=0.1.0a0"]
 bot-full = [
-    "openviking[bot,bot-langfuse,bot-telegram,bot-feishu,bot-dingtalk,bot-slack,bot-qq,bot-sandbox,bot-fuse,bot-opencode]",
+    "atom-ctx[bot,bot-langfuse,bot-telegram,bot-feishu,bot-dingtalk,bot-slack,bot-qq,bot-sandbox,bot-fuse,bot-opencode]",
 ]
 
 [project.urls]
-Homepage = "https://github.com/volcengine/openviking"
-Documentation = "https://openviking.ai"
-Repository = "https://github.com/volcengine/openviking"
-Issues = "https://github.com/volcengine/openviking/issues"
+Homepage = "https://github.com/volcengine/atom-ctx"
+Documentation = "https://atom-ctx.ai"
+Repository = "https://github.com/volcengine/atom-ctx"
+Issues = "https://github.com/volcengine/atom-ctx/issues"
 
 [project.scripts]
-ov = "openviking_cli.rust_cli:main"  # Rust CLI 入口（极简包装器）
-openviking = "openviking_cli.rust_cli:main"  # Rust CLI 入口（放弃 python CLI）
-openviking-server = "openviking_cli.server_bootstrap:main"
-vikingbot = "vikingbot.cli.commands:app"
+ctx = "atom_ctx_cli.rust_cli:main"
+ctx-server = "atom_ctx_cli.server_bootstrap:main"
 
 [tool.setuptools_scm]
-write_to = "openviking/_version.py"
+write_to = "atom_ctx/_version.py"
 local_scheme = "no-local-version"
 tag_regex = "^(?:v)?(?:[a-zA-Z0-9_]+@)?(?P<version>[0-9]+(?:\\.[0-9]+)*)$"
 
 [tool.setuptools.packages.find]
 where = [".", "bot"]
-include = ["openviking*", "vikingbot*"]
+include = ["atom_ctx*", "vikingbot*"]
 exclude = ["tests*", "docs*", "examples*"]
 
 [tool.setuptools.package-data]
-openviking = [
+atom_ctx = [
     "prompts/templates/**/*.yaml",
     "bin/agfs-server",
     "bin/agfs-server.exe",
     "lib/libagfsbinding.so",
     "lib/libagfsbinding.dylib",
     "lib/libagfsbinding.dll",
-    "bin/ov",
-    "bin/ov.exe",
+    "bin/ctx",
+    "bin/ctx.exe",
     "storage/vectordb/engine/*.abi3.so",
     "storage/vectordb/engine/*.pyd",
 ]
@@ -220,7 +218,7 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
-addopts = "-v --cov=openviking --cov-report=term-missing"
+addopts = "-v --cov=atom_ctx --cov-report=term-missing"
 
 [tool.ruff]
 line-length = 100

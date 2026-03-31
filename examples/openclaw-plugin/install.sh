@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# OpenClaw + OpenViking one-click installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/volcengine/OpenViking/main/examples/openclaw-plugin/install.sh | bash
+# OpenClaw + AtomCtx one-click installer
+# Usage: curl -fsSL https://raw.githubusercontent.com/volcengine/AtomCtx/main/examples/openclaw-plugin/install.sh | bash
 #
 # Options:
-#   --repo <owner/repo>           - GitHub repository (default: volcengine/OpenViking)
+#   --repo <owner/repo>           - GitHub repository (default: volcengine/AtomCtx)
 #   --plugin-version <tag>        - Plugin version (Git tag, e.g. v0.2.9, default: latest tag)
-#   --openviking-version <ver>    - OpenViking PyPI version (e.g. 0.2.9, default: latest)
+#   --atom_ctx-version <ver>    - AtomCtx PyPI version (e.g. 0.2.9, default: latest)
 #   --workdir <path>              - OpenClaw config directory (default: ~/.openclaw)
 #   --update / --upgrade-plugin   - Upgrade only the plugin using native script logic
 #   --rollback                    - Roll back the last plugin upgrade
@@ -18,51 +18,51 @@
 #   REPO=owner/repo               - GitHub repository (same as --repo)
 #   BRANCH=branch                 - Git branch/tag/commit (legacy, use --plugin-version instead)
 #   PLUGIN_VERSION=tag            - Plugin version (same as --plugin-version)
-#   OPENVIKING_VERSION=ver        - OpenViking PyPI version (same as --openviking-version)
-#   OPENVIKING_INSTALL_YES=1      - non-interactive mode (same as -y)
+#   CTX_VERSION=ver        - AtomCtx PyPI version (same as --atom_ctx-version)
+#   ATOM_CTX_INSTALL_YES=1      - non-interactive mode (same as -y)
 #   SKIP_OPENCLAW=1               - skip OpenClaw check
-#   SKIP_OPENVIKING=1             - skip OpenViking installation
+#   SKIP_ATOM_CTX=1             - skip AtomCtx installation
 #   NPM_REGISTRY=url              - npm registry (default: https://registry.npmmirror.com)
 #   PIP_INDEX_URL=url             - pip index URL (default: https://pypi.tuna.tsinghua.edu.cn/simple)
-#   OPENVIKING_VLM_API_KEY        - VLM model API key (optional)
-#   OPENVIKING_EMBEDDING_API_KEY  - Embedding model API key (optional)
-#   OPENVIKING_ARK_API_KEY        - legacy fallback for both keys
-#   OPENVIKING_ALLOW_BREAK_SYSTEM_PACKAGES=1 - if venv unavailable (PEP 668 only), allow pip --break-system-packages
+#   ATOM_CTX_VLM_API_KEY        - VLM model API key (optional)
+#   ATOM_CTX_EMBEDDING_API_KEY  - Embedding model API key (optional)
+#   ATOM_CTX_ARK_API_KEY        - legacy fallback for both keys
+#   ATOM_CTX_ALLOW_BREAK_SYSTEM_PACKAGES=1 - if venv unavailable (PEP 668 only), allow pip --break-system-packages
 #   GET_PIP_URL=url               - URL for get-pip.py when using venv --without-pip (default: auto)
 #
-# On Debian/Ubuntu (PEP 668), the script installs OpenViking into a venv at
-# ~/.openviking/venv to avoid "externally-managed-environment" errors.
+# On Debian/Ubuntu (PEP 668), the script installs AtomCtx into a venv at
+# ~/.ctx/venv to avoid "externally-managed-environment" errors.
 #
 # If curl | bash from a branch URL looks stale, pin the commit SHA in the path:
-#   .../LinQiang391/OpenViking/<commit>/examples/openclaw-plugin/install.sh
+#   .../LinQiang391/AtomCtx/<commit>/examples/openclaw-plugin/install.sh
 # (raw.githubusercontent.com may cache branch resolution briefly.)
 #
 
 set -e
 set -o pipefail
 
-# Set by install_openviking when using venv (e.g. on Debian/Ubuntu); used by write_openviking_env
-OPENVIKING_PYTHON_PATH=""
+# Set by install_atom_ctx when using venv (e.g. on Debian/Ubuntu); used by write_atom_ctx_env
+ATOM_CTX_PYTHON_PATH=""
 
-REPO="${REPO:-volcengine/OpenViking}"
+REPO="${REPO:-volcengine/AtomCtx}"
 # BRANCH is legacy, prefer PLUGIN_VERSION. If omitted, resolve the latest tag from GitHub.
 PLUGIN_VERSION_EXPLICIT="0"
 if [[ -n "${PLUGIN_VERSION:-}" || -n "${BRANCH:-}" ]]; then
   PLUGIN_VERSION_EXPLICIT="1"
 fi
 PLUGIN_VERSION="${PLUGIN_VERSION:-${BRANCH:-}}"
-OPENVIKING_VERSION="${OPENVIKING_VERSION:-}"
-INSTALL_YES="${OPENVIKING_INSTALL_YES:-0}"
-UPGRADE_PLUGIN_ONLY="${OPENVIKING_UPGRADE_PLUGIN_ONLY:-0}"
-ROLLBACK_LAST_UPGRADE="${OPENVIKING_ROLLBACK_LAST_UPGRADE:-0}"
+CTX_VERSION="${CTX_VERSION:-}"
+INSTALL_YES="${ATOM_CTX_INSTALL_YES:-0}"
+UPGRADE_PLUGIN_ONLY="${ATOM_CTX_UPGRADE_PLUGIN_ONLY:-0}"
+ROLLBACK_LAST_UPGRADE="${ATOM_CTX_ROLLBACK_LAST_UPGRADE:-0}"
 SKIP_OC="${SKIP_OPENCLAW:-0}"
-SKIP_OV="${SKIP_OPENVIKING:-0}"
+SKIP_OV="${SKIP_ATOM_CTX:-0}"
 NPM_REGISTRY="${NPM_REGISTRY:-https://registry.npmmirror.com}"
 PIP_INDEX_URL="${PIP_INDEX_URL:-https://mirrors.volces.com/pypi/simple/}"
 HOME_DIR="${HOME:-$USERPROFILE}"
 DEFAULT_OPENCLAW_DIR="${HOME_DIR}/.openclaw"
 OPENCLAW_DIR="${DEFAULT_OPENCLAW_DIR}"
-OPENVIKING_DIR="${HOME_DIR}/.openviking"
+ATOM_CTX_DIR="${HOME_DIR}/.ctx"
 PLUGIN_DEST=""  # Will be set after resolving plugin config
 DEFAULT_SERVER_PORT=1933
 DEFAULT_AGFS_PORT=1833
@@ -82,7 +82,7 @@ RESOLVED_FILES_REQUIRED=()
 RESOLVED_FILES_OPTIONAL=()
 RESOLVED_NPM_OMIT_DEV="true"
 RESOLVED_MIN_OPENCLAW_VERSION=""
-RESOLVED_MIN_OPENVIKING_VERSION=""
+RESOLVED_MIN_CTX_VERSION=""
 RESOLVED_PLUGIN_RELEASE_ID=""
 
 UPGRADE_DETECTED_GENERATION="none"
@@ -124,7 +124,7 @@ for arg in "$@"; do
     continue
   fi
   if [[ -n "$_expect_ov_version" ]]; then
-    OPENVIKING_VERSION="$arg"
+    CTX_VERSION="$arg"
     _expect_ov_version=""
     continue
   fi
@@ -139,18 +139,18 @@ for arg in "$@"; do
   [[ "$arg" == "--zh" ]] && LANG_UI="zh"
   [[ "$arg" == "--workdir" ]] && { _expect_workdir="1"; continue; }
   [[ "$arg" == "--plugin-version" ]] && { _expect_plugin_version="1"; continue; }
-  [[ "$arg" == "--openviking-version" ]] && { _expect_ov_version="1"; continue; }
+  [[ "$arg" == "--atom_ctx-version" ]] && { _expect_ov_version="1"; continue; }
   [[ "$arg" == "--repo" ]] && { _expect_repo="1"; continue; }
   [[ "$arg" == "-h" || "$arg" == "--help" ]] && {
     echo "Usage: curl -fsSL <INSTALL_URL> | bash [-s -- OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  --repo <owner/repo>      GitHub repository (default: volcengine/OpenViking)"
+    echo "  --repo <owner/repo>      GitHub repository (default: volcengine/AtomCtx)"
     echo "  --plugin-version <tag>   Plugin version (Git tag, e.g. v0.2.9, default: latest tag)"
-    echo "  --openviking-version <v> OpenViking PyPI version (e.g. 0.2.9, default: latest)"
+    echo "  --atom_ctx-version <v> AtomCtx PyPI version (e.g. 0.2.9, default: latest)"
     echo "  --workdir <path>         OpenClaw config directory (default: ~/.openclaw)"
     echo "  --update, --upgrade-plugin"
-    echo "                           Upgrade only the plugin to the requested --plugin-version; do not change the OpenViking service"
+    echo "                           Upgrade only the plugin to the requested --plugin-version; do not change the AtomCtx service"
     echo "  --rollback              Roll back the last plugin upgrade"
     echo "  -y, --yes                Non-interactive mode"
     echo "  --zh                     Chinese prompts"
@@ -161,7 +161,7 @@ for arg in "$@"; do
     echo "  curl -fsSL <URL> | bash"
     echo ""
     echo "  # Install from a fork repository"
-    echo "  curl -fsSL <URL> | bash -s -- --repo yourname/OpenViking --plugin-version dev-branch"
+    echo "  curl -fsSL <URL> | bash -s -- --repo yourname/AtomCtx --plugin-version dev-branch"
     echo ""
     echo "  # Install specific plugin version"
     echo "  curl -fsSL <URL> | bash -s -- --plugin-version v0.2.8"
@@ -172,7 +172,7 @@ for arg in "$@"; do
     echo "  # Roll back the last plugin upgrade"
     echo "  curl -fsSL <URL> | bash -s -- --rollback"
     echo ""
-    echo "Env vars: REPO, PLUGIN_VERSION, OPENVIKING_VERSION, SKIP_OPENCLAW, SKIP_OPENVIKING, NPM_REGISTRY, PIP_INDEX_URL"
+    echo "Env vars: REPO, PLUGIN_VERSION, CTX_VERSION, SKIP_OPENCLAW, SKIP_ATOM_CTX, NPM_REGISTRY, PIP_INDEX_URL"
     exit 0
   }
 done
@@ -195,11 +195,11 @@ tr() {
 legacy_plugin_install_hint() {
   local args=(--plugin-version "<legacy-version>")
   [[ "$OPENCLAW_DIR" != "$DEFAULT_OPENCLAW_DIR" ]] && args+=(--workdir "$OPENCLAW_DIR")
-  [[ "$REPO" != "volcengine/OpenViking" ]] && args+=(--repo "$REPO")
+  [[ "$REPO" != "volcengine/AtomCtx" ]] && args+=(--repo "$REPO")
   [[ "$LANG_UI" == "zh" ]] && args+=(--zh)
 
-  if [[ -n "${OPENVIKING_INSTALL_LEGACY_HINT:-}" ]]; then
-    printf "%s\n" "${OPENVIKING_INSTALL_LEGACY_HINT}"
+  if [[ -n "${ATOM_CTX_INSTALL_LEGACY_HINT:-}" ]]; then
+    printf "%s\n" "${ATOM_CTX_INSTALL_LEGACY_HINT}"
     return 0
   fi
 
@@ -215,7 +215,7 @@ legacy_plugin_install_hint() {
     return 0
   fi
 
-  printf "ov-install"
+  printf "ctx-install"
   local arg
   for arg in "${args[@]}"; do
     printf " %q" "${arg}"
@@ -249,11 +249,11 @@ get_openclaw_config_path() {
 }
 
 get_install_state_path_for_plugin() {
-  printf "%s\n" "${OPENCLAW_DIR}/extensions/$1/.ov-install-state.json"
+  printf "%s\n" "${OPENCLAW_DIR}/extensions/$1/.ctx-install-state.json"
 }
 
 get_upgrade_audit_dir() {
-  printf "%s\n" "${OPENCLAW_DIR}/.openviking-upgrade-backup"
+  printf "%s\n" "${OPENCLAW_DIR}/.ctx-upgrade-backup"
 }
 
 get_upgrade_audit_path() {
@@ -266,14 +266,14 @@ get_openclaw_config_backup_path() {
 
 variant_meta_by_id() {
   case "$1" in
-    memory-openviking) printf "%s\n" "memory-openviking|openclaw-memory-plugin|memory|legacy|none" ;;
-    openviking) printf "%s\n" "openviking|openclaw-plugin|contextEngine|current|legacy" ;;
+    memory-atom_ctx) printf "%s\n" "memory-atom_ctx|openclaw-memory-plugin|memory|legacy|none" ;;
+    atom_ctx) printf "%s\n" "atom_ctx|openclaw-plugin|contextEngine|current|legacy" ;;
     *) return 1 ;;
   esac
 }
 
 format_target_version_label() {
-  local base="${RESOLVED_PLUGIN_ID:-openviking}@${PLUGIN_VERSION}"
+  local base="${RESOLVED_PLUGIN_ID:-atom_ctx}@${PLUGIN_VERSION}"
   if [[ -n "${RESOLVED_PLUGIN_RELEASE_ID}" && "${RESOLVED_PLUGIN_RELEASE_ID}" != "${PLUGIN_VERSION}" ]]; then
     printf "%s\n" "${base} (${RESOLVED_PLUGIN_RELEASE_ID})"
     return 0
@@ -289,8 +289,8 @@ validate_requested_plugin_version() {
 }
 
 ensure_plugin_only_operation_args() {
-  if [[ ("${UPGRADE_PLUGIN_ONLY}" == "1" || "${ROLLBACK_LAST_UPGRADE}" == "1") && -n "${OPENVIKING_VERSION}" ]]; then
-    err "--update/--upgrade-plugin and --rollback only operate on the plugin. Do not use --openviking-version with these modes."
+  if [[ ("${UPGRADE_PLUGIN_ONLY}" == "1" || "${ROLLBACK_LAST_UPGRADE}" == "1") && -n "${CTX_VERSION}" ]]; then
+    err "--update/--upgrade-plugin and --rollback only operate on the plugin. Do not use --atom_ctx-version with these modes."
     exit 1
   fi
 }
@@ -425,10 +425,10 @@ write_install_state_file() {
   local operation="$1"
   local from_version="$2"
   local install_state_path
-  install_state_path="$(get_install_state_path_for_plugin "${RESOLVED_PLUGIN_ID:-openviking}")"
+  install_state_path="$(get_install_state_path_for_plugin "${RESOLVED_PLUGIN_ID:-atom_ctx}")"
   mkdir -p "$(dirname "${install_state_path}")"
   node - "${install_state_path}" \
-    "${RESOLVED_PLUGIN_ID:-openviking}" \
+    "${RESOLVED_PLUGIN_ID:-atom_ctx}" \
     "${PLUGIN_VERSION}" \
     "${RESOLVED_PLUGIN_RELEASE_ID}" \
     "${REPO}" \
@@ -440,7 +440,7 @@ const fs = require("fs");
 const path = require("path");
 
 const [installStatePath, pluginId, requestedRef, releaseId, repo, operation, fromVersion, configBackupPath, ...backupArgs] = process.argv.slice(2);
-const generation = pluginId === "memory-openviking" ? "legacy" : pluginId === "openviking" ? "current" : "unknown";
+const generation = pluginId === "memory-atom_ctx" ? "legacy" : pluginId === "atom_ctx" ? "current" : "unknown";
 const pluginBackups = backupArgs
   .filter(Boolean)
   .map((item) => {
@@ -544,16 +544,16 @@ detect_installed_plugin_state() {
       agentId) UPGRADE_RUNTIME_AGENT_ID="$(decode_base64_with_node "${value}")" ;;
       detectionId) UPGRADE_DETECTED_IDS+=("${value}") ;;
     esac
-  done < <(node - "${config_path}" "${OPENCLAW_DIR}" "${RESOLVED_PLUGIN_ID}" "${RESOLVED_PLUGIN_SLOT}" "${OPENVIKING_DIR}" "${DEFAULT_SERVER_PORT}" <<'NODE'
+  done < <(node - "${config_path}" "${OPENCLAW_DIR}" "${RESOLVED_PLUGIN_ID}" "${RESOLVED_PLUGIN_SLOT}" "${ATOM_CTX_DIR}" "${DEFAULT_SERVER_PORT}" <<'NODE'
 const fs = require("fs");
 const path = require("path");
 
-const [configPath, openclawDir, resolvedPluginId, resolvedPluginSlot, openvikingDir, defaultServerPortRaw] = process.argv.slice(2);
+const [configPath, openclawDir, resolvedPluginId, resolvedPluginSlot, atom_ctxDir, defaultServerPortRaw] = process.argv.slice(2);
 const defaultServerPort = Number.parseInt(defaultServerPortRaw, 10) || 1933;
 const enc = (value) => Buffer.from(String(value ?? ""), "utf8").toString("base64");
 const variants = [
-  { id: "memory-openviking", dir: "openclaw-memory-plugin", generation: "legacy", slot: "memory", slotFallback: "none" },
-  { id: "openviking", dir: "openclaw-plugin", generation: "current", slot: "contextEngine", slotFallback: "legacy" },
+  { id: "memory-atom_ctx", dir: "openclaw-memory-plugin", generation: "legacy", slot: "memory", slotFallback: "none" },
+  { id: "atom_ctx", dir: "openclaw-plugin", generation: "current", slot: "contextEngine", slotFallback: "legacy" },
 ];
 
 function readJson(filePath) {
@@ -562,7 +562,7 @@ function readJson(filePath) {
 }
 
 function getInstallStatePath(pluginId) {
-  return path.join(openclawDir, "extensions", pluginId, ".ov-install-state.json");
+  return path.join(openclawDir, "extensions", pluginId, ".ctx-install-state.json");
 }
 
 function detectPresence(config, variant) {
@@ -607,7 +607,7 @@ function extractRuntimeConfig(entryConfig) {
 }
 
 function readPortFromOvConf(filePath) {
-  const targetPath = filePath || path.join(openvikingDir, "ov.conf");
+  const targetPath = filePath || path.join(atom_ctxDir, "ctx.conf");
   if (!fs.existsSync(targetPath)) return null;
   try {
     const data = JSON.parse(fs.readFileSync(targetPath, "utf8"));
@@ -652,7 +652,7 @@ if (!runtime) runtime = { mode: "local" };
 if (runtime.mode === "remote") {
   runtime.baseUrl = runtime.baseUrl || "http://127.0.0.1:1933";
 } else {
-  runtime.configPath = runtime.configPath || path.join(openvikingDir, "ov.conf");
+  runtime.configPath = runtime.configPath || path.join(atom_ctxDir, "ctx.conf");
   runtime.port = runtime.port || readPortFromOvConf(runtime.configPath) || defaultServerPort;
 }
 
@@ -688,8 +688,8 @@ const fs = require("fs");
 
 const [configPath, ...pluginIds] = process.argv.slice(2);
 const variantMap = {
-  "memory-openviking": { id: "memory-openviking", dir: "openclaw-memory-plugin", slot: "memory", slotFallback: "none" },
-  "openviking": { id: "openviking", dir: "openclaw-plugin", slot: "contextEngine", slotFallback: "legacy" },
+  "memory-atom_ctx": { id: "memory-atom_ctx", dir: "openclaw-memory-plugin", slot: "memory", slotFallback: "none" },
+  "atom_ctx": { id: "atom_ctx", dir: "openclaw-plugin", slot: "contextEngine", slotFallback: "legacy" },
 };
 
 const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
@@ -734,13 +734,13 @@ NODE
 
   case "${status}" in
     changed)
-      info "Cleaned existing OpenViking plugin config only"
+      info "Cleaned existing AtomCtx plugin config only"
       ;;
     no-plugins)
       warn "openclaw.json has no plugins section; skipped targeted plugin cleanup"
       ;;
     *)
-      info "No OpenViking plugin config changes were required"
+      info "No AtomCtx plugin config changes were required"
       ;;
   esac
 }
@@ -748,7 +748,7 @@ NODE
 prepare_strong_plugin_upgrade() {
   detect_installed_plugin_state
   if [[ "${UPGRADE_DETECTED_GENERATION}" == "none" ]]; then
-    err "Plugin upgrade mode requires an existing OpenViking plugin entry in openclaw.json."
+    err "Plugin upgrade mode requires an existing AtomCtx plugin entry in openclaw.json."
     exit 1
   fi
 
@@ -758,13 +758,13 @@ prepare_strong_plugin_upgrade() {
     remote_api_key="${UPGRADE_RUNTIME_API_KEY:-}"
     remote_agent_id="${UPGRADE_RUNTIME_AGENT_ID:-}"
   else
-    SELECTED_CONFIG_PATH="${UPGRADE_RUNTIME_CONFIG_PATH:-${OPENVIKING_DIR}/ov.conf}"
+    SELECTED_CONFIG_PATH="${UPGRADE_RUNTIME_CONFIG_PATH:-${ATOM_CTX_DIR}/ctx.conf}"
     SELECTED_SERVER_PORT="${UPGRADE_RUNTIME_PORT:-${DEFAULT_SERVER_PORT}}"
   fi
 
   local to_version
   to_version="$(format_target_version_label)"
-  info "$(tr "Detected installed OpenViking plugin state: ${UPGRADE_DETECTED_GENERATION}" "检测到已安装的 OpenViking 插件状态: ${UPGRADE_DETECTED_GENERATION}")"
+  info "$(tr "Detected installed AtomCtx plugin state: ${UPGRADE_DETECTED_GENERATION}" "检测到已安装的 AtomCtx 插件状态: ${UPGRADE_DETECTED_GENERATION}")"
   info "$(tr "Upgrade runtime mode: ${SELECTED_MODE}" "升级运行模式: ${SELECTED_MODE}")"
   info "$(tr "Upgrade path: ${UPGRADE_DETECTED_FROM_VERSION} -> ${to_version}" "升级路径: ${UPGRADE_DETECTED_FROM_VERSION} -> ${to_version}")"
 
@@ -800,7 +800,7 @@ prepare_strong_plugin_upgrade() {
 
   write_upgrade_audit_file
   cleanup_installed_plugin_config
-  info "Upgrade will keep the existing OpenViking runtime file and re-apply only the minimum plugin runtime settings."
+  info "Upgrade will keep the existing AtomCtx runtime file and re-apply only the minimum plugin runtime settings."
   info "Upgrade audit file: $(get_upgrade_audit_path)"
 }
 
@@ -845,7 +845,7 @@ rollback_last_upgrade_operation() {
 
   local extensions_dir="${OPENCLAW_DIR}/extensions"
   mkdir -p "${extensions_dir}"
-  rm -rf "${extensions_dir}/memory-openviking" "${extensions_dir}/openviking"
+  rm -rf "${extensions_dir}/memory-atom_ctx" "${extensions_dir}/atom_ctx"
 
   for backup_item in "${UPGRADE_AUDIT_PLUGIN_BACKUPS[@]}"; do
     plugin_id="${backup_item%%|*}"
@@ -969,7 +969,7 @@ select_workdir() {
     else
       OPENCLAW_DIR="${instances[0]}"
     fi
-    PLUGIN_DEST="${OPENCLAW_DIR}/extensions/openviking"
+    PLUGIN_DEST="${OPENCLAW_DIR}/extensions/atom_ctx"
   fi
 }
 
@@ -993,7 +993,7 @@ collect_remote_config() {
   remote_api_key=""
   remote_agent_id=""
   if [[ "$INSTALL_YES" != "1" ]]; then
-    read -r -p "$(tr "OpenViking server URL [${remote_base_url}]: " "OpenViking 服务地址 [${remote_base_url}]: ")" _base_url < /dev/tty || true
+    read -r -p "$(tr "AtomCtx server URL [${remote_base_url}]: " "AtomCtx 服务地址 [${remote_base_url}]: ")" _base_url < /dev/tty || true
     read -r -p "$(tr "API Key (optional): " "API Key（可选）: ")" _api_key < /dev/tty || true
     read -r -p "$(tr "Agent ID (optional): " "Agent ID（可选）: ")" _agent_id < /dev/tty || true
     remote_base_url="${_base_url:-$remote_base_url}"
@@ -1005,7 +1005,7 @@ collect_remote_config() {
 # ---- Environment checks ----
 
 check_python() {
-  local py="${OPENVIKING_PYTHON:-python3}"
+  local py="${ATOM_CTX_PYTHON:-python3}"
   local out
   if ! out=$("$py" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null); then
     echo "fail|$py|$(tr "Python not found. Install Python >= 3.10." "未找到 Python，请安装 Python >= 3.10。")"
@@ -1086,7 +1086,7 @@ print_install_hints() {
 
 # Validate environment
 validate_environment() {
-  info "Checking OpenViking runtime environment..."
+  info "Checking AtomCtx runtime environment..."
   echo ""
 
   local missing=()
@@ -1165,7 +1165,7 @@ resolve_default_plugin_version() {
   api_tags="$(
     curl -fsSL --connect-timeout 10 \
       -H "Accept: application/vnd.github+json" \
-      -H "User-Agent: openviking-installer" \
+      -H "User-Agent: atom_ctx-installer" \
       "https://api.github.com/repos/${REPO}/tags?per_page=100" 2>/dev/null \
       | tr -d '\r' \
       | grep -oE '"name":"[^"]+"' \
@@ -1210,11 +1210,11 @@ detect_openclaw_version() {
   echo "$version"
 }
 
-# Parse JSON using Python (available since we need Python for OpenViking)
+# Parse JSON using Python (available since we need Python for AtomCtx)
 parse_json() {
   local json_file="$1"
   local key="$2"
-  local py_json="${OPENVIKING_PYTHON:-}"
+  local py_json="${ATOM_CTX_PYTHON:-}"
   [[ -z "$py_json" ]] && py_json="$(command -v python3 || command -v python || true)"
   [[ -z "$py_json" ]] && py_json="python3"
   "$py_json" -c "
@@ -1239,9 +1239,9 @@ elif data is not None:
 
 # Fallback configs for old versions without manifest
 # Format: plugin_dir|plugin_id|plugin_kind|plugin_slot|required_files|optional_files
-FALLBACK_LEGACY="openclaw-memory-plugin|memory-openviking|memory|memory|index.ts,config.ts,openclaw.plugin.json,package.json|package-lock.json,.gitignore"
+FALLBACK_LEGACY="openclaw-memory-plugin|memory-atom_ctx|memory|memory|index.ts,config.ts,openclaw.plugin.json,package.json|package-lock.json,.gitignore"
 # Must match examples/openclaw-plugin/install-manifest.json files.*
-FALLBACK_CURRENT="openclaw-plugin|openviking|context-engine|contextEngine|index.ts,config.ts,package.json|context-engine.ts,client.ts,process-manager.ts,memory-ranking.ts,text-utils.ts,tool-call-id.ts,session-transcript-repair.ts,openclaw.plugin.json,tsconfig.json,package-lock.json,.gitignore"
+FALLBACK_CURRENT="openclaw-plugin|atom_ctx|context-engine|contextEngine|index.ts,config.ts,package.json|context-engine.ts,client.ts,process-manager.ts,memory-ranking.ts,text-utils.ts,tool-call-id.ts,session-transcript-repair.ts,openclaw.plugin.json,tsconfig.json,package-lock.json,.gitignore"
 
 # Resolve plugin configuration from manifest or fallback
 resolve_plugin_config() {
@@ -1282,7 +1282,7 @@ resolve_plugin_config() {
     RESOLVED_PLUGIN_KIND=$(parse_json "$manifest_file" "plugin.kind")
     RESOLVED_PLUGIN_SLOT=$(parse_json "$manifest_file" "plugin.slot")
     RESOLVED_MIN_OPENCLAW_VERSION=$(parse_json "$manifest_file" "compatibility.minOpenclawVersion")
-    RESOLVED_MIN_OPENVIKING_VERSION=$(parse_json "$manifest_file" "compatibility.minOpenvikingVersion")
+    RESOLVED_MIN_CTX_VERSION=$(parse_json "$manifest_file" "compatibility.minCtxVersion")
     RESOLVED_PLUGIN_RELEASE_ID=$(parse_json "$manifest_file" "release.id")
     RESOLVED_NPM_OMIT_DEV=$(parse_json "$manifest_file" "npm.omitDev")
     [[ -z "$RESOLVED_NPM_OMIT_DEV" ]] && RESOLVED_NPM_OMIT_DEV="true"
@@ -1307,7 +1307,7 @@ resolve_plugin_config() {
     if curl -fsSL --connect-timeout 10 "${gh_raw}/examples/${plugin_dir}/package.json" -o "$pkg_json_file" 2>/dev/null && [[ -s "$pkg_json_file" ]]; then
       local pkg_name
       pkg_name=$(parse_json "$pkg_json_file" "name")
-      if [[ -n "$pkg_name" && "$pkg_name" != "@openclaw/openviking" ]]; then
+      if [[ -n "$pkg_name" && "$pkg_name" != "@openclaw/atom_ctx" ]]; then
         fallback_key="legacy"
         info "$(tr "Detected legacy plugin by package name: ${pkg_name}" "通过 package.json 名称检测到旧版插件: ${pkg_name}")"
       elif [[ -n "$pkg_name" ]]; then
@@ -1342,7 +1342,7 @@ resolve_plugin_config() {
     IFS=',' read -r -a RESOLVED_FILES_REQUIRED <<< "$required_csv"
     IFS=',' read -r -a RESOLVED_FILES_OPTIONAL <<< "$optional_csv"
     RESOLVED_NPM_OMIT_DEV="true"
-    RESOLVED_MIN_OPENVIKING_VERSION=""
+    RESOLVED_MIN_CTX_VERSION=""
     RESOLVED_PLUGIN_RELEASE_ID=""
 
     # If no compatVer from package.json, try main branch manifest
@@ -1414,15 +1414,15 @@ check_openclaw_compatibility() {
   return 0
 }
 
-check_requested_openviking_compatibility() {
-  if [[ "$SKIP_OV" == "1" || -z "$RESOLVED_MIN_OPENVIKING_VERSION" || -z "$OPENVIKING_VERSION" ]]; then
+check_requested_atom_ctx_compatibility() {
+  if [[ "$SKIP_OV" == "1" || -z "$RESOLVED_MIN_CTX_VERSION" || -z "$CTX_VERSION" ]]; then
     return 0
   fi
 
-  if ! version_gte "$OPENVIKING_VERSION" "$RESOLVED_MIN_OPENVIKING_VERSION"; then
-    err "OpenViking ${OPENVIKING_VERSION} does not support this plugin (requires >= ${RESOLVED_MIN_OPENVIKING_VERSION})"
+  if ! version_gte "$CTX_VERSION" "$RESOLVED_MIN_CTX_VERSION"; then
+    err "AtomCtx ${CTX_VERSION} does not support this plugin (requires >= ${RESOLVED_MIN_CTX_VERSION})"
     echo ""
-    echo "  Use a newer OpenViking version, or omit --openviking-version to install the latest release."
+    echo "  Use a newer AtomCtx version, or omit --atom_ctx-version to install the latest release."
     exit 1
   fi
 }
@@ -1463,20 +1463,20 @@ run_pip_install_capture() {
   return 1
 }
 
-install_openviking() {
+install_atom_ctx() {
   if [[ "$SKIP_OV" == "1" ]]; then
-    info "$(tr "Skipping OpenViking install (SKIP_OPENVIKING=1)" "跳过 OpenViking 安装 (SKIP_OPENVIKING=1)")"
+    info "$(tr "Skipping AtomCtx install (SKIP_ATOM_CTX=1)" "跳过 AtomCtx 安装 (SKIP_ATOM_CTX=1)")"
     return 0
   fi
-  local py="${OPENVIKING_PYTHON:-python3}"
+  local py="${ATOM_CTX_PYTHON:-python3}"
 
   # Determine package spec
-  local pkg_spec="openviking"
-  if [[ -n "$OPENVIKING_VERSION" ]]; then
-    pkg_spec="openviking==${OPENVIKING_VERSION}"
-    info "$(tr "Installing OpenViking ${OPENVIKING_VERSION} from PyPI..." "正在安装 OpenViking ${OPENVIKING_VERSION} (PyPI)...")"
+  local pkg_spec="atom_ctx"
+  if [[ -n "$CTX_VERSION" ]]; then
+    pkg_spec="atom-ctx==${CTX_VERSION}"
+    info "$(tr "Installing AtomCtx ${CTX_VERSION} from PyPI..." "正在安装 AtomCtx ${CTX_VERSION} (PyPI)...")"
   else
-    info "$(tr "Installing OpenViking (latest) from PyPI..." "正在安装 OpenViking (最新版) (PyPI)...")"
+    info "$(tr "Installing AtomCtx (latest) from PyPI..." "正在安装 AtomCtx (最新版) (PyPI)...")"
   fi
   info "$(tr "Using pip index: ${PIP_INDEX_URL}" "使用 pip 镜像: ${PIP_INDEX_URL}")"
 
@@ -1489,9 +1489,9 @@ install_openviking() {
   "$py" -m pip install --upgrade pip -q -i "${PIP_INDEX_URL}" >/dev/null 2>&1 || true
   if run_pip_install_capture "${pip_log}" "$py" -m pip install --progress-bar on "$pkg_spec" -i "${PIP_INDEX_URL}"; then
     rm -f "${pip_log}" 2>/dev/null || true
-    OPENVIKING_PYTHON_PATH="$(command -v "$py" || true)"
-    [[ -z "$OPENVIKING_PYTHON_PATH" ]] && OPENVIKING_PYTHON_PATH="$py"
-    info "$(tr "OpenViking installed." "OpenViking 安装完成。")"
+    ATOM_CTX_PYTHON_PATH="$(command -v "$py" || true)"
+    [[ -z "$ATOM_CTX_PYTHON_PATH" ]] && ATOM_CTX_PYTHON_PATH="$py"
+    info "$(tr "AtomCtx installed." "AtomCtx 安装完成。")"
     return 0
   fi
 
@@ -1501,30 +1501,30 @@ install_openviking() {
   # When system has no pip, or PEP 668 (Debian/Ubuntu): use a venv
   if echo "$err_out" | grep -q "externally-managed-environment\|externally managed\|No module named pip"; then
     if echo "$err_out" | grep -q "No module named pip"; then
-      info "System Python has no pip. Using a venv at ~/.openviking/venv"
+      info "System Python has no pip. Using a venv at ~/.ctx/venv"
     else
       # Opt-in: allow install with --break-system-packages when venv is not available (PEP 668 only, default off)
-      if [[ "${OPENVIKING_ALLOW_BREAK_SYSTEM_PACKAGES}" == "1" ]]; then
-        info "Installing OpenViking with --break-system-packages (OPENVIKING_ALLOW_BREAK_SYSTEM_PACKAGES=1)"
+      if [[ "${ATOM_CTX_ALLOW_BREAK_SYSTEM_PACKAGES}" == "1" ]]; then
+        info "Installing AtomCtx with --break-system-packages (ATOM_CTX_ALLOW_BREAK_SYSTEM_PACKAGES=1)"
         if "$py" -m pip install --progress-bar on --break-system-packages "$pkg_spec" -i "${PIP_INDEX_URL}"; then
-          OPENVIKING_PYTHON_PATH="$(command -v "$py" || true)"
-          [[ -z "$OPENVIKING_PYTHON_PATH" ]] && OPENVIKING_PYTHON_PATH="$py"
-          info "OpenViking installed (system)"
+          ATOM_CTX_PYTHON_PATH="$(command -v "$py" || true)"
+          [[ -z "$ATOM_CTX_PYTHON_PATH" ]] && ATOM_CTX_PYTHON_PATH="$py"
+          info "AtomCtx installed (system)"
           return 0
         fi
       fi
-      info "System Python is externally managed (PEP 668). Using a venv at ~/.openviking/venv"
+      info "System Python is externally managed (PEP 668). Using a venv at ~/.ctx/venv"
     fi
-    mkdir -p "${OPENVIKING_DIR}"
-    local venv_dir="${OPENVIKING_DIR}/venv"
+    mkdir -p "${ATOM_CTX_DIR}"
+    local venv_dir="${ATOM_CTX_DIR}/venv"
     local venv_py="${venv_dir}/bin/python"
 
-    # Reuse existing venv if it has openviking (avoid repeated create on re-run)
-    if [[ -x "${venv_py}" ]] && "${venv_py}" -c "import openviking" 2>/dev/null; then
-      info "Using existing venv with openviking: ${venv_dir}"
+    # Reuse existing venv if it has atom_ctx (avoid repeated create on re-run)
+    if [[ -x "${venv_py}" ]] && "${venv_py}" -c "import atom_ctx" 2>/dev/null; then
+      info "Using existing venv with atom_ctx: ${venv_dir}"
       "${venv_py}" -m pip install --progress-bar on -U "$pkg_spec" -i "${PIP_INDEX_URL}" || true
-      OPENVIKING_PYTHON_PATH="${venv_dir}/bin/python"
-      info "OpenViking installed (venv)"
+      ATOM_CTX_PYTHON_PATH="${venv_dir}/bin/python"
+      info "AtomCtx installed (venv)"
       return 0
     fi
 
@@ -1580,21 +1580,21 @@ install_openviking() {
       echo "  sudo apt install python${py_ver}-venv   # or python3-full"
       echo ""
       echo "Or (may conflict with system packages):"
-      echo "  OPENVIKING_ALLOW_BREAK_SYSTEM_PACKAGES=1 curl -fsSL ... | bash"
+      echo "  ATOM_CTX_ALLOW_BREAK_SYSTEM_PACKAGES=1 curl -fsSL ... | bash"
       exit 1
     fi
 
     "$venv_py" -m pip install --upgrade pip -q -i "${PIP_INDEX_URL}" >/dev/null 2>&1
     if ! "$venv_py" -m pip install --progress-bar on "$pkg_spec" -i "${PIP_INDEX_URL}"; then
-      err "OpenViking install failed in venv."
+      err "AtomCtx install failed in venv."
       exit 1
     fi
-    OPENVIKING_PYTHON_PATH="${venv_dir}/bin/python"
-    info "OpenViking installed (venv)"
+    ATOM_CTX_PYTHON_PATH="${venv_dir}/bin/python"
+    info "AtomCtx installed (venv)"
     return 0
   fi
 
-  err "$(tr "OpenViking install failed. Check Python version (>=3.10) and pip." "OpenViking 安装失败，请检查 Python 版本（需 >= 3.10）与 pip。")"
+  err "$(tr "AtomCtx install failed. Check Python version (>=3.10) and pip." "AtomCtx 安装失败，请检查 Python 版本（需 >= 3.10）与 pip。")"
   echo "$err_out" >&2
   exit 1
 }
@@ -1613,26 +1613,26 @@ normalize_port() {
   echo "$default_value"
 }
 
-configure_openviking_conf() {
-  mkdir -p "${OPENVIKING_DIR}"
+configure_atom_ctx_conf() {
+  mkdir -p "${ATOM_CTX_DIR}"
 
-  local workspace="${OPENVIKING_DIR}/data"
+  local workspace="${ATOM_CTX_DIR}/data"
   local server_port="${DEFAULT_SERVER_PORT}"
   local agfs_port="${DEFAULT_AGFS_PORT}"
   local vlm_model="${DEFAULT_VLM_MODEL}"
   local embedding_model="${DEFAULT_EMBED_MODEL}"
-  local vlm_api_key="${OPENVIKING_VLM_API_KEY:-${OPENVIKING_ARK_API_KEY:-}}"
-  local embedding_api_key="${OPENVIKING_EMBEDDING_API_KEY:-${OPENVIKING_ARK_API_KEY:-}}"
-  local conf_path="${OPENVIKING_DIR}/ov.conf"
+  local vlm_api_key="${ATOM_CTX_VLM_API_KEY:-${ATOM_CTX_ARK_API_KEY:-}}"
+  local embedding_api_key="${ATOM_CTX_EMBEDDING_API_KEY:-${ATOM_CTX_ARK_API_KEY:-}}"
+  local conf_path="${ATOM_CTX_DIR}/ctx.conf"
 
   if [[ "$INSTALL_YES" != "1" ]]; then
     echo ""
-    read -r -p "$(tr "OpenViking workspace path [${workspace}]: " "OpenViking 数据目录 [${workspace}]: ")" _workspace < /dev/tty || true
-    read -r -p "OpenViking HTTP port [${server_port}]: " _server_port < /dev/tty || true
+    read -r -p "$(tr "AtomCtx workspace path [${workspace}]: " "AtomCtx 数据目录 [${workspace}]: ")" _workspace < /dev/tty || true
+    read -r -p "AtomCtx HTTP port [${server_port}]: " _server_port < /dev/tty || true
     read -r -p "AGFS port [${agfs_port}]: " _agfs_port < /dev/tty || true
     read -r -p "VLM model [${vlm_model}]: " _vlm_model < /dev/tty || true
     read -r -p "Embedding model [${embedding_model}]: " _embedding_model < /dev/tty || true
-    echo "VLM and Embedding API keys can differ. You can leave either empty and edit ov.conf later."
+    echo "VLM and Embedding API keys can differ. You can leave either empty and edit ctx.conf later."
     read -r -p "VLM API key (optional): " _vlm_api_key < /dev/tty || true
     read -r -p "Embedding API key (optional): " _embedding_api_key < /dev/tty || true
 
@@ -1645,10 +1645,10 @@ configure_openviking_conf() {
     embedding_api_key="${_embedding_api_key:-$embedding_api_key}"
   fi
 
-  server_port="$(normalize_port "${server_port}" "${DEFAULT_SERVER_PORT}" "OpenViking HTTP port")"
+  server_port="$(normalize_port "${server_port}" "${DEFAULT_SERVER_PORT}" "AtomCtx HTTP port")"
   agfs_port="$(normalize_port "${agfs_port}" "${DEFAULT_AGFS_PORT}" "AGFS port")"
   mkdir -p "${workspace}"
-  local py_json="${OPENVIKING_PYTHON_PATH:-${OPENVIKING_PYTHON:-}}"
+  local py_json="${ATOM_CTX_PYTHON_PATH:-${ATOM_CTX_PYTHON:-}}"
   [[ -z "$py_json" ]] && py_json="$(command -v python3 || command -v python || true)"
   [[ -z "$py_json" ]] && py_json="python3"
   WORKSPACE="${workspace}" \
@@ -1818,7 +1818,7 @@ ensure_existing_plugin_for_upgrade() {
 }
 
 create_plugin_staging_dir() {
-  local plugin_id="${RESOLVED_PLUGIN_ID:-openviking}"
+  local plugin_id="${RESOLVED_PLUGIN_ID:-atom_ctx}"
   local extensions_dir="${OPENCLAW_DIR}/extensions"
   local staging_dir="${extensions_dir}/.${plugin_id}.staging.$$.$RANDOM"
   mkdir -p "${extensions_dir}"
@@ -1858,8 +1858,8 @@ deploy_plugin_from_remote() {
 # Matches INSTALL*.md manual cleanup (stale entries + slot + allow + load.paths).
 resolved_plugin_slot_fallback() {
   case "${RESOLVED_PLUGIN_ID}" in
-    memory-openviking) printf '%s\n' "none" ;;
-    openviking) printf '%s\n' "legacy" ;;
+    memory-atom_ctx) printf '%s\n' "none" ;;
+    atom_ctx) printf '%s\n' "legacy" ;;
     *) printf '%s\n' "none" ;;
   esac
 }
@@ -1932,7 +1932,7 @@ if (p.slots && p.slots[slot] === pluginId) {
 if (!changed) process.exit(0);
 
 const out = JSON.stringify(cfg, null, 2) + "\n";
-const tmp = `${configPath}.ov-install-tmp.${process.pid}`;
+const tmp = `${configPath}.ctx-install-tmp.${process.pid}`;
 fs.writeFileSync(tmp, out, "utf8");
 fs.renameSync(tmp, configPath);
 NODE
@@ -1976,7 +1976,7 @@ configure_openclaw_plugin() {
 
   # Set plugin config for the selected mode
   if [[ "$SELECTED_MODE" == "local" ]]; then
-    local ov_conf_path="${SELECTED_CONFIG_PATH:-${OPENVIKING_DIR}/ov.conf}"
+    local ov_conf_path="${SELECTED_CONFIG_PATH:-${ATOM_CTX_DIR}/ctx.conf}"
     "${oc_env[@]}" openclaw config set "plugins.entries.${plugin_id}.config.mode" local
     "${oc_env[@]}" openclaw config set "plugins.entries.${plugin_id}.config.configPath" "${ov_conf_path}"
     "${oc_env[@]}" openclaw config set "plugins.entries.${plugin_id}.config.port" "${SELECTED_SERVER_PORT}"
@@ -1993,7 +1993,7 @@ configure_openclaw_plugin() {
 
   # Legacy (memory) plugins need explicit targetUri/autoRecall/autoCapture (new version has defaults in config.ts)
   if [[ "${RESOLVED_PLUGIN_KIND}" == "memory" ]]; then
-    "${oc_env[@]}" openclaw config set "plugins.entries.${plugin_id}.config.targetUri" "viking://user/memories"
+    "${oc_env[@]}" openclaw config set "plugins.entries.${plugin_id}.config.targetUri" "ctx://user/memories"
     "${oc_env[@]}" openclaw config set "plugins.entries.${plugin_id}.config.autoRecall" true --json
     "${oc_env[@]}" openclaw config set "plugins.entries.${plugin_id}.config.autoCapture" true --json
   fi
@@ -2001,27 +2001,27 @@ configure_openclaw_plugin() {
   info "$(tr "OpenClaw plugin configured" "OpenClaw 插件配置完成")"
 }
 
-_deprecated_write_openviking_env() {
+_deprecated_write_atom_ctx_env() {
   local py_path
-  if [[ -n "${OPENVIKING_PYTHON_PATH}" ]]; then
-    py_path="${OPENVIKING_PYTHON_PATH}"
+  if [[ -n "${ATOM_CTX_PYTHON_PATH}" ]]; then
+    py_path="${ATOM_CTX_PYTHON_PATH}"
   else
     py_path="$(command -v python3 || command -v python || true)"
   fi
   if [[ -z "$py_path" ]]; then
-    py_path="${OPENVIKING_PYTHON:-python3}"
-    warn "Could not resolve Python path; using OPENVIKING_PYTHON or python3 in openviking.env. Edit the file if startup fails."
+    py_path="${ATOM_CTX_PYTHON:-python3}"
+    warn "Could not resolve Python path; using ATOM_CTX_PYTHON or python3 in atom_ctx.env. Edit the file if startup fails."
   fi
   mkdir -p "${OPENCLAW_DIR}"
-  cat > "${OPENCLAW_DIR}/openviking.env" <<EOF
-export OPENVIKING_PYTHON='${py_path}'
+  cat > "${OPENCLAW_DIR}/atom_ctx.env" <<EOF
+export ATOM_CTX_PYTHON='${py_path}'
 EOF
-  info "$(tr "Environment file generated: ${OPENCLAW_DIR}/openviking.env" "已生成环境文件: ${OPENCLAW_DIR}/openviking.env")"
+  info "$(tr "Environment file generated: ${OPENCLAW_DIR}/atom_ctx.env" "已生成环境文件: ${OPENCLAW_DIR}/atom_ctx.env")"
 }
 
 # ---- Main flow ----
 
-write_openviking_env() {
+write_atom_ctx_env() {
   local include_python="${1:-1}"
   local py_path=""
   local lines=()
@@ -2031,38 +2031,38 @@ write_openviking_env() {
   fi
 
   if [[ "$include_python" == "1" ]]; then
-    if [[ -n "${OPENVIKING_PYTHON_PATH}" ]]; then
-      py_path="${OPENVIKING_PYTHON_PATH}"
+    if [[ -n "${ATOM_CTX_PYTHON_PATH}" ]]; then
+      py_path="${ATOM_CTX_PYTHON_PATH}"
     else
       py_path="$(command -v python3 || command -v python || true)"
     fi
     if [[ -z "$py_path" ]]; then
-      py_path="${OPENVIKING_PYTHON:-python3}"
-      warn "Could not resolve Python path; using OPENVIKING_PYTHON or python3 in openviking.env. Edit the file if startup fails."
+      py_path="${ATOM_CTX_PYTHON:-python3}"
+      warn "Could not resolve Python path; using ATOM_CTX_PYTHON or python3 in atom_ctx.env. Edit the file if startup fails."
     fi
 
-    # Verify the resolved Python can actually import openviking
-    if ! "$py_path" -c "import openviking" 2>/dev/null; then
-      warn "Resolved Python (${py_path}) cannot import openviking. Searching for the correct Python..."
+    # Verify the resolved Python can actually import atom_ctx
+    if ! "$py_path" -c "import atom_ctx" 2>/dev/null; then
+      warn "Resolved Python (${py_path}) cannot import atom_ctx. Searching for the correct Python..."
       local corrected=""
       for candidate in python3.13 python3.12 python3.11 python3.10 python3 python; do
         local cpath
         cpath="$(command -v "$candidate" 2>/dev/null || true)"
         [[ -z "$cpath" || "$cpath" == "$py_path" ]] && continue
-        if "$cpath" -c "import openviking" 2>/dev/null; then
+        if "$cpath" -c "import atom_ctx" 2>/dev/null; then
           corrected="$cpath"
           break
         fi
       done
       if [[ -n "$corrected" ]]; then
-        info "Auto-corrected OPENVIKING_PYTHON to ${corrected}"
+        info "Auto-corrected ATOM_CTX_PYTHON to ${corrected}"
         py_path="$corrected"
       else
-        warn "Could not auto-detect the correct Python. Edit OPENVIKING_PYTHON in the env file manually."
+        warn "Could not auto-detect the correct Python. Edit ATOM_CTX_PYTHON in the env file manually."
       fi
     fi
 
-    lines+=("export OPENVIKING_PYTHON='$(shell_single_quote "${py_path}")'")
+    lines+=("export ATOM_CTX_PYTHON='$(shell_single_quote "${py_path}")'")
   fi
 
   if [[ ${#lines[@]} -eq 0 ]]; then
@@ -2070,13 +2070,13 @@ write_openviking_env() {
   fi
 
   mkdir -p "${OPENCLAW_DIR}"
-  printf "%s\n" "${lines[@]}" > "${OPENCLAW_DIR}/openviking.env"
-  info "$(tr "Environment file generated: ${OPENCLAW_DIR}/openviking.env" "已生成环境文件: ${OPENCLAW_DIR}/openviking.env")"
+  printf "%s\n" "${lines[@]}" > "${OPENCLAW_DIR}/atom_ctx.env"
+  info "$(tr "Environment file generated: ${OPENCLAW_DIR}/atom_ctx.env" "已生成环境文件: ${OPENCLAW_DIR}/atom_ctx.env")"
 }
 
 wrap_command() {
   local cmd="$1"
-  local env_file="${OPENCLAW_DIR}/openviking.env"
+  local env_file="${OPENCLAW_DIR}/atom_ctx.env"
   if [[ -f "${env_file}" ]]; then
     printf "source '%s' && %s" "$(shell_single_quote "${env_file}")" "${cmd}"
   else
@@ -2086,7 +2086,7 @@ wrap_command() {
 
 main() {
   echo ""
-  bold "OpenClaw + OpenViking Installer"
+  bold "OpenClaw + AtomCtx Installer"
   echo ""
 
   detect_os
@@ -2107,11 +2107,11 @@ main() {
   info "Target: ${OPENCLAW_DIR}"
   info "Repository: ${REPO}"
   info "Plugin version: ${PLUGIN_VERSION}"
-  [[ -n "$OPENVIKING_VERSION" ]] && info "OpenViking version: ${OPENVIKING_VERSION}"
+  [[ -n "$CTX_VERSION" ]] && info "AtomCtx version: ${CTX_VERSION}"
 
   if [[ "$UPGRADE_PLUGIN_ONLY" == "1" ]]; then
     SELECTED_MODE="local"
-    info "Mode: plugin upgrade only (backup old plugin, clean only OpenViking plugin config, keep ov.conf)"
+    info "Mode: plugin upgrade only (backup old plugin, clean only AtomCtx plugin config, keep ctx.conf)"
   else
     select_mode
   fi
@@ -2128,9 +2128,9 @@ main() {
     # Resolve plugin config after OpenClaw is available (for version detection)
     resolve_plugin_config
     check_openclaw_compatibility
-    check_requested_openviking_compatibility
-    install_openviking
-    configure_openviking_conf
+    check_requested_atom_ctx_compatibility
+    install_atom_ctx
+    configure_atom_ctx_conf
   else
     install_openclaw
     resolve_plugin_config
@@ -2154,13 +2154,13 @@ main() {
   fi
 
   if [[ "$UPGRADE_PLUGIN_ONLY" == "1" ]]; then
-    if [[ "$OPENCLAW_DIR" != "$DEFAULT_OPENCLAW_DIR" && ! -f "${OPENCLAW_DIR}/openviking.env" ]]; then
-      write_openviking_env 0
+    if [[ "$OPENCLAW_DIR" != "$DEFAULT_OPENCLAW_DIR" && ! -f "${OPENCLAW_DIR}/atom_ctx.env" ]]; then
+      write_atom_ctx_env 0
     fi
   elif [[ "$SELECTED_MODE" == "local" ]]; then
-    write_openviking_env 1
+    write_atom_ctx_env 1
   elif [[ "$OPENCLAW_DIR" != "$DEFAULT_OPENCLAW_DIR" ]]; then
-    write_openviking_env 0
+    write_atom_ctx_env 0
   fi
 
   echo ""
@@ -2179,14 +2179,14 @@ main() {
     echo ""
   fi
   if [[ "$SELECTED_MODE" == "local" ]]; then
-    info "Run these commands to start OpenClaw + OpenViking:"
+    info "Run these commands to start OpenClaw + AtomCtx:"
     echo "  1) $(wrap_command "openclaw --version")"
     echo "  2) $(wrap_command "openclaw onboard")"
     echo "  3) $(wrap_command "openclaw gateway")"
     echo "  4) $(wrap_command "openclaw status")"
     echo ""
-    info "If source fails (e.g. file missing), run: export OPENVIKING_PYTHON=\"\$(command -v python3)\""
-    info "You can edit the config freely: ${OPENVIKING_DIR}/ov.conf"
+    info "If source fails (e.g. file missing), run: export ATOM_CTX_PYTHON=\"\$(command -v python3)\""
+    info "You can edit the config freely: ${ATOM_CTX_DIR}/ctx.conf"
   else
     info "Run these commands to start OpenClaw:"
     echo "  1) $(wrap_command "openclaw --version")"

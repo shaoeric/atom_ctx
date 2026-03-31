@@ -1,6 +1,6 @@
 # 上下文层级 (L0/L1/L2)
 
-OpenViking 使用三层信息模型来平衡检索效率和内容完整性。
+AtomCtx 使用三层信息模型来平衡检索效率和内容完整性。
 
 ## 概览
 
@@ -28,7 +28,7 @@ API 认证指南，涵盖 OAuth 2.0、JWT 令牌和 API 密钥的安全访问方
 ### API
 
 ```python
-abstract = client.abstract("viking://resources/docs/auth")
+abstract = client.abstract("ctx://resources/docs/auth")
 ```
 
 ## L1: 概览
@@ -57,13 +57,13 @@ abstract = client.abstract("viking://resources/docs/auth")
 - JWT 用于服务间通信
 
 ## 访问
-使用 `read("viking://resources/docs/auth/oauth.md")` 获取完整文档。
+使用 `read("ctx://resources/docs/auth/oauth.md")` 获取完整文档。
 ```
 
 ### API
 
 ```python
-overview = client.overview("viking://resources/docs/auth")
+overview = client.overview("ctx://resources/docs/auth")
 ```
 
 ## L2: 详情
@@ -79,7 +79,7 @@ overview = client.overview("viking://resources/docs/auth")
 ### API
 
 ```python
-content = client.read("viking://resources/docs/auth/oauth.md")
+content = client.read("ctx://resources/docs/auth/oauth.md")
 ```
 
 ## 生成机制
@@ -109,7 +109,7 @@ content = client.read("viking://resources/docs/auth/oauth.md")
 每个目录都遵循统一的文件结构：
 
 ```
-viking://resources/docs/auth/
+ctx://resources/docs/auth/
 ├── .abstract.md          # L0: ~100 tokens
 ├── .overview.md          # L1: ~1k tokens
 ├── .relations.json       # 相关资源
@@ -183,6 +183,6 @@ if needs_more_detail(overview):
 
 - [架构概述](./01-architecture.md) - 系统整体架构
 - [上下文类型](./02-context-types.md) - 三种上下文类型
-- [Viking URI](./04-viking-uri.md) - URI 规范
+- [Ctx URI](./04-ctx-uri.md) - URI 规范
 - [检索机制](./07-retrieval.md) - 检索流程详解
 - [上下文提取](./06-extraction.md) - L0/L1 生成详解

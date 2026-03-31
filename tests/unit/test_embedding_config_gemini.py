@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from openviking_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
+from atom_ctx_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
 
 
 def _gcfg(**kw) -> EmbeddingModelConfig:
@@ -48,7 +48,7 @@ class TestGeminiDimension:
 
 
 class TestGeminiContextRouting:
-    @patch("openviking.models.embedder.gemini_embedders.genai.Client")
+    @patch("atom_ctx.models.embedder.gemini_embedders.genai.Client")
     def test_nonsymmetric_passes_query_document_params(self, _mock):
         """get_embedder() passes query_param/document_param to GeminiDenseEmbedder."""
         cfg = EmbeddingConfig(
@@ -58,7 +58,7 @@ class TestGeminiContextRouting:
         assert embedder.query_param == "retrieval_query"
         assert embedder.document_param == "retrieval_document"
 
-    @patch("openviking.models.embedder.gemini_embedders.genai.Client")
+    @patch("atom_ctx.models.embedder.gemini_embedders.genai.Client")
     def test_only_query_param_set(self, _mock):
         """When only query_param is set, document_param is None."""
         cfg = EmbeddingConfig(dense=_gcfg(query_param="RETRIEVAL_QUERY"))

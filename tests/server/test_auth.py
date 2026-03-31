@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Beijing Volcano Engine Technology Co., Ltd.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for multi-tenant authentication (openviking/server/auth.py)."""
+"""Tests for multi-tenant authentication (atom_ctx/server/auth.py)."""
 
 import io
 import logging
@@ -15,16 +15,16 @@ from fastapi import Request as FastAPIRequest
 from fastapi.responses import JSONResponse
 from starlette.requests import Request
 
-from openviking.server import app as server_app_module
-from openviking.server.app import create_app
-from openviking.server.auth import get_request_context, resolve_identity
-from openviking.server.config import ServerConfig, _is_localhost, validate_server_config
-from openviking.server.dependencies import set_service
-from openviking.server.identity import ResolvedIdentity, Role
-from openviking.server.models import ERROR_CODE_TO_HTTP_STATUS, ErrorInfo, Response
-from openviking.service.core import OpenVikingService
-from openviking_cli.exceptions import InvalidArgumentError, OpenVikingError
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.server import app as server_app_module
+from atom_ctx.server.app import create_app
+from atom_ctx.server.auth import get_request_context, resolve_identity
+from atom_ctx.server.config import ServerConfig, _is_localhost, validate_server_config
+from atom_ctx.server.dependencies import set_service
+from atom_ctx.server.identity import ResolvedIdentity, Role
+from atom_ctx.server.models import ERROR_CODE_TO_HTTP_STATUS, ErrorInfo, Response
+from atom_ctx.service.core import AtomCtxService
+from atom_ctx_cli.exceptions import InvalidArgumentError, AtomCtxError
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 def _uid() -> str:
@@ -76,8 +76,8 @@ def _build_auth_http_test_app(
         # Match production auth mode so get_request_context enters the guard path.
         app.state.api_key_manager = object()
 
-    @app.exception_handler(OpenVikingError)
-    async def openviking_error_handler(request: FastAPIRequest, exc: OpenVikingError):
+    @app.exception_handler(AtomCtxError)
+    async def atom_ctx_error_handler(request: FastAPIRequest, exc: AtomCtxError):
         """Mirror the server's JSON error envelope for auth failures."""
         http_status = ERROR_CODE_TO_HTTP_STATUS.get(exc.code, 500)
         return JSONResponse(
@@ -131,7 +131,7 @@ def _build_auth_http_test_app(
 @pytest_asyncio.fixture(scope="function")
 async def auth_service(temp_dir):
     """Service for auth tests."""
-    svc = OpenVikingService(
+    svc = AtomCtxService(
         path=str(temp_dir / "auth_data"), user=UserIdentifier.the_default_user("auth_user")
     )
     await svc.initialize()
@@ -142,14 +142,14 @@ async def auth_service(temp_dir):
 @pytest_asyncio.fixture(scope="function")
 async def auth_app(auth_service):
     """App with root_api_key configured and APIKeyManager loaded."""
-    from openviking.server.api_keys import APIKeyManager
+    from atom_ctx.server.api_keys import APIKeyManager
 
     config = ServerConfig(root_api_key=ROOT_KEY)
     app = create_app(config=config, service=auth_service)
     set_service(auth_service)
 
     # Manually initialize APIKeyManager (lifespan not triggered in ASGI tests)
-    manager = APIKeyManager(root_key=ROOT_KEY, viking_fs=auth_service.viking_fs)
+    manager = APIKeyManager(root_key=ROOT_KEY, ctx_fs=auth_service.ctx_fs)
     await manager.load()
     app.state.api_key_manager = manager
 
@@ -203,7 +203,7 @@ async def test_root_key_via_bearer(auth_client: httpx.AsyncClient):
 async def test_user_key_access(auth_client: httpx.AsyncClient, user_key: str):
     """User key should grant access to regular endpoints."""
     resp = await auth_client.get(
-        "/api/v1/fs/ls?uri=viking://",
+        "/api/v1/fs/ls?uri=ctx://",
         headers={"X-API-Key": user_key},
     )
     assert resp.status_code == 200
@@ -248,7 +248,7 @@ async def test_auth_on_multiple_endpoints(auth_client: httpx.AsyncClient):
         ("GET", "/api/v1/system/status"),
         ("GET", "/api/v1/observer/system"),
         ("GET", "/api/v1/debug/health"),
-        ("GET", "/api/v1/fs/ls?uri=viking://"),
+        ("GET", "/api/v1/fs/ls?uri=ctx://"),
     ]
     for method, url in endpoints:
         resp = await auth_client.request(method, url)
@@ -259,18 +259,18 @@ async def test_auth_on_multiple_endpoints(auth_client: httpx.AsyncClient):
         assert resp.status_code == 200, f"{method} {url} should succeed with root key"
 
     tenant_resp = await auth_client.get(
-        "/api/v1/fs/ls?uri=viking://",
+        "/api/v1/fs/ls?uri=ctx://",
         headers={"X-API-Key": ROOT_KEY},
     )
     assert tenant_resp.status_code == 400
     assert tenant_resp.json()["error"]["code"] == "INVALID_ARGUMENT"
 
     tenant_resp = await auth_client.get(
-        "/api/v1/fs/ls?uri=viking://",
+        "/api/v1/fs/ls?uri=ctx://",
         headers={
             "X-API-Key": ROOT_KEY,
-            "X-OpenViking-Account": "default",
-            "X-OpenViking-User": "default",
+            "X-AtomCtx-Account": "default",
+            "X-AtomCtx-User": "default",
         },
     )
     assert tenant_resp.status_code == 200
@@ -291,10 +291,10 @@ async def test_user_key_cannot_access_admin_api(auth_client: httpx.AsyncClient, 
 
 
 async def test_agent_id_header_forwarded(auth_client: httpx.AsyncClient):
-    """X-OpenViking-Agent header should be captured in identity."""
+    """X-AtomCtx-Agent header should be captured in identity."""
     resp = await auth_client.get(
         "/api/v1/system/status",
-        headers={"X-API-Key": ROOT_KEY, "X-OpenViking-Agent": "my-agent"},
+        headers={"X-API-Key": ROOT_KEY, "X-AtomCtx-Agent": "my-agent"},
     )
     assert resp.status_code == 200
 
@@ -336,7 +336,7 @@ async def test_root_tenant_scoped_requests_require_explicit_identity():
     request = _make_request("/api/v1/resources", auth_enabled=True)
     identity = ResolvedIdentity(role=Role.ROOT, account_id="default", user_id="default")
 
-    with pytest.raises(InvalidArgumentError, match="X-OpenViking-Account"):
+    with pytest.raises(InvalidArgumentError, match="X-AtomCtx-Account"):
         await get_request_context(request, identity)
 
 
@@ -357,8 +357,8 @@ async def test_root_tenant_scoped_requests_allow_explicit_identity():
     request = _make_request(
         "/api/v1/resources",
         headers={
-            "X-OpenViking-Account": "acme",
-            "X-OpenViking-User": "alice",
+            "X-AtomCtx-Account": "acme",
+            "X-AtomCtx-User": "alice",
         },
         auth_enabled=True,
     )
@@ -399,7 +399,7 @@ async def test_root_debug_vector_requests_require_explicit_identity():
     request = _make_request("/api/v1/debug/vector/scroll", auth_enabled=True)
     identity = ResolvedIdentity(role=Role.ROOT, account_id="default", user_id="default")
 
-    with pytest.raises(InvalidArgumentError, match="X-OpenViking-Account"):
+    with pytest.raises(InvalidArgumentError, match="X-AtomCtx-Account"):
         await get_request_context(request, identity)
 
 
@@ -495,9 +495,9 @@ async def test_trusted_mode_allows_header_identity_without_api_key():
     request = _make_request(
         "/api/v1/resources",
         headers={
-            "X-OpenViking-Account": "acme",
-            "X-OpenViking-User": "alice",
-            "X-OpenViking-Agent": "assistant-1",
+            "X-AtomCtx-Account": "acme",
+            "X-AtomCtx-User": "alice",
+            "X-AtomCtx-Agent": "assistant-1",
         },
         auth_enabled=False,
         auth_mode="trusted",
@@ -505,9 +505,9 @@ async def test_trusted_mode_allows_header_identity_without_api_key():
 
     identity = await resolve_identity(
         request,
-        x_openviking_account="acme",
-        x_openviking_user="alice",
-        x_openviking_agent="assistant-1",
+        x_atom_ctx_account="acme",
+        x_atom_ctx_user="alice",
+        x_atom_ctx_agent="assistant-1",
     )
 
     assert identity.role == Role.USER
@@ -521,19 +521,19 @@ async def test_trusted_mode_with_root_api_key_requires_matching_api_key():
     request = _make_request(
         "/api/v1/resources",
         headers={
-            "X-OpenViking-Account": "acme",
-            "X-OpenViking-User": "alice",
+            "X-AtomCtx-Account": "acme",
+            "X-AtomCtx-User": "alice",
         },
         auth_enabled=False,
         auth_mode="trusted",
         root_api_key=ROOT_KEY,
     )
 
-    with pytest.raises(OpenVikingError, match="Missing API Key"):
+    with pytest.raises(AtomCtxError, match="Missing API Key"):
         await resolve_identity(
             request,
-            x_openviking_account="acme",
-            x_openviking_user="alice",
+            x_atom_ctx_account="acme",
+            x_atom_ctx_user="alice",
         )
 
 
@@ -543,9 +543,9 @@ async def test_trusted_mode_with_root_api_key_accepts_matching_api_key():
         "/api/v1/resources",
         headers={
             "X-API-Key": ROOT_KEY,
-            "X-OpenViking-Account": "acme",
-            "X-OpenViking-User": "alice",
-            "X-OpenViking-Agent": "assistant-1",
+            "X-AtomCtx-Account": "acme",
+            "X-AtomCtx-User": "alice",
+            "X-AtomCtx-Agent": "assistant-1",
         },
         auth_enabled=False,
         auth_mode="trusted",
@@ -555,9 +555,9 @@ async def test_trusted_mode_with_root_api_key_accepts_matching_api_key():
     identity = await resolve_identity(
         request,
         x_api_key=ROOT_KEY,
-        x_openviking_account="acme",
-        x_openviking_user="alice",
-        x_openviking_agent="assistant-1",
+        x_atom_ctx_account="acme",
+        x_atom_ctx_user="alice",
+        x_atom_ctx_agent="assistant-1",
     )
 
     assert identity.role == Role.USER
@@ -595,9 +595,9 @@ async def test_trusted_mode_tenant_http_routes_accept_explicit_identity_headers(
         response = await client.get(
             "/api/v1/fs/ls",
             headers={
-                "X-OpenViking-Account": "acme",
-                "X-OpenViking-User": "alice",
-                "X-OpenViking-Agent": "assistant-1",
+                "X-AtomCtx-Account": "acme",
+                "X-AtomCtx-User": "alice",
+                "X-AtomCtx-Agent": "assistant-1",
             },
         )
 
@@ -619,8 +619,8 @@ async def test_trusted_mode_http_routes_require_api_key_when_root_key_configured
         response = await client.get(
             "/api/v1/fs/ls",
             headers={
-                "X-OpenViking-Account": "acme",
-                "X-OpenViking-User": "alice",
+                "X-AtomCtx-Account": "acme",
+                "X-AtomCtx-User": "alice",
             },
         )
 
@@ -643,9 +643,9 @@ async def test_trusted_mode_http_routes_accept_api_key_when_root_key_configured(
             "/api/v1/fs/ls",
             headers={
                 "X-API-Key": ROOT_KEY,
-                "X-OpenViking-Account": "acme",
-                "X-OpenViking-User": "alice",
-                "X-OpenViking-Agent": "assistant-1",
+                "X-AtomCtx-Account": "acme",
+                "X-AtomCtx-User": "alice",
+                "X-AtomCtx-Agent": "assistant-1",
             },
         )
 

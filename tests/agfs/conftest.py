@@ -10,7 +10,7 @@ import pytest
 @pytest.fixture(scope="session")
 def agfs_test_root():
     """Root directory for AGFS tests."""
-    path = Path("/tmp/openviking_agfs_test")
+    path = Path("/tmp/atom_ctx_agfs_test")
     path.mkdir(parents=True, exist_ok=True)
     yield path
     shutil.rmtree(path, ignore_errors=True)

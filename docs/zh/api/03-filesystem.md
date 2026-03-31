@@ -1,6 +1,6 @@
 # 文件系统
 
-OpenViking 提供类 Unix 的文件系统操作来管理上下文。
+AtomCtx 提供类 Unix 的文件系统操作来管理上下文。
 
 ## API 参考
 
@@ -12,12 +12,12 @@ OpenViking 提供类 Unix 的文件系统操作来管理上下文。
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| uri | str | 是 | - | Viking URI（必须是目录） |
+| uri | str | 是 | - | Ctx URI（必须是目录） |
 
 **Python SDK (Embedded / HTTP)**
 
 ```python
-abstract = client.abstract("viking://resources/docs/")
+abstract = client.abstract("ctx://resources/docs/")
 print(f"Abstract: {abstract}")
 # Output: "Documentation for the project API, covering authentication, endpoints..."
 ```
@@ -29,14 +29,14 @@ GET /api/v1/content/abstract?uri={uri}
 ```
 
 ```bash
-curl -X GET "http://localhost:1933/api/v1/content/abstract?uri=viking://resources/docs/" \
+curl -X GET "http://localhost:1933/api/v1/content/abstract?uri=ctx://resources/docs/" \
   -H "X-API-Key: your-key"
 ```
 
 **CLI**
 
 ```bash
-openviking abstract viking://resources/docs/
+atom_ctx abstract ctx://resources/docs/
 ```
 
 **响应**
@@ -59,12 +59,12 @@ openviking abstract viking://resources/docs/
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| uri | str | 是 | - | Viking URI（必须是目录） |
+| uri | str | 是 | - | Ctx URI（必须是目录） |
 
 **Python SDK (Embedded / HTTP)**
 
 ```python
-overview = client.overview("viking://resources/docs/")
+overview = client.overview("ctx://resources/docs/")
 print(f"Overview:\n{overview}")
 ```
 
@@ -75,14 +75,14 @@ GET /api/v1/content/overview?uri={uri}
 ```
 
 ```bash
-curl -X GET "http://localhost:1933/api/v1/content/overview?uri=viking://resources/docs/" \
+curl -X GET "http://localhost:1933/api/v1/content/overview?uri=ctx://resources/docs/" \
   -H "X-API-Key: your-key"
 ```
 
 **CLI**
 
 ```bash
-openviking overview viking://resources/docs/
+atom_ctx overview ctx://resources/docs/
 ```
 
 **响应**
@@ -105,12 +105,12 @@ openviking overview viking://resources/docs/
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| uri | str | 是 | - | Viking URI |
+| uri | str | 是 | - | Ctx URI |
 
 **Python SDK (Embedded / HTTP)**
 
 ```python
-content = client.read("viking://resources/docs/api.md")
+content = client.read("ctx://resources/docs/api.md")
 print(f"Content:\n{content}")
 ```
 
@@ -121,14 +121,14 @@ GET /api/v1/content/read?uri={uri}
 ```
 
 ```bash
-curl -X GET "http://localhost:1933/api/v1/content/read?uri=viking://resources/docs/api.md" \
+curl -X GET "http://localhost:1933/api/v1/content/read?uri=ctx://resources/docs/api.md" \
   -H "X-API-Key: your-key"
 ```
 
 **CLI**
 
 ```bash
-openviking read viking://resources/docs/api.md
+atom_ctx read ctx://resources/docs/api.md
 ```
 
 **响应**
@@ -151,7 +151,7 @@ openviking read viking://resources/docs/api.md
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| uri | str | 是 | - | Viking URI |
+| uri | str | 是 | - | Ctx URI |
 | simple | bool | 否 | False | 仅返回相对路径 |
 | recursive | bool | 否 | False | 递归列出所有子目录 |
 
@@ -164,7 +164,7 @@ openviking read viking://resources/docs/api.md
     "mode": 16877,            # 文件模式
     "modTime": "2024-01-01T00:00:00Z",  # ISO 时间戳
     "isDir": True,            # 如果是目录则为 True
-    "uri": "viking://resources/docs/",  # Viking URI
+    "uri": "ctx://resources/docs/",  # Ctx URI
     "meta": {}                # 可选元数据
 }
 ```
@@ -172,7 +172,7 @@ openviking read viking://resources/docs/api.md
 **Python SDK (Embedded / HTTP)**
 
 ```python
-entries = client.ls("viking://resources/")
+entries = client.ls("ctx://resources/")
 for entry in entries:
     type_str = "dir" if entry['isDir'] else "file"
     print(f"{entry['name']} - {type_str}")
@@ -186,22 +186,22 @@ GET /api/v1/fs/ls?uri={uri}&simple={bool}&recursive={bool}
 
 ```bash
 # 基本列表
-curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=viking://resources/" \
+curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=ctx://resources/" \
   -H "X-API-Key: your-key"
 
 # 简单路径列表
-curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=viking://resources/&simple=true" \
+curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=ctx://resources/&simple=true" \
   -H "X-API-Key: your-key"
 
 # 递归列表
-curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=viking://resources/&recursive=true" \
+curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=ctx://resources/&recursive=true" \
   -H "X-API-Key: your-key"
 ```
 
 **CLI**
 
 ```bash
-openviking ls viking://resources/ [--simple] [--recursive]
+atom_ctx ls ctx://resources/ [--simple] [--recursive]
 ```
 
 **响应**
@@ -216,7 +216,7 @@ openviking ls viking://resources/ [--simple] [--recursive]
       "mode": 16877,
       "modTime": "2024-01-01T00:00:00Z",
       "isDir": true,
-      "uri": "viking://resources/docs/"
+      "uri": "ctx://resources/docs/"
     }
   ],
   "time": 0.1
@@ -233,12 +233,12 @@ openviking ls viking://resources/ [--simple] [--recursive]
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| uri | str | 是 | - | Viking URI |
+| uri | str | 是 | - | Ctx URI |
 
 **Python SDK (Embedded / HTTP)**
 
 ```python
-entries = client.tree("viking://resources/")
+entries = client.tree("ctx://resources/")
 for entry in entries:
     type_str = "dir" if entry['isDir'] else "file"
     print(f"{entry['rel_path']} - {type_str}")
@@ -251,14 +251,14 @@ GET /api/v1/fs/tree?uri={uri}
 ```
 
 ```bash
-curl -X GET "http://localhost:1933/api/v1/fs/tree?uri=viking://resources/" \
+curl -X GET "http://localhost:1933/api/v1/fs/tree?uri=ctx://resources/" \
   -H "X-API-Key: your-key"
 ```
 
 **CLI**
 
 ```bash
-openviking tree viking://resources/my-project/
+atom_ctx tree ctx://resources/my-project/
 ```
 
 **响应**
@@ -272,14 +272,14 @@ openviking tree viking://resources/my-project/
       "size": 4096,
       "isDir": true,
       "rel_path": "docs/",
-      "uri": "viking://resources/docs/"
+      "uri": "ctx://resources/docs/"
     },
     {
       "name": "api.md",
       "size": 1024,
       "isDir": false,
       "rel_path": "docs/api.md",
-      "uri": "viking://resources/docs/api.md"
+      "uri": "ctx://resources/docs/api.md"
     }
   ],
   "time": 0.1
@@ -296,12 +296,12 @@ openviking tree viking://resources/my-project/
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| uri | str | 是 | - | Viking URI |
+| uri | str | 是 | - | Ctx URI |
 
 **Python SDK (Embedded / HTTP)**
 
 ```python
-info = client.stat("viking://resources/docs/api.md")
+info = client.stat("ctx://resources/docs/api.md")
 print(f"Size: {info['size']}")
 print(f"Is directory: {info['isDir']}")
 ```
@@ -313,14 +313,14 @@ GET /api/v1/fs/stat?uri={uri}
 ```
 
 ```bash
-curl -X GET "http://localhost:1933/api/v1/fs/stat?uri=viking://resources/docs/api.md" \
+curl -X GET "http://localhost:1933/api/v1/fs/stat?uri=ctx://resources/docs/api.md" \
   -H "X-API-Key: your-key"
 ```
 
 **CLI**
 
 ```bash
-openviking stat viking://resources/my-project/docs/api.md
+atom_ctx stat ctx://resources/my-project/docs/api.md
 ```
 
 **响应**
@@ -334,7 +334,7 @@ openviking stat viking://resources/my-project/docs/api.md
     "mode": 33188,
     "modTime": "2024-01-01T00:00:00Z",
     "isDir": false,
-    "uri": "viking://resources/docs/api.md"
+    "uri": "ctx://resources/docs/api.md"
   },
   "time": 0.1
 }
@@ -350,12 +350,12 @@ openviking stat viking://resources/my-project/docs/api.md
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| uri | str | 是 | - | 新目录的 Viking URI |
+| uri | str | 是 | - | 新目录的 Ctx URI |
 
 **Python SDK (Embedded / HTTP)**
 
 ```python
-client.mkdir("viking://resources/new-project/")
+client.mkdir("ctx://resources/new-project/")
 ```
 
 **HTTP API**
@@ -369,14 +369,14 @@ curl -X POST http://localhost:1933/api/v1/fs/mkdir \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
-    "uri": "viking://resources/new-project/"
+    "uri": "ctx://resources/new-project/"
   }'
 ```
 
 **CLI**
 
 ```bash
-openviking mkdir viking://resources/new-project/
+atom_ctx mkdir ctx://resources/new-project/
 ```
 
 **响应**
@@ -385,7 +385,7 @@ openviking mkdir viking://resources/new-project/
 {
   "status": "ok",
   "result": {
-    "uri": "viking://resources/new-project/"
+    "uri": "ctx://resources/new-project/"
   },
   "time": 0.1
 }
@@ -401,17 +401,17 @@ openviking mkdir viking://resources/new-project/
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| uri | str | 是 | - | 要删除的 Viking URI |
+| uri | str | 是 | - | 要删除的 Ctx URI |
 | recursive | bool | 否 | False | 递归删除目录 |
 
 **Python SDK (Embedded / HTTP)**
 
 ```python
 # 删除单个文件
-client.rm("viking://resources/docs/old.md")
+client.rm("ctx://resources/docs/old.md")
 
 # 递归删除目录
-client.rm("viking://resources/old-project/", recursive=True)
+client.rm("ctx://resources/old-project/", recursive=True)
 ```
 
 **HTTP API**
@@ -422,18 +422,18 @@ DELETE /api/v1/fs?uri={uri}&recursive={bool}
 
 ```bash
 # 删除单个文件
-curl -X DELETE "http://localhost:1933/api/v1/fs?uri=viking://resources/docs/old.md" \
+curl -X DELETE "http://localhost:1933/api/v1/fs?uri=ctx://resources/docs/old.md" \
   -H "X-API-Key: your-key"
 
 # 递归删除目录
-curl -X DELETE "http://localhost:1933/api/v1/fs?uri=viking://resources/old-project/&recursive=true" \
+curl -X DELETE "http://localhost:1933/api/v1/fs?uri=ctx://resources/old-project/&recursive=true" \
   -H "X-API-Key: your-key"
 ```
 
 **CLI**
 
 ```bash
-openviking rm viking://resources/old.md [--recursive]
+atom_ctx rm ctx://resources/old.md [--recursive]
 ```
 
 **响应**
@@ -442,7 +442,7 @@ openviking rm viking://resources/old.md [--recursive]
 {
   "status": "ok",
   "result": {
-    "uri": "viking://resources/docs/old.md"
+    "uri": "ctx://resources/docs/old.md"
   },
   "time": 0.1
 }
@@ -458,15 +458,15 @@ openviking rm viking://resources/old.md [--recursive]
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| from_uri | str | 是 | - | 源 Viking URI |
-| to_uri | str | 是 | - | 目标 Viking URI |
+| from_uri | str | 是 | - | 源 Ctx URI |
+| to_uri | str | 是 | - | 目标 Ctx URI |
 
 **Python SDK (Embedded / HTTP)**
 
 ```python
 client.mv(
-    "viking://resources/old-name/",
-    "viking://resources/new-name/"
+    "ctx://resources/old-name/",
+    "ctx://resources/new-name/"
 )
 ```
 
@@ -481,15 +481,15 @@ curl -X POST http://localhost:1933/api/v1/fs/mv \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
-    "from_uri": "viking://resources/old-name/",
-    "to_uri": "viking://resources/new-name/"
+    "from_uri": "ctx://resources/old-name/",
+    "to_uri": "ctx://resources/new-name/"
   }'
 ```
 
 **CLI**
 
 ```bash
-openviking mv viking://resources/old-name/ viking://resources/new-name/
+atom_ctx mv ctx://resources/old-name/ ctx://resources/new-name/
 ```
 
 **响应**
@@ -498,8 +498,8 @@ openviking mv viking://resources/old-name/ viking://resources/new-name/
 {
   "status": "ok",
   "result": {
-    "from": "viking://resources/old-name/",
-    "to": "viking://resources/new-name/"
+    "from": "ctx://resources/old-name/",
+    "to": "ctx://resources/new-name/"
   },
   "time": 0.1
 }
@@ -515,7 +515,7 @@ openviking mv viking://resources/old-name/ viking://resources/new-name/
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| uri | str | 是 | - | 要搜索的 Viking URI |
+| uri | str | 是 | - | 要搜索的 Ctx URI |
 | pattern | str | 是 | - | 搜索模式（正则表达式） |
 | case_insensitive | bool | 否 | False | 忽略大小写 |
 
@@ -523,7 +523,7 @@ openviking mv viking://resources/old-name/ viking://resources/new-name/
 
 ```python
 results = client.grep(
-    "viking://resources/",
+    "ctx://resources/",
     "authentication",
     case_insensitive=True
 )
@@ -545,7 +545,7 @@ curl -X POST http://localhost:1933/api/v1/search/grep \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
-    "uri": "viking://resources/",
+    "uri": "ctx://resources/",
     "pattern": "authentication",
     "case_insensitive": true
   }'
@@ -554,7 +554,7 @@ curl -X POST http://localhost:1933/api/v1/search/grep \
 **CLI**
 
 ```bash
-openviking grep viking://resources/ "authentication" [--ignore-case]
+atom_ctx grep ctx://resources/ "authentication" [--ignore-case]
 ```
 
 **响应**
@@ -565,7 +565,7 @@ openviking grep viking://resources/ "authentication" [--ignore-case]
   "result": {
     "matches": [
       {
-        "uri": "viking://resources/docs/auth.md",
+        "uri": "ctx://resources/docs/auth.md",
         "line": 15,
         "content": "User authentication is handled by..."
       }
@@ -587,19 +587,19 @@ openviking grep viking://resources/ "authentication" [--ignore-case]
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
 | pattern | str | 是 | - | Glob 模式（例如 `**/*.md`） |
-| uri | str | 否 | "viking://" | 起始 URI |
+| uri | str | 否 | "ctx://" | 起始 URI |
 
 **Python SDK (Embedded / HTTP)**
 
 ```python
 # 查找所有 Markdown 文件
-results = client.glob("**/*.md", "viking://resources/")
+results = client.glob("**/*.md", "ctx://resources/")
 print(f"Found {results['count']} markdown files:")
 for uri in results['matches']:
     print(f"  {uri}")
 
 # 查找所有 Python 文件
-results = client.glob("**/*.py", "viking://resources/")
+results = client.glob("**/*.py", "ctx://resources/")
 print(f"Found {results['count']} Python files")
 ```
 
@@ -615,14 +615,14 @@ curl -X POST http://localhost:1933/api/v1/search/glob \
   -H "X-API-Key: your-key" \
   -d '{
     "pattern": "**/*.md",
-    "uri": "viking://resources/"
+    "uri": "ctx://resources/"
   }'
 ```
 
 **CLI**
 
 ```bash
-openviking glob "**/*.md" [--uri viking://resources/]
+atom_ctx glob "**/*.md" [--uri ctx://resources/]
 ```
 
 **响应**
@@ -632,8 +632,8 @@ openviking glob "**/*.md" [--uri viking://resources/]
   "status": "ok",
   "result": {
     "matches": [
-      "viking://resources/docs/api.md",
-      "viking://resources/docs/guide.md"
+      "ctx://resources/docs/api.md",
+      "ctx://resources/docs/guide.md"
     ],
     "count": 2
   },
@@ -660,17 +660,17 @@ openviking glob "**/*.md" [--uri viking://resources/]
 ```python
 # 单个关联
 client.link(
-    "viking://resources/docs/auth/",
-    "viking://resources/docs/security/",
+    "ctx://resources/docs/auth/",
+    "ctx://resources/docs/security/",
     reason="Security best practices for authentication"
 )
 
 # 多个关联
 client.link(
-    "viking://resources/docs/api/",
+    "ctx://resources/docs/api/",
     [
-        "viking://resources/docs/auth/",
-        "viking://resources/docs/errors/"
+        "ctx://resources/docs/auth/",
+        "ctx://resources/docs/errors/"
     ],
     reason="Related documentation"
 )
@@ -688,8 +688,8 @@ curl -X POST http://localhost:1933/api/v1/relations/link \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
-    "from_uri": "viking://resources/docs/auth/",
-    "to_uris": "viking://resources/docs/security/",
+    "from_uri": "ctx://resources/docs/auth/",
+    "to_uris": "ctx://resources/docs/security/",
     "reason": "Security best practices for authentication"
   }'
 
@@ -698,8 +698,8 @@ curl -X POST http://localhost:1933/api/v1/relations/link \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
-    "from_uri": "viking://resources/docs/api/",
-    "to_uris": ["viking://resources/docs/auth/", "viking://resources/docs/errors/"],
+    "from_uri": "ctx://resources/docs/api/",
+    "to_uris": ["ctx://resources/docs/auth/", "ctx://resources/docs/errors/"],
     "reason": "Related documentation"
   }'
 ```
@@ -707,7 +707,7 @@ curl -X POST http://localhost:1933/api/v1/relations/link \
 **CLI**
 
 ```bash
-openviking link viking://resources/docs/auth/ viking://resources/docs/security/ --reason "Security best practices"
+atom_ctx link ctx://resources/docs/auth/ ctx://resources/docs/security/ --reason "Security best practices"
 ```
 
 **响应**
@@ -716,8 +716,8 @@ openviking link viking://resources/docs/auth/ viking://resources/docs/security/ 
 {
   "status": "ok",
   "result": {
-    "from": "viking://resources/docs/auth/",
-    "to": "viking://resources/docs/security/"
+    "from": "ctx://resources/docs/auth/",
+    "to": "ctx://resources/docs/security/"
   },
   "time": 0.1
 }
@@ -733,12 +733,12 @@ openviking link viking://resources/docs/auth/ viking://resources/docs/security/ 
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| uri | str | 是 | - | Viking URI |
+| uri | str | 是 | - | Ctx URI |
 
 **Python SDK (Embedded / HTTP)**
 
 ```python
-relations = client.relations("viking://resources/docs/auth/")
+relations = client.relations("ctx://resources/docs/auth/")
 for rel in relations:
     print(f"Related: {rel['uri']}")
     print(f"  Reason: {rel['reason']}")
@@ -751,14 +751,14 @@ GET /api/v1/relations?uri={uri}
 ```
 
 ```bash
-curl -X GET "http://localhost:1933/api/v1/relations?uri=viking://resources/docs/auth/" \
+curl -X GET "http://localhost:1933/api/v1/relations?uri=ctx://resources/docs/auth/" \
   -H "X-API-Key: your-key"
 ```
 
 **CLI**
 
 ```bash
-openviking relations viking://resources/docs/auth/
+atom_ctx relations ctx://resources/docs/auth/
 ```
 
 **响应**
@@ -767,8 +767,8 @@ openviking relations viking://resources/docs/auth/
 {
   "status": "ok",
   "result": [
-    {"uri": "viking://resources/docs/security/", "reason": "Security best practices"},
-    {"uri": "viking://resources/docs/errors/", "reason": "Error handling"}
+    {"uri": "ctx://resources/docs/security/", "reason": "Security best practices"},
+    {"uri": "ctx://resources/docs/errors/", "reason": "Error handling"}
   ],
   "time": 0.1
 }
@@ -791,8 +791,8 @@ openviking relations viking://resources/docs/auth/
 
 ```python
 client.unlink(
-    "viking://resources/docs/auth/",
-    "viking://resources/docs/security/"
+    "ctx://resources/docs/auth/",
+    "ctx://resources/docs/security/"
 )
 ```
 
@@ -807,15 +807,15 @@ curl -X DELETE http://localhost:1933/api/v1/relations/link \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
-    "from_uri": "viking://resources/docs/auth/",
-    "to_uri": "viking://resources/docs/security/"
+    "from_uri": "ctx://resources/docs/auth/",
+    "to_uri": "ctx://resources/docs/security/"
   }'
 ```
 
 **CLI**
 
 ```bash
-openviking unlink viking://resources/docs/auth/ viking://resources/docs/security/
+atom_ctx unlink ctx://resources/docs/auth/ ctx://resources/docs/security/
 ```
 
 **响应**
@@ -824,8 +824,8 @@ openviking unlink viking://resources/docs/auth/ viking://resources/docs/security
 {
   "status": "ok",
   "result": {
-    "from": "viking://resources/docs/auth/",
-    "to": "viking://resources/docs/security/"
+    "from": "ctx://resources/docs/auth/",
+    "to": "ctx://resources/docs/security/"
   },
   "time": 0.1
 }
@@ -835,6 +835,6 @@ openviking unlink viking://resources/docs/auth/ viking://resources/docs/security
 
 ## 相关文档
 
-- [Viking URI](../concepts/04-viking-uri.md) - URI 规范
+- [Ctx URI](../concepts/04-ctx-uri.md) - URI 规范
 - [Context Layers](../concepts/03-context-layers.md) - L0/L1/L2
 - [Resources](02-resources.md) - 资源管理

@@ -7,7 +7,7 @@ Alice — 技术负责人的使用流程
 获取 API Key:
     API Key 由管理员通过 Admin API 分配，流程如下：
 
-    1. ov.conf 中配置 server.root_api_key（如 "test"）
+    1. ctx.conf 中配置 server.root_api_key（如 "test"）
     2. 用 root_api_key 创建租户和管理员:
          curl -X POST http://localhost:1933/api/v1/admin/accounts \
            -H "X-API-Key: test" -H "Content-Type: application/json" \
@@ -25,8 +25,8 @@ import json
 import sys
 import time
 
-import openviking as ov
-from openviking_cli.utils.async_utils import run_async
+import atom_ctx as ctx
+from atom_ctx_cli.utils.async_utils import run_async
 
 
 def load_key_from_file(user="alice"):
@@ -59,14 +59,14 @@ def main():
     print("User:   alice")
     print(f"Key:    {api_key[:16]}...")
 
-    client = ov.SyncHTTPClient(url=url, api_key=api_key, agent_id="alice-agent")
+    client = ctx.SyncHTTPClient(url=url, api_key=api_key, agent_id="alice-agent")
     client.initialize()
 
     try:
         # ── 1. 添加资源 ──
-        print("\n== 1. 添加资源: OpenViking README ==")
+        print("\n== 1. 添加资源: AtomCtx README ==")
         result = client.add_resource(
-            path="https://raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md",
+            path="https://raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md",
             reason="项目核心文档",
         )
         readme_uri = result.get("root_uri", "")
@@ -77,7 +77,7 @@ def main():
 
         # ── 2. 查看文件系统 ──
         print("\n== 2. 文件系统 ==")
-        entries = client.ls("viking://")
+        entries = client.ls("ctx://")
         for entry in entries:
             if isinstance(entry, dict):
                 kind = "dir " if entry.get("isDir") else "file"
@@ -102,10 +102,10 @@ def main():
         print(f"  Session: {session.session_id}")
 
         messages = [
-            ("user", "我们的项目选择用 OpenViking 做 Context Database，主要原因是什么？"),
+            ("user", "我们的项目选择用 AtomCtx 做 Context Database，主要原因是什么？"),
             (
                 "assistant",
-                "选择 OpenViking 的核心原因：1) 文件系统范式统一管理上下文 "
+                "选择 AtomCtx 的核心原因：1) 文件系统范式统一管理上下文 "
                 "2) 分层加载（L0/L1/L2）节省 token 3) 目录递归检索比传统 RAG 效果好 "
                 "4) 内置 session 管理和 memory 自动沉淀。",
             ),
@@ -116,11 +116,11 @@ def main():
                 "2) VikingDB 和方舟模型在同一可用区，网络延迟低 "
                 "3) 自动扩缩容，不用担心数据量增长。本地模式只用于开发测试。",
             ),
-            ("user", "文件存储用 TOS 对吧？prefix 是 ov？"),
+            ("user", "文件存储用 TOS 对吧？prefix 是 ctx？"),
             (
                 "assistant",
                 "是的。AGFS 后端配置为 S3 模式，对接 TOS。"
-                "bucket 是 openvikingdata，prefix 设为 ov，所有文件存在 ov/ 目录下。"
+                "bucket 是 atom_ctxdata，prefix 设为 ov，所有文件存在 ov/ 目录下。"
                 "AK/SK 使用 IAM 子用户的密钥，权限范围限定在这个 bucket。",
             ),
         ]
@@ -140,7 +140,7 @@ def main():
         # ── 7. 查看记忆目录 ──
         print("\n== 7. 记忆目录 ==")
         try:
-            mem_entries = client.ls("viking://user/alice/memories")
+            mem_entries = client.ls("ctx://user/alice/memories")
             for entry in mem_entries:
                 if isinstance(entry, dict):
                     kind = "dir " if entry.get("isDir") else "file"

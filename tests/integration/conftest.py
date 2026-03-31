@@ -3,7 +3,7 @@
 
 """Shared fixtures for integration tests.
 
-Automatically starts an OpenViking server in a background thread so that
+Automatically starts an AtomCtx server in a background thread so that
 AsyncHTTPClient integration tests can run without a manually started server process.
 """
 
@@ -19,10 +19,10 @@ import httpx
 import pytest
 import uvicorn
 
-from openviking.server.app import create_app
-from openviking.server.config import ServerConfig
-from openviking.service.core import OpenVikingService
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.server.app import create_app
+from atom_ctx.server.config import ServerConfig
+from atom_ctx.service.core import AtomCtxService
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 TEST_TMP_DIR = PROJECT_ROOT / "test_data" / "tmp_integration"
@@ -63,7 +63,7 @@ def gemini_embedder():
     if not GOOGLE_API_KEY:
         pytest.skip("GOOGLE_API_KEY not set")
     try:
-        from openviking.models.embedder.gemini_embedders import GeminiDenseEmbedder
+        from atom_ctx.models.embedder.gemini_embedders import GeminiDenseEmbedder
     except (ImportError, ModuleNotFoundError, AttributeError):
         pytest.skip("google-genai not installed")
     return GeminiDenseEmbedder("gemini-embedding-2-preview", api_key=GOOGLE_API_KEY, dimension=768)
@@ -88,7 +88,7 @@ def server_url(temp_dir):
 
     loop = asyncio.new_event_loop()
 
-    svc = OpenVikingService(
+    svc = AtomCtxService(
         path=str(temp_dir / "data"), user=UserIdentifier.the_default_user("test_user")
     )
     loop.run_until_complete(svc.initialize())

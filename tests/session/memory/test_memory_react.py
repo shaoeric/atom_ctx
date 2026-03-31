@@ -9,14 +9,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from openviking.session.memory.extract_loop import (
+from atom_ctx.session.memory.extract_loop import (
     ExtractLoop,
 )
-from openviking.session.memory.dataclass import (
+from atom_ctx.session.memory.dataclass import (
     MemoryTypeSchema,
     MemoryField,
 )
-from openviking.session.memory.merge_op.base import FieldType, MergeOp
+from atom_ctx.session.memory.merge_op.base import FieldType, MergeOp
 
 
 class TestPreFetchFileFiltering:
@@ -35,7 +35,7 @@ class TestPreFetchFileFiltering:
             {"name": "data.json", "isDir": False},
         ]
 
-        dir_uri = "viking://user/default/memories/preferences"
+        dir_uri = "ctx://user/default/memories/preferences"
         single_file_schemas = set()
 
         # Apply the filtering logic manually (replicate what _pre_fetch_context does)
@@ -62,7 +62,7 @@ class TestPreFetchFileFiltering:
 
     def test_only_read_existing_files(self):
         """Test that only existing files are read - when only one exists or none exist."""
-        dir_uri = "viking://user/default/memories/preferences"
+        dir_uri = "ctx://user/default/memories/preferences"
         single_file_schemas = set()
 
         # Case 1: Only .abstract.md exists
@@ -150,28 +150,28 @@ class TestAllowedDirectoriesList:
         return vlm
 
     @pytest.fixture
-    def mock_viking_fs(self):
+    def mock_ctx_fs(self):
         """Create a mock VikingFS."""
         return MagicMock()
 
-    def test_get_allowed_directories_list(self, mock_vlm, mock_viking_fs):
+    def test_get_allowed_directories_list(self, mock_vlm, mock_ctx_fs):
         """Test that allowed directories list is properly formatted."""
         # Patch the registry loading so we can inject our own schemas
-        with patch('openviking.session.memory.extract_loop.MemoryTypeRegistry') as mock_registry_cls:
+        with patch('atom_ctx.session.memory.extract_loop.MemoryTypeRegistry') as mock_registry_cls:
             mock_registry = MagicMock()
 
             # Create test schemas
             schema1 = MemoryTypeSchema(
                 memory_type="preferences",
                 description="Preferences",
-                directory="viking://user/{user_space}/memories/preferences",
+                directory="ctx://user/{user_space}/memories/preferences",
                 filename_template="{topic}.md",
                 fields=[],
             )
             schema2 = MemoryTypeSchema(
                 memory_type="tools",
                 description="Tools",
-                directory="viking://agent/{agent_space}/memories/tools",
+                directory="ctx://agent/{agent_space}/memories/tools",
                 filename_template="{tool_name}.md",
                 fields=[],
             )
@@ -180,8 +180,8 @@ class TestAllowedDirectoriesList:
             mock_registry_cls.return_value = mock_registry
 
             # Also patch schema_model_generator and schema_prompt_generator
-            with patch('openviking.session.memory.extract_loop.SchemaModelGenerator') as mock_smg, \
-                 patch('openviking.session.memory.extract_loop.SchemaPromptGenerator') as mock_spg:
+            with patch('atom_ctx.session.memory.extract_loop.SchemaModelGenerator') as mock_smg, \
+                 patch('atom_ctx.session.memory.extract_loop.SchemaPromptGenerator') as mock_spg:
 
                 mock_smg_instance = MagicMock()
                 mock_smg_instance.generate_all_models = MagicMock()
@@ -191,11 +191,11 @@ class TestAllowedDirectoriesList:
                 mock_spg.return_value = MagicMock()
 
                 # Create ExtractLoop
-                extract_loop = ExtractLoop(mock_vlm, mock_viking_fs)
+                extract_loop = ExtractLoop(mock_vlm, mock_ctx_fs)
 
                 # Call the method
                 result = extract_loop._get_allowed_directories_list()
 
                 # Verify the result contains the expected directories with variables replaced
-                assert "viking://user/default/memories/preferences" in result
-                assert "viking://agent/default/memories/tools" in result
+                assert "ctx://user/default/memories/preferences" in result
+                assert "ctx://agent/default/memories/tools" in result

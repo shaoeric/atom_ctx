@@ -19,13 +19,13 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from openviking.parse.base import (
+from atom_ctx.parse.base import (
     NodeType,
     ResourceNode,
     create_parse_result,
 )
-from openviking.parse.parsers.base_parser import BaseParser
-from openviking.parse.parsers.directory import DirectoryParser
+from atom_ctx.parse.parsers.base_parser import BaseParser
+from atom_ctx.parse.parsers.directory import DirectoryParser
 
 # ---------------------------------------------------------------------------
 # Fake VikingFS – records mkdir / write / move / ls operations
@@ -110,7 +110,7 @@ class FakeVikingFS:
 
     def create_temp_uri(self) -> str:
         self._temp_counter += 1
-        return f"viking://temp/dir_{self._temp_counter}"
+        return f"ctx://temp/dir_{self._temp_counter}"
 
 
 # ---------------------------------------------------------------------------
@@ -126,7 +126,7 @@ def fake_fs():
 @pytest.fixture
 def parser(fake_fs):
     """DirectoryParser with VikingFS patched for ALL BaseParser instances."""
-    with patch.object(BaseParser, "_get_viking_fs", return_value=fake_fs):
+    with patch.object(BaseParser, "_get_ctx_fs", return_value=fake_fs):
         yield DirectoryParser()
 
 
@@ -392,9 +392,9 @@ class TestParserDelegation:
         fake_result.temp_dir_path = mock_temp
 
         with patch(
-            "openviking.parse.parsers.directory.DirectoryParser._assign_parser",
+            "atom_ctx.parse.parsers.directory.DirectoryParser._assign_parser",
         ) as mock_assign:
-            from openviking.parse.parsers.word import WordParser as _Word
+            from atom_ctx.parse.parsers.word import WordParser as _Word
 
             mock_word = AsyncMock(spec=_Word)
             mock_word.parse = AsyncMock(return_value=fake_result)
@@ -434,9 +434,9 @@ class TestParserDelegation:
         fake_result.temp_dir_path = mock_temp
 
         with patch(
-            "openviking.parse.parsers.directory.DirectoryParser._assign_parser",
+            "atom_ctx.parse.parsers.directory.DirectoryParser._assign_parser",
         ) as mock_assign:
-            from openviking.parse.parsers.excel import ExcelParser as _Excel
+            from atom_ctx.parse.parsers.excel import ExcelParser as _Excel
 
             mock_excel = AsyncMock(spec=_Excel)
             mock_excel.parse = AsyncMock(return_value=fake_result)
@@ -474,9 +474,9 @@ class TestParserDelegation:
         fake_result.temp_dir_path = mock_temp
 
         with patch(
-            "openviking.parse.parsers.directory.DirectoryParser._assign_parser",
+            "atom_ctx.parse.parsers.directory.DirectoryParser._assign_parser",
         ) as mock_assign:
-            from openviking.parse.parsers.epub import EPubParser as _EPub
+            from atom_ctx.parse.parsers.epub import EPubParser as _EPub
 
             mock_epub = AsyncMock(spec=_EPub)
             mock_epub.parse = AsyncMock(return_value=fake_result)
@@ -514,9 +514,9 @@ class TestParserDelegation:
         fake_result.temp_dir_path = mock_temp
 
         with patch(
-            "openviking.parse.parsers.directory.DirectoryParser._assign_parser",
+            "atom_ctx.parse.parsers.directory.DirectoryParser._assign_parser",
         ) as mock_assign:
-            from openviking.parse.parsers.powerpoint import PowerPointParser as _PPT
+            from atom_ctx.parse.parsers.powerpoint import PowerPointParser as _PPT
 
             mock_ppt = AsyncMock(spec=_PPT)
             mock_ppt.parse = AsyncMock(return_value=fake_result)
@@ -556,9 +556,9 @@ class TestParserDelegation:
         fake_result.temp_dir_path = mock_temp
 
         with patch(
-            "openviking.parse.parsers.directory.DirectoryParser._assign_parser",
+            "atom_ctx.parse.parsers.directory.DirectoryParser._assign_parser",
         ) as mock_assign:
-            from openviking.parse.parsers.zip_parser import ZipParser as _Zip
+            from atom_ctx.parse.parsers.zip_parser import ZipParser as _Zip
 
             mock_zip = AsyncMock(spec=_Zip)
             mock_zip.parse = AsyncMock(return_value=fake_result)
@@ -593,7 +593,7 @@ class TestPDFConversion:
 
         # Mock PDFParser.parse to return a ParseResult with fake content
         # in VikingFS (simulating conversion).
-        mock_temp = fake_fs.create_temp_uri()  # e.g. viking://temp/dir_2
+        mock_temp = fake_fs.create_temp_uri()  # e.g. ctx://temp/dir_2
         doc_dir = f"{mock_temp}/document"
         await fake_fs.mkdir(mock_temp)
         await fake_fs.mkdir(doc_dir)
@@ -609,9 +609,9 @@ class TestPDFConversion:
         fake_result.temp_dir_path = mock_temp
 
         with patch(
-            "openviking.parse.parsers.directory.DirectoryParser._assign_parser",
+            "atom_ctx.parse.parsers.directory.DirectoryParser._assign_parser",
         ) as mock_assign:
-            from openviking.parse.parsers.pdf import PDFParser as _PDF
+            from atom_ctx.parse.parsers.pdf import PDFParser as _PDF
 
             mock_pdf = AsyncMock(spec=_PDF)
             mock_pdf.parse = AsyncMock(return_value=fake_result)
@@ -638,9 +638,9 @@ class TestPDFConversion:
         pdf_file.write_bytes(b"%PDF-1.4 broken")
 
         with patch(
-            "openviking.parse.parsers.directory.DirectoryParser._assign_parser",
+            "atom_ctx.parse.parsers.directory.DirectoryParser._assign_parser",
         ) as mock_assign:
-            from openviking.parse.parsers.pdf import PDFParser as _PDF
+            from atom_ctx.parse.parsers.pdf import PDFParser as _PDF
 
             mock_pdf = AsyncMock(spec=_PDF)
             mock_pdf.parse = AsyncMock(side_effect=RuntimeError("conversion failed"))
@@ -692,7 +692,7 @@ class TestDirectlyUploadMedia:
     @pytest.mark.asyncio
     async def test_default_directly_upload_media_true(self, tmp_media_files: Path, fake_fs) -> None:
         """Test that with directly_upload_media=True (default), media files are uploaded directly."""
-        with patch.object(BaseParser, "_get_viking_fs", return_value=fake_fs):
+        with patch.object(BaseParser, "_get_ctx_fs", return_value=fake_fs):
             parser = DirectoryParser()
             await parser.parse(str(tmp_media_files))
 
@@ -735,13 +735,13 @@ class TestDirectlyUploadMedia:
         )
         mock_video_result.temp_dir_path = fake_fs.create_temp_uri()
 
-        with patch.object(BaseParser, "_get_viking_fs", return_value=fake_fs):
+        with patch.object(BaseParser, "_get_ctx_fs", return_value=fake_fs):
             parser = DirectoryParser()
 
             with patch.object(parser, "_assign_parser") as mock_assign:
-                from openviking.parse.parsers.media.audio import AudioParser
-                from openviking.parse.parsers.media.image import ImageParser
-                from openviking.parse.parsers.media.video import VideoParser
+                from atom_ctx.parse.parsers.media.audio import AudioParser
+                from atom_ctx.parse.parsers.media.image import ImageParser
+                from atom_ctx.parse.parsers.media.video import VideoParser
 
                 mock_image = AsyncMock(spec=ImageParser)
                 mock_image.parse = AsyncMock(return_value=mock_image_result)

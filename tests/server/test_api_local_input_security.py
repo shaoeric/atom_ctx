@@ -31,13 +31,13 @@ description: temp uploaded skill
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
-    assert body["result"]["uri"].startswith("viking://agent/skills/")
+    assert body["result"]["uri"].startswith("ctx://agent/skills/")
 
 
 async def test_add_skill_rejects_direct_local_path(client: httpx.AsyncClient):
     resp = await client.post(
         "/api/v1/skills",
-        json={"data": "/app/ov.conf"},
+        json={"data": "/app/ctx.conf"},
     )
     assert resp.status_code == 403
     body = resp.json()
@@ -69,74 +69,74 @@ description: inline
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
-    assert body["result"]["uri"].startswith("viking://agent/skills/")
+    assert body["result"]["uri"].startswith("ctx://agent/skills/")
 
 
-def _build_ovpack_bytes() -> bytes:
+def _build_ctxpack_bytes() -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as zf:
-        zf.writestr("pkg/_._meta.json", '{"uri": "viking://resources/pkg"}')
+        zf.writestr("pkg/_._meta.json", '{"uri": "ctx://resources/pkg"}')
         zf.writestr("pkg/content.md", "# Demo\n")
     return buffer.getvalue()
 
 
-async def test_import_ovpack_accepts_temp_uploaded_file(
+async def test_import_ctxpack_accepts_temp_uploaded_file(
     client: httpx.AsyncClient,
     upload_temp_dir,
 ):
-    ovpack_file = upload_temp_dir / "demo.ovpack"
-    ovpack_file.write_bytes(_build_ovpack_bytes())
+    ctxpack_file = upload_temp_dir / "demo.ctxpack"
+    ctxpack_file.write_bytes(_build_ctxpack_bytes())
 
     resp = await client.post(
         "/api/v1/pack/import",
         json={
-            "temp_file_id": ovpack_file.name,
-            "parent": "viking://resources/imported",
+            "temp_file_id": ctxpack_file.name,
+            "parent": "ctx://resources/imported",
             "vectorize": False,
         },
     )
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
-    assert body["result"]["uri"].startswith("viking://resources/imported/")
+    assert body["result"]["uri"].startswith("ctx://resources/imported/")
 
 
-async def test_import_ovpack_rejects_direct_file_path_field(client: httpx.AsyncClient):
+async def test_import_ctxpack_rejects_direct_file_path_field(client: httpx.AsyncClient):
     resp = await client.post(
         "/api/v1/pack/import",
         json={
-            "file_path": "/tmp/demo.ovpack",
-            "parent": "viking://resources/imported",
+            "file_path": "/tmp/demo.ctxpack",
+            "parent": "ctx://resources/imported",
             "vectorize": False,
         },
     )
     assert resp.status_code == 422
 
 
-async def test_import_ovpack_rejects_legacy_temp_path_field(client: httpx.AsyncClient):
+async def test_import_ctxpack_rejects_legacy_temp_path_field(client: httpx.AsyncClient):
     resp = await client.post(
         "/api/v1/pack/import",
         json={
-            "temp_path": "upload_pack.ovpack",
-            "parent": "viking://resources/imported",
+            "temp_path": "upload_pack.ctxpack",
+            "parent": "ctx://resources/imported",
             "vectorize": False,
         },
     )
     assert resp.status_code == 422
 
 
-async def test_import_ovpack_rejects_forged_temp_file_id(
+async def test_import_ctxpack_rejects_forged_temp_file_id(
     client: httpx.AsyncClient,
     upload_temp_dir,
 ):
-    outside_file = upload_temp_dir.parent / "outside.ovpack"
-    outside_file.write_bytes(_build_ovpack_bytes())
+    outside_file = upload_temp_dir.parent / "outside.ctxpack"
+    outside_file.write_bytes(_build_ctxpack_bytes())
 
     resp = await client.post(
         "/api/v1/pack/import",
         json={
-            "temp_file_id": "../outside.ovpack",
-            "parent": "viking://resources/imported",
+            "temp_file_id": "../outside.ctxpack",
+            "parent": "ctx://resources/imported",
             "vectorize": False,
         },
     )

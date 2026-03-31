@@ -1,3 +1,3 @@
-from .service_manager import OpenVikingServiceManager
+from .service_manager import AtomCtxServiceManager
 
-__all__ = ["OpenVikingServiceManager"]
+__all__ = ["AtomCtxServiceManager"]

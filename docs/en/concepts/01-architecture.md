@@ -1,17 +1,17 @@
 # Architecture Overview
 
-OpenViking is a context database designed for AI Agents, unifying all context types (Memory, Resource, Skill) into a directory structure with semantic retrieval and progressive content loading.
+AtomCtx is a context database designed for AI Agents, unifying all context types (Memory, Resource, Skill) into a directory structure with semantic retrieval and progressive content loading.
 
 ## System Overview
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
-│                        OpenViking System Architecture                       │
+│                        AtomCtx System Architecture                       │
 ├────────────────────────────────────────────────────────────────────────────┤
 │                                                                            │
 │                              ┌─────────────┐                               │
 │                              │   Client    │                               │
-│                              │ (OpenViking)│                               │
+│                              │ (AtomCtx)│                               │
 │                              └──────┬──────┘                               │
 │                                     │ delegates                            │
 │                              ┌──────▼──────┐                               │
@@ -72,12 +72,12 @@ The Service layer decouples business logic from the transport layer, enabling re
 | **SessionService** | Session management | session, sessions, commit, delete |
 | **ResourceService** | Resource import | add_resource, add_skill, wait_processed |
 | **RelationService** | Relation management | relations, link, unlink |
-| **PackService** | Import/export | export_ovpack, import_ovpack |
+| **PackService** | Import/export | export_ctxpack, import_ctxpack |
 | **DebugService** | Debug service | observer (ObserverService) |
 
 ## Dual-Layer Storage
 
-OpenViking uses a dual-layer storage architecture separating content from index (see [Storage Architecture](./05-storage.md)):
+AtomCtx uses a dual-layer storage architecture separating content from index (see [Storage Architecture](./05-storage.md)):
 
 | Layer | Responsibility | Content |
 |-------|----------------|---------|
@@ -127,7 +127,7 @@ Messages → Compress → Archive → Memory Extraction → Storage
 For local development and single-process applications:
 
 ```python
-client = OpenViking(path="./data")
+client = AtomCtx(path="./data")
 ```
 
 - Auto-starts AGFS subprocess
@@ -139,7 +139,7 @@ client = OpenViking(path="./data")
 For team sharing, production deployment, and cross-language integration:
 
 ```python
-# Python SDK connects to OpenViking Server
+# Python SDK connects to AtomCtx Server
 client = SyncHTTPClient(url="http://localhost:1933", api_key="xxx")
 ```
 
@@ -147,10 +147,10 @@ client = SyncHTTPClient(url="http://localhost:1933", api_key="xxx")
 # Or use curl / any HTTP client
 curl http://localhost:1933/api/v1/search/find \
   -H "X-API-Key: xxx" \
-  -d '{"query": "how to use openviking"}'
+  -d '{"query": "how to use atom_ctx"}'
 ```
 
-- Server runs as standalone process (`openviking-server`)
+- Server runs as standalone process (`ctx-server`)
 - Clients connect via HTTP API
 - Supports any language that can make HTTP requests
 - See [Server Deployment](../guides/03-deployment.md) for setup
@@ -168,7 +168,7 @@ curl http://localhost:1933/api/v1/search/find \
 
 - [Context Types](./02-context-types.md) - Resource/Memory/Skill types
 - [Context Layers](./03-context-layers.md) - L0/L1/L2 model
-- [Viking URI](./04-viking-uri.md) - Unified resource identifier
+- [Ctx URI](./04-ctx-uri.md) - Unified resource identifier
 - [Storage Architecture](./05-storage.md) - Dual-layer storage details
 - [Retrieval Mechanism](./07-retrieval.md) - Retrieval process details
 - [Context Extraction](./06-extraction.md) - Parsing and extraction process

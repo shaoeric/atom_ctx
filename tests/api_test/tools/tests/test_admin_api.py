@@ -1,10 +1,10 @@
 import json
 
-from api.client import OpenVikingAPIClient
+from api.client import AtomCtxAPIClient
 
 
 def main():
-    client = OpenVikingAPIClient()
+    client = AtomCtxAPIClient()
 
     print("Current API Key:", client.api_key)
     print("Current Headers:", client.session.headers)

@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from types import SimpleNamespace
 
-from openviking.parse.parsers.feishu import FeishuParser
+from atom_ctx.parse.parsers.feishu import FeishuParser
 
 
 def _make_block(**kwargs):
@@ -85,23 +85,23 @@ class TestParseFeishuUrl:
 
 class TestIsFeishuUrl:
     def test_feishu_docx(self):
-        from openviking.utils.media_processor import UnifiedResourceProcessor
+        from atom_ctx.utils.media_processor import UnifiedResourceProcessor
         assert UnifiedResourceProcessor._is_feishu_url(
             "https://example.feishu.cn/docx/abc123"
         )
 
     def test_larksuite(self):
-        from openviking.utils.media_processor import UnifiedResourceProcessor
+        from atom_ctx.utils.media_processor import UnifiedResourceProcessor
         assert UnifiedResourceProcessor._is_feishu_url(
             "https://example.larksuite.com/sheets/abc123"
         )
 
     def test_non_feishu_url(self):
-        from openviking.utils.media_processor import UnifiedResourceProcessor
+        from atom_ctx.utils.media_processor import UnifiedResourceProcessor
         assert not UnifiedResourceProcessor._is_feishu_url("https://github.com/foo/bar")
 
     def test_feishu_non_doc_path(self):
-        from openviking.utils.media_processor import UnifiedResourceProcessor
+        from atom_ctx.utils.media_processor import UnifiedResourceProcessor
         assert not UnifiedResourceProcessor._is_feishu_url(
             "https://example.feishu.cn/profile/settings"
         )
@@ -449,7 +449,7 @@ class TestParseAsyncIntegration:
         mock_md_result.parse_time = 0.1
         mock_md_result.meta = {}
 
-        with patch("openviking.parse.parsers.feishu.MarkdownParser") as MockMD:
+        with patch("atom_ctx.parse.parsers.feishu.MarkdownParser") as MockMD:
             mock_md_instance = MagicMock()
             async def _mock_parse_content(*a, **kw):
                 return mock_md_result
@@ -492,7 +492,7 @@ class TestParseAsyncIntegration:
         mock_md_result.parse_time = 0.1
         mock_md_result.meta = {}
 
-        with patch("openviking.parse.parsers.feishu.MarkdownParser") as MockMD:
+        with patch("atom_ctx.parse.parsers.feishu.MarkdownParser") as MockMD:
             mock_md_instance = MagicMock()
             async def _mock_parse_content(*a, **kw):
                 return mock_md_result

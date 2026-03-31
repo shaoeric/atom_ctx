@@ -1,4 +1,4 @@
-api_keys_path = "/usr/local/lib/python3.11/site-packages/openviking/server/api_keys.py"
+api_keys_path = "/usr/local/lib/python3.11/site-packages/atom_ctx/server/api_keys.py"
 print(f"Reading {api_keys_path}...")
 print("=" * 80)
 

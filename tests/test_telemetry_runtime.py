@@ -8,23 +8,23 @@ from types import SimpleNamespace
 
 import pytest
 
-from openviking.models.embedder.base import EmbedResult
-from openviking.server.identity import RequestContext, Role
-from openviking.service.resource_service import ResourceService
-from openviking.storage.collection_schemas import TextEmbeddingHandler
-from openviking.storage.queuefs.semantic_dag import DagStats
-from openviking.storage.queuefs.semantic_msg import SemanticMsg
-from openviking.storage.queuefs.semantic_processor import SemanticProcessor
-from openviking.telemetry import (
+from atom_ctx.models.embedder.base import EmbedResult
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx.service.resource_service import ResourceService
+from atom_ctx.storage.collection_schemas import TextEmbeddingHandler
+from atom_ctx.storage.queuefs.semantic_dag import DagStats
+from atom_ctx.storage.queuefs.semantic_msg import SemanticMsg
+from atom_ctx.storage.queuefs.semantic_processor import SemanticProcessor
+from atom_ctx.telemetry import (
     get_current_telemetry,
     get_telemetry_runtime,
     register_telemetry,
     unregister_telemetry,
 )
-from openviking.telemetry.backends.memory import MemoryOperationTelemetry
-from openviking.telemetry.context import bind_telemetry
-from openviking.telemetry.snapshot import TelemetrySnapshot
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.telemetry.backends.memory import MemoryOperationTelemetry
+from atom_ctx.telemetry.context import bind_telemetry
+from atom_ctx.telemetry.snapshot import TelemetrySnapshot
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 def test_telemetry_module_exports_snapshot_and_runtime():
@@ -146,18 +146,18 @@ async def test_semantic_processor_binds_registered_operation_telemetry(monkeypat
             return DagStats()
 
     monkeypatch.setattr(
-        "openviking.storage.queuefs.semantic_processor.get_viking_fs",
+        "atom_ctx.storage.queuefs.semantic_processor.get_ctx_fs",
         lambda: FakeVikingFS(),
     )
     monkeypatch.setattr(
-        "openviking.storage.queuefs.semantic_processor.SemanticDagExecutor",
+        "atom_ctx.storage.queuefs.semantic_processor.SemanticDagExecutor",
         lambda **kwargs: _FakeDagExecutor(**kwargs),
     )
 
     try:
         await processor.on_dequeue(
             SemanticMsg(
-                uri="viking://resources/demo",
+                uri="ctx://resources/demo",
                 context_type="resource",
                 recursive=False,
                 telemetry_id=telemetry.telemetry_id,
@@ -199,7 +199,7 @@ async def test_embedding_handler_binds_registered_operation_telemetry(monkeypatc
             return "rec-1"
 
     monkeypatch.setattr(
-        "openviking_cli.utils.config.get_openviking_config",
+        "atom_ctx_cli.utils.config.get_atom_ctx_config",
         lambda: _DummyConfig(),
     )
 
@@ -212,7 +212,7 @@ async def test_embedding_handler_binds_registered_operation_telemetry(monkeypatc
                 "telemetry_id": telemetry.telemetry_id,
                 "context_data": {
                     "id": "id-1",
-                    "uri": "viking://resources/sample",
+                    "uri": "ctx://resources/sample",
                     "account_id": "default",
                     "abstract": "sample",
                 },
@@ -238,7 +238,7 @@ async def test_resource_service_add_resource_reports_queue_summary(monkeypatch):
         async def process_resource(self, **kwargs):
             return {
                 "status": "success",
-                "root_uri": "viking://resources/demo",
+                "root_uri": "ctx://resources/demo",
             }
 
     class _DummyQueueManager:
@@ -249,7 +249,7 @@ async def test_resource_service_add_resource_reports_queue_summary(monkeypatch):
             }
 
     monkeypatch.setattr(
-        "openviking.service.resource_service.get_queue_manager",
+        "atom_ctx.service.resource_service.get_queue_manager",
         lambda: _DummyQueueManager(),
     )
 
@@ -260,13 +260,13 @@ async def test_resource_service_add_resource_reports_queue_summary(monkeypatch):
         in_progress_nodes = 0
 
     monkeypatch.setattr(
-        "openviking.storage.queuefs.semantic_processor.SemanticProcessor.consume_dag_stats",
+        "atom_ctx.storage.queuefs.semantic_processor.SemanticProcessor.consume_dag_stats",
         classmethod(lambda cls, telemetry_id="", uri=None: _DagStats()),
     )
 
     service = ResourceService(
         vikingdb=object(),
-        viking_fs=object(),
+        ctx_fs=object(),
         resource_processor=_DummyProcessor(),
         skill_processor=object(),
     )
@@ -275,7 +275,7 @@ async def test_resource_service_add_resource_reports_queue_summary(monkeypatch):
     with bind_telemetry(telemetry):
         result = await service.add_resource(path="/tmp/demo.md", ctx=ctx, wait=True)
 
-    assert result["root_uri"] == "viking://resources/demo"
+    assert result["root_uri"] == "ctx://resources/demo"
     telemetry_result = telemetry.finish()
     summary = telemetry_result.summary
     assert summary["queue"] == {

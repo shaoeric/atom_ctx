@@ -9,7 +9,7 @@ and that _convert_local injects them as markdown headings.
 
 from unittest.mock import MagicMock
 
-from openviking.parse.parsers.pdf import PDFParser
+from atom_ctx.parse.parsers.pdf import PDFParser
 
 
 class TestExtractBookmarks:

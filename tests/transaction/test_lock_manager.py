@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from openviking.storage.transaction.lock_manager import LockManager
-from openviking.storage.transaction.path_lock import LOCK_FILE_NAME
+from atom_ctx.storage.transaction.lock_manager import LockManager
+from atom_ctx.storage.transaction.path_lock import LOCK_FILE_NAME
 
 
 def _lock_file_gone(agfs_client, lock_path: str) -> bool:

@@ -5,8 +5,8 @@
 import os
 import unittest
 
-from openviking.models.embedder.minimax_embedders import MinimaxDenseEmbedder
-from openviking_cli.utils.config.embedding_config import EmbeddingModelConfig
+from atom_ctx.models.embedder.minimax_embedders import MinimaxDenseEmbedder
+from atom_ctx_cli.utils.config.embedding_config import EmbeddingModelConfig
 
 
 class TestMinimaxRealCall(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestMinimaxRealCall(unittest.TestCase):
             document_param="db",
         )
 
-        text = "OpenViking integration test for MiniMax."
+        text = "AtomCtx integration test for MiniMax."
 
         try:
             result = embedder.embed(text)

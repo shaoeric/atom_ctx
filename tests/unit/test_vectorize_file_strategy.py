@@ -2,8 +2,8 @@ import types
 
 import pytest
 
-from openviking.core.context import Context
-from openviking.utils import embedding_utils
+from atom_ctx.core.context import Context
+from atom_ctx.utils import embedding_utils
 
 
 class DummyQueue:
@@ -52,10 +52,10 @@ class DummyReq:
 async def test_vectorize_file_uses_summary_first(monkeypatch):
     queue = DummyQueue()
     monkeypatch.setattr(embedding_utils, "get_queue_manager", lambda: DummyQueueManager(queue))
-    monkeypatch.setattr(embedding_utils, "get_viking_fs", lambda: DummyFS("X" * 5000))
+    monkeypatch.setattr(embedding_utils, "get_ctx_fs", lambda: DummyFS("X" * 5000))
     monkeypatch.setattr(
         embedding_utils,
-        "get_openviking_config",
+        "get_atom_ctx_config",
         lambda: types.SimpleNamespace(
             embedding=types.SimpleNamespace(text_source="summary_first", max_input_chars=1000)
         ),
@@ -67,9 +67,9 @@ async def test_vectorize_file_uses_summary_first(monkeypatch):
     )
 
     await embedding_utils.vectorize_file(
-        file_path="viking://user/default/resources/test.md",
+        file_path="ctx://user/default/resources/test.md",
         summary_dict={"name": "test.md", "summary": "short summary"},
-        parent_uri="viking://user/default/resources",
+        parent_uri="ctx://user/default/resources",
         ctx=DummyReq(),
     )
 
@@ -82,10 +82,10 @@ async def test_vectorize_file_uses_summary_first(monkeypatch):
 async def test_vectorize_file_truncates_content_when_content_only(monkeypatch):
     queue = DummyQueue()
     monkeypatch.setattr(embedding_utils, "get_queue_manager", lambda: DummyQueueManager(queue))
-    monkeypatch.setattr(embedding_utils, "get_viking_fs", lambda: DummyFS("A" * 1500))
+    monkeypatch.setattr(embedding_utils, "get_ctx_fs", lambda: DummyFS("A" * 1500))
     monkeypatch.setattr(
         embedding_utils,
-        "get_openviking_config",
+        "get_atom_ctx_config",
         lambda: types.SimpleNamespace(
             embedding=types.SimpleNamespace(text_source="content_only", max_input_chars=1000)
         ),
@@ -97,9 +97,9 @@ async def test_vectorize_file_truncates_content_when_content_only(monkeypatch):
     )
 
     await embedding_utils.vectorize_file(
-        file_path="viking://user/default/resources/test.md",
+        file_path="ctx://user/default/resources/test.md",
         summary_dict={"name": "test.md", "summary": "short summary"},
-        parent_uri="viking://user/default/resources",
+        parent_uri="ctx://user/default/resources",
         ctx=DummyReq(),
     )
 

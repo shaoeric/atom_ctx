@@ -1,10 +1,10 @@
 from types import SimpleNamespace
 
-from openviking.telemetry.operation import OperationTelemetry
+from atom_ctx.telemetry.operation import OperationTelemetry
 
 
 def test_record_resource_wait_metrics_collects_queue_and_dag_stats(monkeypatch):
-    from openviking.telemetry.resource_summary import record_resource_wait_metrics
+    from atom_ctx.telemetry.resource_summary import record_resource_wait_metrics
 
     telemetry = OperationTelemetry(operation="resources.add_resource", enabled=True)
     telemetry_id = telemetry.telemetry_id
@@ -28,15 +28,15 @@ def test_record_resource_wait_metrics_collects_queue_and_dag_stats(monkeypatch):
         in_progress_nodes = 0
 
     monkeypatch.setattr(
-        "openviking.telemetry.resource_summary._consume_semantic_request_stats",
+        "atom_ctx.telemetry.resource_summary._consume_semantic_request_stats",
         lambda _tid: _SemanticStats(),
     )
     monkeypatch.setattr(
-        "openviking.telemetry.resource_summary._consume_embedding_request_stats",
+        "atom_ctx.telemetry.resource_summary._consume_embedding_request_stats",
         lambda _tid: _EmbeddingStats(),
     )
     monkeypatch.setattr(
-        "openviking.telemetry.resource_summary._consume_semantic_dag_stats",
+        "atom_ctx.telemetry.resource_summary._consume_semantic_dag_stats",
         lambda _tid, _uri: _DagStats(),
     )
 
@@ -44,7 +44,7 @@ def test_record_resource_wait_metrics_collects_queue_and_dag_stats(monkeypatch):
         telemetry=telemetry,
         telemetry_id=telemetry_id,
         queue_status=queue_status,
-        root_uri="viking://resources/demo",
+        root_uri="ctx://resources/demo",
     )
 
     summary = telemetry.finish().summary

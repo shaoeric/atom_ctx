@@ -20,7 +20,7 @@ static float inner_product_ref(const void* v1, const void* v2,
   return res;
 }
 
-#if defined(OV_SIMD_AVX512)
+#if defined(CTX_SIMD_AVX512)
 static float inner_product_avx512(const void* v1, const void* v2,
                                   const void* params) {
   const float* pv1 = static_cast<const float*>(v1);
@@ -46,7 +46,7 @@ static float inner_product_avx512(const void* v1, const void* v2,
 }
 #endif
 
-#if defined(OV_SIMD_AVX)
+#if defined(CTX_SIMD_AVX)
 static float inner_product_avx(const void* v1, const void* v2,
                                const void* params) {
   const float* pv1 = static_cast<const float*>(v1);
@@ -79,7 +79,7 @@ static float inner_product_avx(const void* v1, const void* v2,
 }
 #endif
 
-#if defined(OV_SIMD_SSE)
+#if defined(CTX_SIMD_SSE)
 static float inner_product_sse(const void* v1, const void* v2,
                                const void* params) {
   const float* pv1 = static_cast<const float*>(v1);
@@ -108,7 +108,7 @@ static float inner_product_sse(const void* v1, const void* v2,
 }
 #endif
 
-#if defined(OV_SIMD_NEON)
+#if defined(CTX_SIMD_NEON)
 #include "krl.h"
 
 // ARM NEON optimized inner product using KRL library
@@ -126,13 +126,13 @@ static float inner_product_neon(const void* v1, const void* v2,
 class InnerProductSpace : public VectorSpace<float> {
  public:
   explicit InnerProductSpace(size_t dim) : dim_(dim) {
-#if defined(OV_SIMD_NEON)
+#if defined(CTX_SIMD_NEON)
     metric_func_ = inner_product_neon;
-#elif defined(OV_SIMD_AVX512)
+#elif defined(CTX_SIMD_AVX512)
     metric_func_ = inner_product_avx512;
-#elif defined(OV_SIMD_AVX)
+#elif defined(CTX_SIMD_AVX)
     metric_func_ = inner_product_avx;
-#elif defined(OV_SIMD_SSE)
+#elif defined(CTX_SIMD_SSE)
     metric_func_ = inner_product_sse;
 #else
     metric_func_ = inner_product_ref;

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OpenViking 记忆演示脚本 — 事件跨多个 turn 的测试
+AtomCtx 记忆演示脚本 — 事件跨多个 turn 的测试
 """
 
 import argparse
@@ -12,7 +12,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-import openviking as ov
+import atom_ctx as ctx
 
 # ── 常量 ───────────────────────────────────────────────────────────────────
 
@@ -93,7 +93,7 @@ VERIFY_QUERIES = [
 # ── 辅助函数 ──────────────────────────────────────────────────────────────
 
 
-def run_ingest(client: ov.SyncHTTPClient, session_id: str, wait_seconds: float):
+def run_ingest(client: ctx.SyncHTTPClient, session_id: str, wait_seconds: float):
     """写入对话并提交"""
     console.print()
     console.rule(f"[bold]Phase 1: 写入对话 — {DISPLAY_NAME} ({len(CONVERSATION)} 轮)[/bold]")
@@ -148,7 +148,7 @@ def run_ingest(client: ov.SyncHTTPClient, session_id: str, wait_seconds: float):
     return session_id
 
 
-def run_verify(client: ov.SyncHTTPClient):
+def run_verify(client: ctx.SyncHTTPClient):
     """验证记忆召回"""
     console.print()
     console.rule(f"[bold]Phase 2: 验证记忆召回 — {DISPLAY_NAME} ({len(VERIFY_QUERIES)} 条查询)[/bold]")
@@ -217,7 +217,7 @@ def run_verify(client: ov.SyncHTTPClient):
 
 def main():
     """入口函数"""
-    parser = argparse.ArgumentParser(description=f"OpenViking 记忆演示 — {DISPLAY_NAME}")
+    parser = argparse.ArgumentParser(description=f"AtomCtx 记忆演示 — {DISPLAY_NAME}")
     parser.add_argument("--url", default=DEFAULT_URL, help=f"Server URL (默认: {DEFAULT_URL})")
     parser.add_argument("--api-key", default=DEFAULT_API_KEY, help="API key")
     parser.add_argument("--agent-id", default=DEFAULT_AGENT_ID, help="Agent ID")
@@ -236,7 +236,7 @@ def main():
 
     args = parser.parse_args()
 
-    client = ov.SyncHTTPClient(
+    client = ctx.SyncHTTPClient(
         url=args.url, api_key=args.api_key, agent_id=args.agent_id,
         timeout=180
     )

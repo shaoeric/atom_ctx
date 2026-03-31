@@ -19,14 +19,14 @@ def _get_scm_version(project_root: Path) -> str:
     )
 
 
-def resolve_openviking_version(
+def resolve_atom_ctx_version(
     env: Mapping[str, str] | None = None, project_root: Path | None = None
 ) -> str:
-    """Resolve the version shared by the Python package and bundled ov binary."""
+    """Resolve the version shared by the Python package and bundled ctx binary."""
     env = env or os.environ
     project_root = project_root or PROJECT_ROOT
 
-    for key in ("OPENVIKING_VERSION", "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_OPENVIKING"):
+    for key in ("CTX_VERSION", "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_ATOM_CTX"):
         value = env.get(key, "").strip()
         if value:
             return value

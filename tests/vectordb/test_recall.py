@@ -5,7 +5,7 @@ import shutil
 import unittest
 from typing import List
 
-from openviking.storage.vectordb.collection.local_collection import get_or_create_local_collection
+from atom_ctx.storage.vectordb.collection.local_collection import get_or_create_local_collection
 
 # Test data path
 TEST_DB_PATH = "./test_data/test_recall_collection/"

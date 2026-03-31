@@ -1,5 +1,5 @@
 import pytest
-from openviking.parse.parsers.html import HTMLParser
+from atom_ctx.parse.parsers.html import HTMLParser
 
 
 class TestHTMLParserRawUrlConversion:
@@ -9,8 +9,8 @@ class TestHTMLParserRawUrlConversion:
         self.parser = HTMLParser()
 
     def test_github_blob_conversion(self):
-        blob_url = "https://github.com/volcengine/OpenViking/blob/main/docs/design.md"
-        expected = "https://raw.githubusercontent.com/volcengine/OpenViking/main/docs/design.md"
+        blob_url = "https://github.com/volcengine/atom-ctx/blob/main/docs/design.md"
+        expected = "https://raw.githubusercontent.com/volcengine/AtomCtx/main/docs/design.md"
         assert self.parser._convert_to_raw_url(blob_url) == expected
 
         blob_deep = "https://github.com/user/repo/blob/feature/branch/src/components/Button.tsx"
@@ -20,13 +20,13 @@ class TestHTMLParserRawUrlConversion:
         assert self.parser._convert_to_raw_url(blob_deep) == expected_deep
 
     def test_github_non_blob_urls(self):
-        repo_root = "https://github.com/volcengine/OpenViking"
+        repo_root = "https://github.com/volcengine/atom-ctx"
         assert self.parser._convert_to_raw_url(repo_root) == repo_root
 
-        issue_url = "https://github.com/volcengine/OpenViking/issues/1"
+        issue_url = "https://github.com/volcengine/atom-ctx/issues/1"
         assert self.parser._convert_to_raw_url(issue_url) == issue_url
 
-        raw_url = "https://raw.githubusercontent.com/volcengine/OpenViking/main/README.md"
+        raw_url = "https://raw.githubusercontent.com/volcengine/AtomCtx/main/README.md"
         assert self.parser._convert_to_raw_url(raw_url) == raw_url
 
     def test_gitlab_blob_conversion(self):

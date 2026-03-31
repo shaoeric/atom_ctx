@@ -4,8 +4,8 @@
 
 import pytest
 
-from openviking.agfs_manager import AGFSManager
-from openviking_cli.utils.config.agfs_config import AGFSConfig, DirectoryMarkerMode, S3Config
+from atom_ctx.agfs_manager import AGFSManager
+from atom_ctx_cli.utils.config.agfs_config import AGFSConfig, DirectoryMarkerMode, S3Config
 
 
 def _build_s3_config(**overrides) -> S3Config:

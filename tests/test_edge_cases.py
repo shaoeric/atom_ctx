@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Beijing Volcano Engine Technology Co., Ltd.
 # SPDX-License-Identifier: Apache-2.0
 """
-Comprehensive edge case tests for OpenViking.
+Comprehensive edge case tests for AtomCtx.
 
 This module tests boundary conditions, unicode edge cases, concurrent operations,
 and security considerations that might not be covered in regular testing.
@@ -23,13 +23,13 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from openviking.parse.parsers.upload_utils import (  # noqa: I001
+from atom_ctx.parse.parsers.upload_utils import (  # noqa: I001
     _sanitize_rel_path,
     detect_and_convert_encoding,
     is_text_file,
     upload_directory,
 )
-from openviking_cli.utils.uri import VikingURI
+from atom_ctx_cli.utils.uri import CtxURI
 
 
 class MockVikingDB:
@@ -232,7 +232,7 @@ class TestDuplicateFilenameHandling:
 
         # Upload the same file 10 times
         for _ in range(10):
-            await upload_text_files([str(test_file)], "viking://test/", mock_fs)
+            await upload_text_files([str(test_file)], "ctx://test/", mock_fs)
 
         # Should handle duplicates without crashing
         assert mock_fs.write_file_bytes.call_count == 10
@@ -278,7 +278,7 @@ class TestConcurrentOperations:
         # Create 20 concurrent write tasks
         async def write_task(i):
             content = f"Content for file {i}"
-            uri = f"viking://concurrent/file_{i}.txt"
+            uri = f"ctx://concurrent/file_{i}.txt"
             await mock_fs.write_file_bytes(uri, content.encode("utf-8"))
 
         tasks = [write_task(i) for i in range(20)]
@@ -423,18 +423,18 @@ class TestSecurityEdgeCases:
     def test_malformed_uri_handling(self):
         """Test handling of malformed URIs."""
         malformed_uris = [
-            "viking://",  # Empty path
-            "viking:///",  # Multiple slashes
-            "viking://\x00null",  # Null byte in URI
-            "viking://path with spaces",  # Unescaped spaces
-            "viking://../../../etc/passwd",  # Path traversal
+            "ctx://",  # Empty path
+            "ctx:///",  # Multiple slashes
+            "ctx://\x00null",  # Null byte in URI
+            "ctx://path with spaces",  # Unescaped spaces
+            "ctx://../../../etc/passwd",  # Path traversal
         ]
 
         for uri in malformed_uris:
             try:
-                viking_uri = VikingURI(uri)
+                ctx_uri = CtxURI(uri)
                 # Should either handle gracefully or raise appropriate exception
-                assert viking_uri is not None
+                assert ctx_uri is not None
             except (ValueError, Exception) as e:
                 # Appropriate exception handling is acceptable
                 assert isinstance(e, (ValueError, Exception))
@@ -503,7 +503,7 @@ class TestBoundaryConditions:
 
         # Should handle circular links without infinite recursion
         try:
-            result = await upload_directory(tmp_path, "viking://test/", MockFS())
+            result = await upload_directory(tmp_path, "ctx://test/", MockFS())
             # Should complete without hanging
             assert result is None or result is not None
         except Exception as e:
@@ -512,11 +512,11 @@ class TestBoundaryConditions:
 
 
 # Async utility function for upload_text_files
-async def upload_text_files(file_paths: List[str], target_uri: str, viking_fs):
+async def upload_text_files(file_paths: List[str], target_uri: str, ctx_fs):
     """Upload multiple text files to VikingFS."""
     for file_path in file_paths:
         path = Path(file_path)
         if path.exists() and path.is_file():
             content = path.read_bytes()
             uri = f"{target_uri.rstrip('/')}/{path.name}"
-            await viking_fs.write_file_bytes(uri, content)
+            await ctx_fs.write_file_bytes(uri, content)

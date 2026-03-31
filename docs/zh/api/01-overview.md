@@ -1,30 +1,30 @@
 # API 概览
 
-本页介绍如何连接 OpenViking 以及所有 API 端点共享的约定。
+本页介绍如何连接 AtomCtx 以及所有 API 端点共享的约定。
 
-## 连接 OpenViking
+## 连接 AtomCtx
 
-OpenViking 支持三种连接模式：
+AtomCtx 支持三种连接模式：
 
 | 模式 | 使用场景 | 说明 |
 |------|----------|------|
 | **嵌入式** | 本地开发，单进程 | 本地运行，数据存储在本地 |
-| **HTTP** | 连接 OpenViking Server | 通过 HTTP API 连接远程服务 |
+| **HTTP** | 连接 AtomCtx Server | 通过 HTTP API 连接远程服务 |
 | **CLI** | Shell 脚本、Agent 工具调用 | 通过 CLI 命令连接服务端 |
 
 ### 嵌入式模式
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.OpenViking(path="./data")
+client = ctx.AtomCtx(path="./data")
 client.initialize()
 ```
 
-嵌入式模式通过 `ov.conf` 配置 embedding、vlm、storage 等模块。默认路径 `~/.openviking/ov.conf`，也可通过环境变量指定：
+嵌入式模式通过 `ctx.conf` 配置 embedding、vlm、storage 等模块。默认路径 `~/.ctx/ctx.conf`，也可通过环境变量指定：
 
 ```bash
-export OPENVIKING_CONFIG_FILE=/path/to/ov.conf
+export CTX_CONFIG_FILE=/path/to/ctx.conf
 ```
 
 最小配置示例：
@@ -54,7 +54,7 @@ export OPENVIKING_CONFIG_FILE=/path/to/ov.conf
 ### HTTP 模式
 
 ```python
-client = ov.SyncHTTPClient(
+client = ctx.SyncHTTPClient(
     url="http://localhost:1933",
     api_key="your-key",
     agent_id="my-agent",
@@ -63,10 +63,10 @@ client = ov.SyncHTTPClient(
 client.initialize()
 ```
 
-未显式传入 `url` 时，HTTP 客户端会自动从 `ovcli.conf` 读取连接信息。`ovcli.conf` 是 HTTP 客户端和 CLI 共享的配置文件，默认路径 `~/.openviking/ovcli.conf`，也可通过环境变量指定：
+未显式传入 `url` 时，HTTP 客户端会自动从 `ctx-cli.conf` 读取连接信息。`ctx-cli.conf` 是 HTTP 客户端和 CLI 共享的配置文件，默认路径 `~/.ctx/ctx-cli.conf`，也可通过环境变量指定：
 
 ```bash
-export OPENVIKING_CLI_CONFIG_FILE=/path/to/ovcli.conf
+export CTX_CLI_CONFIG_FILE=/path/to/ctx-cli.conf
 ```
 
 ```json
@@ -101,18 +101,18 @@ export OPENVIKING_CLI_CONFIG_FILE=/path/to/ovcli.conf
 ### 直接 HTTP（curl）
 
 ```bash
-curl http://localhost:1933/api/v1/fs/ls?uri=viking:// \
+curl http://localhost:1933/api/v1/fs/ls?uri=ctx:// \
   -H "X-API-Key: your-key"
 ```
 
 ### CLI 模式
 
-CLI 连接到 OpenViking 服务端，将所有操作暴露为 Shell 命令。CLI 同样从 `ovcli.conf` 读取连接信息（与 HTTP 客户端共享）。
+CLI 连接到 AtomCtx 服务端，将所有操作暴露为 Shell 命令。CLI 同样从 `ctx-cli.conf` 读取连接信息（与 HTTP 客户端共享）。
 
 **基本用法**
 
 ```bash
-openviking [全局选项] <command> [参数] [命令选项]
+atom_ctx [全局选项] <command> [参数] [命令选项]
 ```
 
 **全局选项**（必须放在命令名之前）
@@ -125,7 +125,7 @@ openviking [全局选项] <command> [参数] [命令选项]
 示例：
 
 ```bash
-openviking -o json ls viking://resources/
+atom_ctx -o json ls ctx://resources/
 ```
 
 ## 生命周期
@@ -133,9 +133,9 @@ openviking -o json ls viking://resources/
 **嵌入式模式**
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.OpenViking(path="./data")
+client = ctx.AtomCtx(path="./data")
 client.initialize()
 
 # ... 使用 client ...
@@ -146,9 +146,9 @@ client.close()
 **HTTP 模式**
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(url="http://localhost:1933")
+client = ctx.SyncHTTPClient(url="http://localhost:1933")
 client.initialize()
 
 # ... 使用 client ...
@@ -186,7 +186,7 @@ client.close()
   "status": "error",
   "error": {
     "code": "NOT_FOUND",
-    "message": "Resource not found: viking://resources/nonexistent/"
+    "message": "Resource not found: ctx://resources/nonexistent/"
   },
   "time": 0.01
 }
@@ -199,9 +199,9 @@ client.close()
 列表数据渲染为表格，非列表数据 fallback 到格式化 JSON：
 
 ```bash
-openviking ls viking://resources/
+atom_ctx ls ctx://resources/
 # name          size  mode  isDir  uri
-# .abstract.md  100   420   False  viking://resources/.abstract.md
+# .abstract.md  100   420   False  ctx://resources/.abstract.md
 ```
 
 ### JSON 模式（`--output json`）
@@ -209,11 +209,11 @@ openviking ls viking://resources/
 所有命令输出格式化 JSON，与 API 响应的 `result` 结构一致：
 
 ```bash
-openviking -o json ls viking://resources/
+atom_ctx -o json ls ctx://resources/
 # [{ "name": "...", "size": 100, ... }, ...]
 ```
 
-可在 `ovcli.conf` 中设置默认输出格式：
+可在 `ctx-cli.conf` 中设置默认输出格式：
 
 ```json
 {
@@ -259,7 +259,7 @@ openviking -o json ls viking://resources/
 |--------|-------------|------|
 | `OK` | 200 | 成功 |
 | `INVALID_ARGUMENT` | 400 | 无效参数 |
-| `INVALID_URI` | 400 | 无效的 Viking URI 格式 |
+| `INVALID_URI` | 400 | 无效的 Ctx URI 格式 |
 | `NOT_FOUND` | 404 | 资源未找到 |
 | `ALREADY_EXISTS` | 409 | 资源已存在 |
 | `UNAUTHENTICATED` | 401 | 缺少或无效的 API Key |
@@ -290,8 +290,8 @@ openviking -o json ls viking://resources/
 |------|------|------|
 | POST | `/api/v1/resources` | 添加资源 |
 | POST | `/api/v1/skills` | 添加技能 |
-| POST | `/api/v1/pack/export` | 导出 .ovpack |
-| POST | `/api/v1/pack/import` | 导入 .ovpack |
+| POST | `/api/v1/pack/export` | 导出 .ctxpack |
+| POST | `/api/v1/pack/import` | 导入 .ctxpack |
 
 ### 文件系统
 

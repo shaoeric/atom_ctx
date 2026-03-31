@@ -1,20 +1,20 @@
-# OpenClaw + OpenViking Context-Engine Plugin
+# OpenClaw + AtomCtx Context-Engine Plugin
 
-Use [OpenViking](https://github.com/volcengine/OpenViking) as the long-term memory backend for [OpenClaw](https://github.com/openclaw/openclaw). In OpenClaw, this plugin is registered as the `openviking` context engine. Once installed, OpenClaw will automatically **remember** important information from conversations and **recall** relevant context before responding.
+Use [AtomCtx](https://github.com/volcengine/atom-ctx) as the long-term memory backend for [OpenClaw](https://github.com/openclaw/openclaw). In OpenClaw, this plugin is registered as the `atom_ctx` context engine. Once installed, OpenClaw will automatically **remember** important information from conversations and **recall** relevant context before responding.
 
 > **ℹ️ Historical Compatibility Note**
 >
-> Legacy OpenViking/OpenClaw integrations had a known issue around OpenClaw `2026.3.12` where conversations could hang after the plugin loaded.
+> Legacy AtomCtx/OpenClaw integrations had a known issue around OpenClaw `2026.3.12` where conversations could hang after the plugin loaded.
 > That issue affected the legacy plugin path; the current context-engine Plugin 2.0 described in this document is not affected, so new installations do not need to downgrade OpenClaw for this reason.
-> Plugin 2.0 is also not backward-compatible with the legacy `memory-openviking` plugin and its configuration, so upgrades must replace the old setup instead of mixing the two versions.
+> Plugin 2.0 is also not backward-compatible with the legacy `memory-atom_ctx` plugin and its configuration, so upgrades must replace the old setup instead of mixing the two versions.
 > Plugin 2.0 also depends on OpenClaw's context-engine capability and does not support older OpenClaw releases; upgrade OpenClaw first before using this plugin.
-> If you are troubleshooting a legacy deployment, see [#591](https://github.com/volcengine/OpenViking/issues/591) and upstream fix PRs: openclaw/openclaw#34673, openclaw/openclaw#33547.
+> If you are troubleshooting a legacy deployment, see [#591](https://github.com/volcengine/atom-ctx/issues/591) and upstream fix PRs: openclaw/openclaw#34673, openclaw/openclaw#33547.
 
 > **🚀 Plugin 2.0 (Context-Engine Architecture)**
 >
-> This document covers the current OpenViking Plugin 2.0 built on the context-engine architecture, which is the recommended integration path for AI coding assistants.
+> This document covers the current AtomCtx Plugin 2.0 built on the context-engine architecture, which is the recommended integration path for AI coding assistants.
 > For design background and earlier discussion, see:
-> https://github.com/volcengine/OpenViking/discussions/525
+> https://github.com/volcengine/atom-ctx/discussions/525
 
 ---
 
@@ -42,14 +42,14 @@ For users who want a quick local experience. The setup helper handles environmen
 ### Method A: npm Install (Recommended, Cross-platform)
 
 ```bash
-npm install -g openclaw-openviking-setup-helper
+npm install -g openclaw-atom_ctx-setup-helper
 ov-install
 ```
 
 ### Method B: curl One-Click (Linux / macOS)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/volcengine/OpenViking/main/examples/openclaw-plugin/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/volcengine/AtomCtx/main/examples/openclaw-plugin/install.sh | bash
 ```
 
 The setup helper will walk you through:
@@ -57,7 +57,7 @@ The setup helper will walk you through:
 1. **Environment check** — Detects Python >= 3.10, Node.js, cmake, etc.
 2. **Select OpenClaw instance** — If multiple instances are installed locally, lists them for you to choose
 3. **Select deployment mode** — Local or Remote (see below)
-4. **Generate config** — Writes `~/.openviking/ov.conf` and `~/.openclaw/openviking.env` automatically
+4. **Generate config** — Writes `~/.ctx/ctx.conf` and `~/.openclaw/atom_ctx.env` automatically
 
 <details>
 <summary>Setup helper options</summary>
@@ -70,10 +70,10 @@ ov-install [options]
   -h, --help             Show help
 
 Env vars:
-  OPENVIKING_PYTHON       Python path
-  OPENVIKING_CONFIG_FILE  ov.conf path
-  OPENVIKING_REPO         Local OpenViking repo path
-  OPENVIKING_ARK_API_KEY  Volcengine API Key (skip prompt in -y mode)
+  ATOM_CTX_PYTHON       Python path
+  CTX_CONFIG_FILE  ctx.conf path
+  ATOM_CTX_REPO         Local AtomCtx repo path
+  ATOM_CTX_ARK_API_KEY  Volcengine API Key (skip prompt in -y mode)
 ```
 
 </details>
@@ -86,7 +86,7 @@ Env vars:
 
 | Component | Version | Purpose |
 |-----------|---------|---------|
-| **Python** | >= 3.10 | OpenViking runtime (Local mode) |
+| **Python** | >= 3.10 | AtomCtx runtime (Local mode) |
 | **Node.js** | >= 22 | OpenClaw runtime |
 | **Volcengine Ark API Key** | — | Embedding + VLM model calls |
 
@@ -106,60 +106,60 @@ openclaw --version   # installed
 
 The simplest option — nearly zero configuration. The memory service runs alongside your OpenClaw agent locally. You only need a Volcengine Ark API Key.
 
-#### Step 1: Install OpenViking
+#### Step 1: Install AtomCtx
 
 ```bash
-python3 -m pip install openviking --upgrade
+python3 -m pip install atom-ctx --upgrade
 ```
 
-Verify: `python3 -c "import openviking; print('ok')"`
+Verify: `python3 -c "import atom_ctx; print('ok')"`
 
 > Hit `externally-managed-environment`? Use the one-click installer (handles venv automatically) or create one manually:
 > ```bash
-> python3 -m venv ~/.openviking/venv && ~/.openviking/venv/bin/pip install openviking
+> python3 -m venv ~/.ctx/venv && ~/.ctx/venv/bin/pip install atom-ctx
 > ```
 
 #### Step 2: Run the Setup Helper
 
 ```bash
 # Method A: npm install (recommended, cross-platform)
-npm install -g openclaw-openviking-setup-helper
+npm install -g openclaw-atom_ctx-setup-helper
 ov-install
 
 # Method B: curl one-click (Linux / macOS)
-curl -fsSL https://raw.githubusercontent.com/volcengine/OpenViking/main/examples/openclaw-plugin/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/volcengine/AtomCtx/main/examples/openclaw-plugin/install.sh | bash
 ```
 
 Select **local** mode, keep defaults, and enter your Ark API Key.
 
 Generated config files:
-- `~/.openviking/ov.conf` — OpenViking service config
-- `~/.openclaw/openviking.env` — Environment variables (Python path, etc.)
+- `~/.ctx/ctx.conf` — AtomCtx service config
+- `~/.openclaw/atom_ctx.env` — Environment variables (Python path, etc.)
 
 #### Step 3: Start
 
 ```bash
-source ~/.openclaw/openviking.env && openclaw gateway restart
+source ~/.openclaw/atom_ctx.env && openclaw gateway restart
 ```
 
-> In Local mode you must `source` the env file first — the plugin auto-starts an OpenViking subprocess.
+> In Local mode you must `source` the env file first — the plugin auto-starts an AtomCtx subprocess.
 
 #### Step 4: Verify
 
 ```bash
 openclaw status
-# ContextEngine row should show: enabled (plugin openviking)
+# ContextEngine row should show: enabled (plugin atom_ctx)
 ```
 
 ---
 
 ### Remote Mode (Team Sharing)
 
-For multiple OpenClaw instances or team use. Deploy a standalone OpenViking service that is shared across agents. **No Python/OpenViking needed on the client side.**
+For multiple OpenClaw instances or team use. Deploy a standalone AtomCtx service that is shared across agents. **No Python/AtomCtx needed on the client side.**
 
-#### Step 1: Deploy the OpenViking Service
+#### Step 1: Deploy the AtomCtx Service
 
-Edit `~/.openviking/ov.conf` — set `root_api_key` to enable multi-tenancy:
+Edit `~/.ctx/ctx.conf` — set `root_api_key` to enable multi-tenancy:
 
 ```json
 {
@@ -170,7 +170,7 @@ Edit `~/.openviking/ov.conf` — set `root_api_key` to enable multi-tenancy:
     "cors_origins": ["*"]
   },
   "storage": {
-    "workspace": "~/.openviking/data",
+    "workspace": "~/.ctx/data",
     "vectordb": {
       "name": "context",
       "backend": "local"
@@ -204,7 +204,7 @@ Edit `~/.openviking/ov.conf` — set `root_api_key` to enable multi-tenancy:
 Start the service:
 
 ```bash
-openviking-server
+ctx-server
 ```
 
 #### Step 2: Create Team & Users
@@ -232,15 +232,15 @@ curl -X POST http://localhost:1933/api/v1/admin/accounts/my-team/users \
 #### Step 3: Configure the OpenClaw Plugin
 
 ```bash
-openclaw plugins enable openviking
+openclaw plugins enable atom_ctx
 openclaw config set gateway.mode local
-openclaw config set plugins.slots.contextEngine openviking
-openclaw config set plugins.entries.openviking.config.mode remote
-openclaw config set plugins.entries.openviking.config.baseUrl "http://your-server:1933"
-openclaw config set plugins.entries.openviking.config.apiKey "<user-api-key>"
-openclaw config set plugins.entries.openviking.config.agentId "<agent-id>"
-openclaw config set plugins.entries.openviking.config.autoRecall true --json
-openclaw config set plugins.entries.openviking.config.autoCapture true --json
+openclaw config set plugins.slots.contextEngine atom_ctx
+openclaw config set plugins.entries.ctx.config.mode remote
+openclaw config set plugins.entries.ctx.config.baseUrl "http://your-server:1933"
+openclaw config set plugins.entries.ctx.config.apiKey "<user-api-key>"
+openclaw config set plugins.entries.ctx.config.agentId "<agent-id>"
+openclaw config set plugins.entries.ctx.config.autoRecall true --json
+openclaw config set plugins.entries.ctx.config.autoCapture true --json
 ```
 
 #### Step 4: Start & Verify
@@ -255,23 +255,23 @@ openclaw status
 
 ### Volcengine ECS Deployment
 
-Deploy OpenClaw + OpenViking on Volcengine ECS. See [Volcengine docs](https://www.volcengine.com/docs/6396/2249500?lang=zh) for details.
+Deploy OpenClaw + AtomCtx on Volcengine ECS. See [Volcengine docs](https://www.volcengine.com/docs/6396/2249500?lang=zh) for details.
 
 > ECS instances restrict global pip installs under root to protect system Python. Create a venv first.
 
 ```bash
 # 1. Install
-npm install -g openclaw-openviking-setup-helper
+npm install -g openclaw-atom_ctx-setup-helper
 ov-install
 
 # 2. Load environment
-source /root/.openclaw/openviking.env
+source /root/.openclaw/atom_ctx.env
 
-# 3. Start OpenViking server
-python -m openviking.server.bootstrap
+# 3. Start AtomCtx server
+python -m atom_ctx.server.bootstrap
 
 # 4. Start Web Console (ensure security group allows TCP 8020 inbound)
-python -m openviking.console.bootstrap --host 0.0.0.0 --port 8020 --openviking-url http://127.0.0.1:1933
+python -m atom_ctx.console.bootstrap --host 0.0.0.0 --port 8020 --atom_ctx-url http://127.0.0.1:1933
 ```
 
 Access `http://<public-ip>:8020` to use the Web Console.
@@ -283,7 +283,7 @@ Access `http://<public-ip>:8020` to use the Web Console.
 ### Local Mode
 
 ```bash
-source ~/.openclaw/openviking.env && openclaw gateway restart
+source ~/.openclaw/atom_ctx.env && openclaw gateway restart
 ```
 
 ### Remote Mode
@@ -296,27 +296,27 @@ openclaw gateway restart
 
 ```bash
 openclaw status
-# ContextEngine row should show: enabled (plugin openviking)
+# ContextEngine row should show: enabled (plugin atom_ctx)
 ```
 
 ### View Plugin Config
 
 ```bash
-openclaw config get plugins.entries.openviking.config
+openclaw config get plugins.entries.ctx.config
 ```
 
 ---
 
 ## Configuration Reference
 
-### `~/.openviking/ov.conf` (Local Mode)
+### `~/.ctx/ctx.conf` (Local Mode)
 
 ```json
 {
   "root_api_key": null,
   "server": { "host": "127.0.0.1", "port": 1933 },
   "storage": {
-    "workspace": "~/.openviking/data",
+    "workspace": "~/.ctx/data",
     "vectordb": { "backend": "local" },
     "agfs": { "backend": "local", "port": 1833 }
   },
@@ -346,12 +346,12 @@ openclaw config get plugins.entries.openviking.config
 | Option | Default | Description |
 |--------|---------|-------------|
 | `mode` | `remote` | `local` (start local server) or `remote` (connect to remote) |
-| `baseUrl` | `http://127.0.0.1:1933` | OpenViking server URL (Remote mode) |
-| `apiKey` | — | OpenViking API Key (optional) |
+| `baseUrl` | `http://127.0.0.1:1933` | AtomCtx server URL (Remote mode) |
+| `apiKey` | — | AtomCtx API Key (optional) |
 | `agentId` | auto-generated | Agent identifier, distinguishes OpenClaw instances. Auto-generates `openclaw-<hostname>-<random>` if unset |
-| `configPath` | `~/.openviking/ov.conf` | Config file path (Local mode) |
+| `configPath` | `~/.ctx/ctx.conf` | Config file path (Local mode) |
 | `port` | `1933` | Local server port (Local mode) |
-| `targetUri` | `viking://user/memories` | Default memory search scope |
+| `targetUri` | `ctx://user/memories` | Default memory search scope |
 | `autoCapture` | `true` | Auto-extract memories after conversations |
 | `captureMode` | `semantic` | Extraction mode: `semantic` (full semantic) / `keyword` (trigger-word only) |
 | `captureMaxLength` | `24000` | Max text length per capture |
@@ -360,12 +360,12 @@ openclaw config get plugins.entries.openviking.config
 | `recallScoreThreshold` | `0.01` | Minimum relevance score for recall |
 | `ingestReplyAssist` | `true` | Add reply guidance when multi-party conversation text is detected |
 
-### `~/.openclaw/openviking.env`
+### `~/.openclaw/atom_ctx.env`
 
 Auto-generated by the setup helper, stores environment variables like the Python path:
 
 ```bash
-export OPENVIKING_PYTHON='/usr/local/bin/python3'
+export ATOM_CTX_PYTHON='/usr/local/bin/python3'
 ```
 
 ---
@@ -374,7 +374,7 @@ export OPENVIKING_PYTHON='/usr/local/bin/python3'
 
 ```bash
 # Start (Local mode — source env first)
-source ~/.openclaw/openviking.env && openclaw gateway
+source ~/.openclaw/atom_ctx.env && openclaw gateway
 
 # Start (Remote mode — no env needed)
 openclaw gateway
@@ -382,8 +382,8 @@ openclaw gateway
 # Disable the context engine
 openclaw config set plugins.slots.contextEngine legacy
 
-# Re-enable OpenViking as the context engine
-openclaw config set plugins.slots.contextEngine openviking
+# Re-enable AtomCtx as the context engine
+openclaw config set plugins.slots.contextEngine atom_ctx
 ```
 
 > Restart the gateway after changing the context-engine slot.
@@ -392,13 +392,13 @@ openclaw config set plugins.slots.contextEngine openviking
 
 ## Web Console (Visualization)
 
-OpenViking provides a Web Console for debugging and inspecting stored memories.
+AtomCtx provides a Web Console for debugging and inspecting stored memories.
 
 ```bash
-python -m openviking.console.bootstrap \
+python -m atom_ctx.console.bootstrap \
   --host 127.0.0.1 \
   --port 8020 \
-  --openviking-url http://127.0.0.1:1933 \
+  --atom_ctx-url http://127.0.0.1:1933 \
   --write-enabled
 ```
 
@@ -412,29 +412,29 @@ Open http://127.0.0.1:8020 in your browser.
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| Conversation hangs, no response | Usually a legacy pre-2.0 integration affected by the historical OpenClaw `2026.3.12` issue | If you are on the legacy path, see [#591](https://github.com/volcengine/OpenViking/issues/591) and temporarily downgrade to `2026.3.11`; for current installs, migrate to Plugin 2.0 |
-| `registerContextEngine is unavailable` in logs | OpenClaw version is too old and does not expose the context-engine API required by Plugin 2.0 | Upgrade OpenClaw to a current release, then restart the gateway and verify `openclaw status` shows `openviking` as the ContextEngine |
-| Agent hangs silently, no output | auto-recall missing timeout protection | Disable auto-recall temporarily: `openclaw config set plugins.entries.openviking.config.autoRecall false --json`, or apply the patch in [#673](https://github.com/volcengine/OpenViking/issues/673) |
-| ContextEngine is not `openviking` | Plugin slot not configured | `openclaw config set plugins.slots.contextEngine openviking` |
-| `memory_store failed: fetch failed` | OpenViking not running | Check `ov.conf` and Python path; verify service is up |
+| Conversation hangs, no response | Usually a legacy pre-2.0 integration affected by the historical OpenClaw `2026.3.12` issue | If you are on the legacy path, see [#591](https://github.com/volcengine/atom-ctx/issues/591) and temporarily downgrade to `2026.3.11`; for current installs, migrate to Plugin 2.0 |
+| `registerContextEngine is unavailable` in logs | OpenClaw version is too old and does not expose the context-engine API required by Plugin 2.0 | Upgrade OpenClaw to a current release, then restart the gateway and verify `openclaw status` shows `atom_ctx` as the ContextEngine |
+| Agent hangs silently, no output | auto-recall missing timeout protection | Disable auto-recall temporarily: `openclaw config set plugins.entries.ctx.config.autoRecall false --json`, or apply the patch in [#673](https://github.com/volcengine/atom-ctx/issues/673) |
+| ContextEngine is not `atom_ctx` | Plugin slot not configured | `openclaw config set plugins.slots.contextEngine atom_ctx` |
+| `memory_store failed: fetch failed` | AtomCtx not running | Check `ctx.conf` and Python path; verify service is up |
 | `health check timeout` | Port held by stale process | `lsof -ti tcp:1933 \| xargs kill -9`, then restart |
-| `extracted 0 memories` | Wrong API Key or model name | Check `api_key` and `model` in `ov.conf` |
-| `port occupied` | Port used by another process | Change port: `openclaw config set plugins.entries.openviking.config.port 1934` |
-| Plugin not loaded | Env file not sourced | Run `source ~/.openclaw/openviking.env` before starting |
+| `extracted 0 memories` | Wrong API Key or model name | Check `api_key` and `model` in `ctx.conf` |
+| `port occupied` | Port used by another process | Change port: `openclaw config set plugins.entries.ctx.config.port 1934` |
+| Plugin not loaded | Env file not sourced | Run `source ~/.openclaw/atom_ctx.env` before starting |
 | `externally-managed-environment` | Python PEP 668 restriction | Use venv or the one-click installer |
 | `TypeError: unsupported operand type(s) for \|` | Python < 3.10 | Upgrade Python to 3.10+ |
 
 ### Viewing Logs
 
 ```bash
-# OpenViking logs
-cat ~/.openviking/data/log/openviking.log
+# AtomCtx logs
+cat ~/.ctx/data/log/ctx-server.log
 
 # OpenClaw gateway logs
 cat ~/.openclaw/logs/gateway.log
 cat ~/.openclaw/logs/gateway.err.log
 
-# Check if OpenViking process is alive
+# Check if AtomCtx process is alive
 lsof -i:1933
 
 # Quick connectivity check
@@ -448,7 +448,7 @@ curl http://localhost:1933
 
 ```bash
 lsof -ti tcp:1933 tcp:1833 tcp:18789 | xargs kill -9
-python3 -m pip uninstall openviking -y && rm -rf ~/.openviking
+python3 -m pip uninstall atom_ctx -y && rm -rf ~/.ctx
 ```
 
 ---

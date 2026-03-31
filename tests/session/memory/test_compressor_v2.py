@@ -13,14 +13,14 @@ from unittest.mock import patch
 
 import pytest
 
-from openviking.message import Message, TextPart
-from openviking.server.identity import RequestContext, Role
-from openviking.session.compressor_v2 import SessionCompressorV2
-from openviking_cli.session.user_id import UserIdentifier
-from openviking_cli.utils.config import get_openviking_config, initialize_openviking_config
+from atom_ctx.message import Message, TextPart
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx.session.compressor_v2 import SessionCompressorV2
+from atom_ctx_cli.session.user_id import UserIdentifier
+from atom_ctx_cli.utils.config import get_atom_ctx_config, initialize_atom_ctx_config
 
-# Let openviking logger propagate to pytest
-for logger_name in ["openviking", "openviking.session.memory"]:
+# Let atom_ctx logger propagate to pytest
+for logger_name in ["atom_ctx", "atom_ctx.session.memory"]:
     logger = logging.getLogger(logger_name)
     logger.propagate = True
     logger.setLevel(logging.DEBUG)
@@ -43,7 +43,7 @@ class MockVikingFS:
 
     def _get_parent_uri(self, uri: str) -> str:
         """Get parent directory URI."""
-        # Handle URIs like "viking://agent/default/memories/cards/file.md"
+        # Handle URIs like "ctx://agent/default/memories/cards/file.md"
         parts = uri.split("/")
         if len(parts) <= 3:
             return uri  # Root or protocol level
@@ -217,7 +217,7 @@ def create_test_conversation() -> List[Message]:
         role="user",
         parts=[
             TextPart(
-                "We're starting the memory extraction feature for the OpenViking project today. This project is an Agent-native context database."
+                "We're starting the memory extraction feature for the AtomCtx project today. This project is an Agent-native context database."
             )
         ],
     )
@@ -262,8 +262,8 @@ def create_test_conversation() -> List[Message]:
         role="user",
         parts=[
             TextPart(
-                "Cards are stored in viking://agent/{agent_space}/memories/cards, each card has name and content fields. "
-                "Events are stored in viking://user/{user_space}/memories/events, each event has event_name, event_time, and content fields."
+                "Cards are stored in ctx://agent/{agent_space}/memories/cards, each card has name and content fields. "
+                "Events are stored in ctx://user/{user_space}/memories/events, each event has event_name, event_time, and content fields."
             )
         ],
     )
@@ -343,8 +343,8 @@ class TestCompressorV2:
         - REAL VLM (from config)
         """
         # Initialize config
-        initialize_openviking_config()
-        config = get_openviking_config()
+        initialize_atom_ctx_config()
+        config = get_atom_ctx_config()
         logger.info(f"Using config with memory.version = {config.memory.version}")
 
         # Get real VLM instance
@@ -356,7 +356,7 @@ class TestCompressorV2:
         ctx = RequestContext(user=user, role=Role.ROOT)
 
         # Create mock VikingFS
-        viking_fs = MockVikingFS()
+        ctx_fs = MockVikingFS()
 
         # Note: SessionCompressorV2 doesn't actually use vikingdb parameter
         vikingdb = None
@@ -379,16 +379,16 @@ class TestCompressorV2:
         compressor = SessionCompressorV2(vikingdb=vikingdb)
 
         # Take snapshot before running
-        viking_fs.snapshot()
+        ctx_fs.snapshot()
 
-        # Patch get_viking_fs() to return our mock
+        # Patch get_ctx_fs() to return our mock
         # Need to patch it in all the places it's used
-        with patch("openviking.session.memory.extract_loop.get_viking_fs", return_value=viking_fs):
+        with patch("atom_ctx.session.memory.extract_loop.get_ctx_fs", return_value=ctx_fs):
             with patch(
-                "openviking.session.memory.memory_updater.get_viking_fs", return_value=viking_fs
+                "atom_ctx.session.memory.memory_updater.get_ctx_fs", return_value=ctx_fs
             ):
                 with patch(
-                    "openviking.session.compressor_v2.get_viking_fs", return_value=viking_fs
+                    "atom_ctx.session.compressor_v2.get_ctx_fs", return_value=ctx_fs
                 ):
                     # Actually call extract_long_term_memories()
                     logger.info("Calling SessionCompressorV2.extract_long_term_memories()...")
@@ -409,7 +409,7 @@ class TestCompressorV2:
         print("=" * 80)
 
         # Check what changed
-        diff = viking_fs.diff_since_snapshot()
+        diff = ctx_fs.diff_since_snapshot()
         print("\nChanges detected:")
         print(f"  Added: {len(diff['added'])} files")
         print(f"  Modified: {len(diff['modified'])} files")

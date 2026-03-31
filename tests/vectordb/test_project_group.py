@@ -4,7 +4,7 @@ import os
 import shutil
 import unittest
 
-from openviking.storage.vectordb.project.project_group import get_or_create_project_group
+from atom_ctx.storage.vectordb.project.project_group import get_or_create_project_group
 
 TEST_PROJECT_ROOT = "./test_data/test_project_root"
 

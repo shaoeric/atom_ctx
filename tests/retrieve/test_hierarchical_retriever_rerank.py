@@ -5,11 +5,11 @@
 
 import pytest
 
-from openviking.retrieve.hierarchical_retriever import HierarchicalRetriever, RetrieverMode
-from openviking.server.identity import RequestContext, Role
-from openviking_cli.retrieve.types import ContextType, TypedQuery
-from openviking_cli.session.user_id import UserIdentifier
-from openviking_cli.utils.config import RerankConfig
+from atom_ctx.retrieve.hierarchical_retriever import HierarchicalRetriever, RetrieverMode
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx_cli.retrieve.types import ContextType, TypedQuery
+from atom_ctx_cli.session.user_id import UserIdentifier
+from atom_ctx_cli.utils.config import RerankConfig
 
 
 class DummyEmbedResult:
@@ -55,14 +55,14 @@ class DummyStorage:
         )
         return [
             {
-                "uri": "viking://resources/root-a",
+                "uri": "ctx://resources/root-a",
                 "abstract": "root A",
                 "_score": 0.2,
                 "level": 1,
                 "context_type": "resource",
             },
             {
-                "uri": "viking://resources/root-b",
+                "uri": "ctx://resources/root-b",
                 "abstract": "root B",
                 "_score": 0.8,
                 "level": 1,
@@ -93,10 +93,10 @@ class DummyStorage:
                 "limit": limit,
             }
         )
-        if parent_uri == "viking://resources":
+        if parent_uri == "ctx://resources":
             return [
                 {
-                    "uri": "viking://resources/file-a",
+                    "uri": "ctx://resources/file-a",
                     "abstract": "child A",
                     "_score": 0.2,
                     "level": 2,
@@ -104,7 +104,7 @@ class DummyStorage:
                     "category": "doc",
                 },
                 {
-                    "uri": "viking://resources/file-b",
+                    "uri": "ctx://resources/file-b",
                     "abstract": "child B",
                     "_score": 0.8,
                     "level": 2,
@@ -139,7 +139,7 @@ class LevelTwoGlobalStorage(DummyStorage):
         )
         return [
             {
-                "uri": "viking://resources/file-a",
+                "uri": "ctx://resources/file-a",
                 "abstract": "child A",
                 "_score": 0.2,
                 "level": 2,
@@ -147,7 +147,7 @@ class LevelTwoGlobalStorage(DummyStorage):
                 "category": "doc",
             },
             {
-                "uri": "viking://resources/file-b",
+                "uri": "ctx://resources/file-b",
                 "abstract": "child B",
                 "_score": 0.8,
                 "level": 2,
@@ -209,15 +209,15 @@ def _config() -> RerankConfig:
 
 
 @pytest.fixture(autouse=True)
-def _disable_viking_fs(monkeypatch):
-    monkeypatch.setattr("openviking.retrieve.hierarchical_retriever.get_viking_fs", lambda: None)
+def _disable_ctx_fs(monkeypatch):
+    monkeypatch.setattr("atom_ctx.retrieve.hierarchical_retriever.get_ctx_fs", lambda: None)
 
 
 def test_retriever_initializes_rerank_client(monkeypatch):
     fake_client = FakeRerankClient([0.9, 0.1])
 
     monkeypatch.setattr(
-        "openviking.retrieve.hierarchical_retriever.RerankClient.from_config",
+        "atom_ctx.retrieve.hierarchical_retriever.RerankClient.from_config",
         lambda config: fake_client,
     )
 
@@ -233,7 +233,7 @@ def test_retriever_initializes_rerank_client(monkeypatch):
 def test_merge_starting_points_prefers_rerank_scores_in_thinking_mode(monkeypatch):
     fake_client = FakeRerankClient([0.95, 0.05])
     monkeypatch.setattr(
-        "openviking.retrieve.hierarchical_retriever.RerankClient.from_config",
+        "atom_ctx.retrieve.hierarchical_retriever.RerankClient.from_config",
         lambda config: fake_client,
     )
 
@@ -245,16 +245,16 @@ def test_merge_starting_points_prefers_rerank_scores_in_thinking_mode(monkeypatc
 
     starting_points = retriever._merge_starting_points(
         "hello",
-        ["viking://resources"],
+        ["ctx://resources"],
         [
             {
-                "uri": "viking://resources/root-a",
+                "uri": "ctx://resources/root-a",
                 "abstract": "root A",
                 "_score": 0.2,
                 "level": 1,
             },
             {
-                "uri": "viking://resources/root-b",
+                "uri": "ctx://resources/root-b",
                 "abstract": "root B",
                 "_score": 0.8,
                 "level": 1,
@@ -264,8 +264,8 @@ def test_merge_starting_points_prefers_rerank_scores_in_thinking_mode(monkeypatc
     )
 
     assert starting_points[:2] == [
-        ("viking://resources/root-a", 0.95),
-        ("viking://resources/root-b", 0.05),
+        ("ctx://resources/root-a", 0.95),
+        ("ctx://resources/root-b", 0.05),
     ]
     assert fake_client.calls == [("hello", ["root A", "root B"])]
 
@@ -274,7 +274,7 @@ def test_merge_starting_points_prefers_rerank_scores_in_thinking_mode(monkeypatc
 async def test_retrieve_uses_rerank_scores_in_thinking_mode(monkeypatch):
     fake_client = FakeRerankClient([0.95, 0.05, 0.11, 0.95])
     monkeypatch.setattr(
-        "openviking.retrieve.hierarchical_retriever.RerankClient.from_config",
+        "atom_ctx.retrieve.hierarchical_retriever.RerankClient.from_config",
         lambda config: fake_client,
     )
 
@@ -287,8 +287,8 @@ async def test_retrieve_uses_rerank_scores_in_thinking_mode(monkeypatch):
     result = await retriever.retrieve(_query(), ctx=_ctx(), limit=2, mode=RetrieverMode.THINKING)
 
     assert [ctx.uri for ctx in result.matched_contexts] == [
-        "viking://resources/file-b",
-        "viking://resources/file-a",
+        "ctx://resources/file-b",
+        "ctx://resources/file-a",
     ]
     assert fake_client.calls[0] == ("hello", ["root A", "root B"])
     assert fake_client.calls[1] == ("hello", ["child A", "child B"])
@@ -298,7 +298,7 @@ async def test_retrieve_uses_rerank_scores_in_thinking_mode(monkeypatch):
 async def test_retrieve_reranks_level_two_initial_candidates_in_thinking_mode(monkeypatch):
     fake_client = FakeRerankClient([0.05, 0.95])
     monkeypatch.setattr(
-        "openviking.retrieve.hierarchical_retriever.RerankClient.from_config",
+        "atom_ctx.retrieve.hierarchical_retriever.RerankClient.from_config",
         lambda config: fake_client,
     )
 
@@ -311,8 +311,8 @@ async def test_retrieve_reranks_level_two_initial_candidates_in_thinking_mode(mo
     result = await retriever.retrieve(_query(), ctx=_ctx(), limit=2, mode=RetrieverMode.THINKING)
 
     assert [ctx.uri for ctx in result.matched_contexts] == [
-        "viking://resources/file-b",
-        "viking://resources/file-a",
+        "ctx://resources/file-b",
+        "ctx://resources/file-a",
     ]
     assert fake_client.calls == [("hello", ["child A", "child B"])]
 
@@ -326,7 +326,7 @@ async def test_retrieve_falls_back_to_vector_scores_when_rerank_returns_none(mon
 
     fake_client = NoneRerankClient([])
     monkeypatch.setattr(
-        "openviking.retrieve.hierarchical_retriever.RerankClient.from_config",
+        "atom_ctx.retrieve.hierarchical_retriever.RerankClient.from_config",
         lambda config: fake_client,
     )
 
@@ -339,8 +339,8 @@ async def test_retrieve_falls_back_to_vector_scores_when_rerank_returns_none(mon
     result = await retriever.retrieve(_query(), ctx=_ctx(), limit=2, mode=RetrieverMode.THINKING)
 
     assert [ctx.uri for ctx in result.matched_contexts] == [
-        "viking://resources/file-b",
-        "viking://resources/file-a",
+        "ctx://resources/file-b",
+        "ctx://resources/file-a",
     ]
     assert fake_client.calls
 
@@ -349,7 +349,7 @@ async def test_retrieve_falls_back_to_vector_scores_when_rerank_returns_none(mon
 async def test_quick_mode_skips_rerank(monkeypatch):
     fake_client = FakeRerankClient([0.95, 0.05, 0.05, 0.95])
     monkeypatch.setattr(
-        "openviking.retrieve.hierarchical_retriever.RerankClient.from_config",
+        "atom_ctx.retrieve.hierarchical_retriever.RerankClient.from_config",
         lambda config: fake_client,
     )
 
@@ -362,7 +362,7 @@ async def test_quick_mode_skips_rerank(monkeypatch):
     result = await retriever.retrieve(_query(), ctx=_ctx(), limit=2, mode=RetrieverMode.QUICK)
 
     assert [ctx.uri for ctx in result.matched_contexts] == [
-        "viking://resources/file-b",
-        "viking://resources/file-a",
+        "ctx://resources/file-b",
+        "ctx://resources/file-a",
     ]
     assert fake_client.calls == []

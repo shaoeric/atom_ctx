@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for AST-based code skeleton extraction."""
 
-from openviking.parse.parsers.code.ast.skeleton import ClassSkeleton, CodeSkeleton, FunctionSig
+from atom_ctx.parse.parsers.code.ast.skeleton import ClassSkeleton, CodeSkeleton, FunctionSig
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -10,31 +10,31 @@ from openviking.parse.parsers.code.ast.skeleton import ClassSkeleton, CodeSkelet
 
 
 def _python_extractor():
-    from openviking.parse.parsers.code.ast.languages.python import PythonExtractor
+    from atom_ctx.parse.parsers.code.ast.languages.python import PythonExtractor
 
     return PythonExtractor()
 
 
 def _js_extractor():
-    from openviking.parse.parsers.code.ast.languages.js_ts import JsTsExtractor
+    from atom_ctx.parse.parsers.code.ast.languages.js_ts import JsTsExtractor
 
     return JsTsExtractor(lang="javascript")
 
 
 def _go_extractor():
-    from openviking.parse.parsers.code.ast.languages.go import GoExtractor
+    from atom_ctx.parse.parsers.code.ast.languages.go import GoExtractor
 
     return GoExtractor()
 
 
 def _ts_extractor():
-    from openviking.parse.parsers.code.ast.languages.js_ts import JsTsExtractor
+    from atom_ctx.parse.parsers.code.ast.languages.js_ts import JsTsExtractor
 
     return JsTsExtractor(lang="typescript")
 
 
 def _csharp_extractor():
-    from openviking.parse.parsers.code.ast.languages.csharp import CSharpExtractor
+    from atom_ctx.parse.parsers.code.ast.languages.csharp import CSharpExtractor
 
     return CSharpExtractor()
 
@@ -381,7 +381,7 @@ func (s *Server) Start() error {
 
 
 def _java_extractor():
-    from openviking.parse.parsers.code.ast.languages.java import JavaExtractor
+    from atom_ctx.parse.parsers.code.ast.languages.java import JavaExtractor
 
     return JavaExtractor()
 
@@ -600,7 +600,7 @@ public class Calculator
 
 
 def _cpp_extractor():
-    from openviking.parse.parsers.code.ast.languages.cpp import CppExtractor
+    from atom_ctx.parse.parsers.code.ast.languages.cpp import CppExtractor
 
     return CppExtractor()
 
@@ -824,7 +824,7 @@ int add(int a, int b) {
 
 
 def _rust_extractor():
-    from openviking.parse.parsers.code.ast.languages.rust import RustExtractor
+    from atom_ctx.parse.parsers.code.ast.languages.rust import RustExtractor
 
     return RustExtractor()
 
@@ -1106,7 +1106,7 @@ function validate(title: string): boolean {
 
 class TestASTExtractorDispatch:
     def setup_method(self):
-        from openviking.parse.parsers.code.ast.extractor import ASTExtractor
+        from atom_ctx.parse.parsers.code.ast.extractor import ASTExtractor
 
         self.extractor = ASTExtractor()
 

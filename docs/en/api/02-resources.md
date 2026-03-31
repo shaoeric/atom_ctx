@@ -42,7 +42,7 @@ Add a resource to the knowledge base.
 |-----------|------|----------|---------|-------------|
 | path | str | Yes | - | SDK/CLI: local path, directory path, or URL. Raw HTTP: remote URL only |
 | temp_file_id | str | No | None | Upload ID returned by `POST /api/v1/resources/temp_upload` for raw HTTP local file ingestion |
-| target | str | No | None | Target Viking URI (must be in `resources` scope) |
+| target | str | No | None | Target Ctx URI (must be in `resources` scope) |
 | reason | str | No | "" | Why this resource is being added (improves search relevance) |
 | instruction | str | No | "" | Special processing instructions |
 | wait | bool | No | False | Wait for semantic processing to complete |
@@ -101,7 +101,7 @@ curl -X POST http://localhost:1933/api/v1/resources \
 **CLI**
 
 ```bash
-openviking add-resource ./documents/guide.md --reason "User guide documentation"
+atom_ctx add-resource ./documents/guide.md --reason "User guide documentation"
 ```
 
 **Response**
@@ -111,7 +111,7 @@ openviking add-resource ./documents/guide.md --reason "User guide documentation"
   "status": "ok",
   "result": {
     "status": "success",
-    "root_uri": "viking://resources/documents/guide.md",
+    "root_uri": "ctx://resources/documents/guide.md",
     "source_path": "./documents/guide.md",
     "errors": []
   },
@@ -126,7 +126,7 @@ openviking add-resource ./documents/guide.md --reason "User guide documentation"
 ```python
 result = client.add_resource(
     "https://example.com/api-docs.md",
-    target="viking://resources/external/",
+    target="ctx://resources/external/",
     reason="External API documentation"
 )
 client.wait_processed()
@@ -140,7 +140,7 @@ curl -X POST http://localhost:1933/api/v1/resources \
   -H "X-API-Key: your-key" \
   -d '{
     "path": "https://example.com/api-docs.md",
-    "target": "viking://resources/external/",
+    "target": "ctx://resources/external/",
     "reason": "External API documentation",
     "wait": true
   }'
@@ -149,7 +149,7 @@ curl -X POST http://localhost:1933/api/v1/resources \
 **CLI**
 
 ```bash
-openviking add-resource https://example.com/api-docs.md --to viking://resources/external/ --reason "External API documentation"
+atom_ctx add-resource https://example.com/api-docs.md --to ctx://resources/external/ --reason "External API documentation"
 ```
 
 **Example: Add a Local File with Raw HTTP**
@@ -206,7 +206,7 @@ curl -X POST http://localhost:1933/api/v1/resources \
 
 **Example: Add Feishu/Lark Cloud Documents**
 
-[Feishu](https://www.feishu.cn) (飞书) and its international version [Lark](https://www.larksuite.com) are widely used for documentation in Chinese tech companies. OpenViking can directly import cloud documents by URL.
+[Feishu](https://www.feishu.cn) (飞书) and its international version [Lark](https://www.larksuite.com) are widely used for documentation in Chinese tech companies. AtomCtx can directly import cloud documents by URL.
 
 Supported document types:
 
@@ -217,9 +217,9 @@ Supported document types:
 | Spreadsheets | `https://*.feishu.cn/sheets/{token}` |
 | Bitable | `https://*.feishu.cn/base/{token}` |
 
-> **Setup**: Install the optional dependency: `pip install 'openviking[bot-feishu]'`
+> **Setup**: Install the optional dependency: `pip install 'atom-ctx[bot-feishu]'`
 >
-> Configure credentials via `ov.conf` (see [Configuration](../../guides/01-configuration.md#feishu)) or environment variables:
+> Configure credentials via `ctx.conf` (see [Configuration](../../guides/01-configuration.md#feishu)) or environment variables:
 > ```bash
 > export FEISHU_APP_ID="cli_xxx"
 > export FEISHU_APP_SECRET="xxx"
@@ -246,13 +246,13 @@ client.add_resource("https://example.feishu.cn/sheets/shtcn456")
 
 ```bash
 # Import a Feishu document
-openviking add-resource "https://example.feishu.cn/docx/doxcnABC123" --reason "Project design document"
+atom_ctx add-resource "https://example.feishu.cn/docx/doxcnABC123" --reason "Project design document"
 
 # Import a wiki page
-openviking add-resource "https://example.feishu.cn/wiki/wikiXYZ"
+atom_ctx add-resource "https://example.feishu.cn/wiki/wikiXYZ"
 
 # Incremental update to an existing target
-openviking add-resource "https://example.feishu.cn/docx/doxcnABC123" --to viking://resources/design-doc
+atom_ctx add-resource "https://example.feishu.cn/docx/doxcnABC123" --to ctx://resources/design-doc
 ```
 
 **Example: Wait for Processing**
@@ -292,7 +292,7 @@ curl -X POST http://localhost:1933/api/v1/system/wait \
 **CLI**
 
 ```bash
-openviking add-resource ./documents/guide.md --wait
+atom_ctx add-resource ./documents/guide.md --wait
 ```
 
 **Example: Watch for Updates (watch_interval)**
@@ -310,7 +310,7 @@ If there is already an active watch task for the same `target`, submitting anoth
 ```python
 client.add_resource(
     "./documents/guide.md",
-    target="viking://resources/documents/guide.md",
+    target="ctx://resources/documents/guide.md",
     watch_interval=60,
 )
 ```
@@ -323,7 +323,7 @@ curl -X POST http://localhost:1933/api/v1/resources \
   -H "X-API-Key: your-key" \
   -d '{
     "path": "https://example.com/guide.md",
-    "target": "viking://resources/documents/guide.md",
+    "target": "ctx://resources/documents/guide.md",
     "watch_interval": 60
   }'
 ```
@@ -331,31 +331,31 @@ curl -X POST http://localhost:1933/api/v1/resources \
 **CLI**
 
 ```bash
-openviking add-resource ./documents/guide.md --to viking://resources/documents/guide.md --watch-interval 60
+atom_ctx add-resource ./documents/guide.md --to ctx://resources/documents/guide.md --watch-interval 60
 
 # Disable watch
-openviking add-resource ./documents/guide.md --to viking://resources/documents/guide.md --watch-interval 0
+atom_ctx add-resource ./documents/guide.md --to ctx://resources/documents/guide.md --watch-interval 0
 ```
 
 ---
 
-### export_ovpack()
+### export_ctxpack()
 
-Export a resource tree as a `.ovpack` file.
+Export a resource tree as a `.ctxpack` file.
 
 **Parameters**
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| uri | str | Yes | - | Viking URI to export |
+| uri | str | Yes | - | Ctx URI to export |
 | to | str | Yes | - | Target file path |
 
 **Python SDK (Embedded / HTTP)**
 
 ```python
-path = client.export_ovpack(
-    "viking://resources/my-project/",
-    "./exports/my-project.ovpack"
+path = client.export_ctxpack(
+    "ctx://resources/my-project/",
+    "./exports/my-project.ctxpack"
 )
 print(f"Exported to: {path}")
 ```
@@ -371,15 +371,15 @@ curl -X POST http://localhost:1933/api/v1/pack/export \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
-    "uri": "viking://resources/my-project/",
-    "to": "./exports/my-project.ovpack"
+    "uri": "ctx://resources/my-project/",
+    "to": "./exports/my-project.ctxpack"
   }'
 ```
 
 **CLI**
 
 ```bash
-openviking export viking://resources/my-project/ ./exports/my-project.ovpack
+atom_ctx export ctx://resources/my-project/ ./exports/my-project.ctxpack
 ```
 
 **Response**
@@ -388,7 +388,7 @@ openviking export viking://resources/my-project/ ./exports/my-project.ovpack
 {
   "status": "ok",
   "result": {
-    "file": "./exports/my-project.ovpack"
+    "file": "./exports/my-project.ctxpack"
   },
   "time": 0.1
 }
@@ -396,15 +396,15 @@ openviking export viking://resources/my-project/ ./exports/my-project.ovpack
 
 ---
 
-### import_ovpack()
+### import_ctxpack()
 
-Import a `.ovpack` file.
+Import a `.ctxpack` file.
 
 **SDK / CLI parameters**
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| file_path | str | Yes | - | Local `.ovpack` file path |
+| file_path | str | Yes | - | Local `.ctxpack` file path |
 | parent | str | Yes | - | Target parent URI |
 | force | bool | No | False | Overwrite existing resources |
 | vectorize | bool | No | True | Trigger vectorization after import |
@@ -421,9 +421,9 @@ Import a `.ovpack` file.
 **Python SDK (Embedded / HTTP)**
 
 ```python
-uri = client.import_ovpack(
-    "./exports/my-project.ovpack",
-    "viking://resources/imported/",
+uri = client.import_ctxpack(
+    "./exports/my-project.ctxpack",
+    "ctx://resources/imported/",
     force=True,
     vectorize=True
 )
@@ -439,11 +439,11 @@ POST /api/v1/pack/import
 ```
 
 ```bash
-# Step 1: upload the local ovpack file
+# Step 1: upload the local ctxpack file
 TEMP_FILE_ID=$(
   curl -sS -X POST http://localhost:1933/api/v1/resources/temp_upload \
     -H "X-API-Key: your-key" \
-    -F 'file=@./exports/my-project.ovpack' \
+    -F 'file=@./exports/my-project.ctxpack' \
   | jq -r '.result.temp_file_id'
 )
 
@@ -453,7 +453,7 @@ curl -X POST http://localhost:1933/api/v1/pack/import \
   -H "X-API-Key: your-key" \
   -d "{
     \"temp_file_id\": \"$TEMP_FILE_ID\",
-    \"parent\": \"viking://resources/imported/\",
+    \"parent\": \"ctx://resources/imported/\",
     \"force\": true,
     \"vectorize\": true
   }"
@@ -462,7 +462,7 @@ curl -X POST http://localhost:1933/api/v1/pack/import \
 **CLI**
 
 ```bash
-openviking import ./exports/my-project.ovpack viking://resources/imported/ --force
+atom_ctx import ./exports/my-project.ctxpack ctx://resources/imported/ --force
 ```
 
 **Response**
@@ -471,7 +471,7 @@ openviking import ./exports/my-project.ovpack viking://resources/imported/ --for
 {
   "status": "ok",
   "result": {
-    "uri": "viking://resources/imported/my-project/"
+    "uri": "ctx://resources/imported/my-project/"
   },
   "time": 0.1
 }
@@ -487,7 +487,7 @@ openviking import ./exports/my-project.ovpack viking://resources/imported/ --for
 
 ```python
 # List all resources
-entries = client.ls("viking://resources/")
+entries = client.ls("ctx://resources/")
 
 # List with details
 for entry in entries:
@@ -495,11 +495,11 @@ for entry in entries:
     print(f"{entry['name']} - {type_str}")
 
 # Simple path list
-paths = client.ls("viking://resources/", simple=True)
+paths = client.ls("ctx://resources/", simple=True)
 # Returns: ["project-a/", "project-b/", "shared/"]
 
 # Recursive listing
-all_entries = client.ls("viking://resources/", recursive=True)
+all_entries = client.ls("ctx://resources/", recursive=True)
 ```
 
 **HTTP API**
@@ -510,15 +510,15 @@ GET /api/v1/fs/ls?uri={uri}&simple={bool}&recursive={bool}
 
 ```bash
 # List all resources
-curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=viking://resources/" \
+curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=ctx://resources/" \
   -H "X-API-Key: your-key"
 
 # Simple path list
-curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=viking://resources/&simple=true" \
+curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=ctx://resources/&simple=true" \
   -H "X-API-Key: your-key"
 
 # Recursive listing
-curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=viking://resources/&recursive=true" \
+curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=ctx://resources/&recursive=true" \
   -H "X-API-Key: your-key"
 ```
 
@@ -526,13 +526,13 @@ curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=viking://resources/&recursiv
 
 ```bash
 # List all resources
-openviking ls viking://resources/
+atom_ctx ls ctx://resources/
 
 # Simple path list
-openviking ls viking://resources/ --simple
+atom_ctx ls ctx://resources/ --simple
 
 # Recursive listing
-openviking ls viking://resources/ --recursive
+atom_ctx ls ctx://resources/ --recursive
 ```
 
 **Response**
@@ -545,7 +545,7 @@ openviking ls viking://resources/ --recursive
       "name": "project-a",
       "size": 4096,
       "isDir": true,
-      "uri": "viking://resources/project-a/"
+      "uri": "ctx://resources/project-a/"
     }
   ],
   "time": 0.1
@@ -560,28 +560,28 @@ openviking ls viking://resources/ --recursive
 
 ```python
 # L0: Abstract
-abstract = client.abstract("viking://resources/docs/")
+abstract = client.abstract("ctx://resources/docs/")
 
 # L1: Overview
-overview = client.overview("viking://resources/docs/")
+overview = client.overview("ctx://resources/docs/")
 
 # L2: Full content
-content = client.read("viking://resources/docs/api.md")
+content = client.read("ctx://resources/docs/api.md")
 ```
 
 **HTTP API**
 
 ```bash
 # L0: Abstract
-curl -X GET "http://localhost:1933/api/v1/content/abstract?uri=viking://resources/docs/" \
+curl -X GET "http://localhost:1933/api/v1/content/abstract?uri=ctx://resources/docs/" \
   -H "X-API-Key: your-key"
 
 # L1: Overview
-curl -X GET "http://localhost:1933/api/v1/content/overview?uri=viking://resources/docs/" \
+curl -X GET "http://localhost:1933/api/v1/content/overview?uri=ctx://resources/docs/" \
   -H "X-API-Key: your-key"
 
 # L2: Full content
-curl -X GET "http://localhost:1933/api/v1/content/read?uri=viking://resources/docs/api.md" \
+curl -X GET "http://localhost:1933/api/v1/content/read?uri=ctx://resources/docs/api.md" \
   -H "X-API-Key: your-key"
 ```
 
@@ -589,13 +589,13 @@ curl -X GET "http://localhost:1933/api/v1/content/read?uri=viking://resources/do
 
 ```bash
 # L0: Abstract
-openviking abstract viking://resources/docs/
+atom_ctx abstract ctx://resources/docs/
 
 # L1: Overview
-openviking overview viking://resources/docs/
+atom_ctx overview ctx://resources/docs/
 
 # L2: Full content
-openviking read viking://resources/docs/api.md
+atom_ctx read ctx://resources/docs/api.md
 ```
 
 **Response**
@@ -616,8 +616,8 @@ openviking read viking://resources/docs/api.md
 
 ```python
 client.mv(
-    "viking://resources/old-project/",
-    "viking://resources/new-project/"
+    "ctx://resources/old-project/",
+    "ctx://resources/new-project/"
 )
 ```
 
@@ -632,15 +632,15 @@ curl -X POST http://localhost:1933/api/v1/fs/mv \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
-    "from_uri": "viking://resources/old-project/",
-    "to_uri": "viking://resources/new-project/"
+    "from_uri": "ctx://resources/old-project/",
+    "to_uri": "ctx://resources/new-project/"
   }'
 ```
 
 **CLI**
 
 ```bash
-openviking mv viking://resources/old-project/ viking://resources/new-project/
+atom_ctx mv ctx://resources/old-project/ ctx://resources/new-project/
 ```
 
 **Response**
@@ -649,8 +649,8 @@ openviking mv viking://resources/old-project/ viking://resources/new-project/
 {
   "status": "ok",
   "result": {
-    "from": "viking://resources/old-project/",
-    "to": "viking://resources/new-project/"
+    "from": "ctx://resources/old-project/",
+    "to": "ctx://resources/new-project/"
   },
   "time": 0.1
 }
@@ -664,10 +664,10 @@ openviking mv viking://resources/old-project/ viking://resources/new-project/
 
 ```python
 # Delete single file
-client.rm("viking://resources/docs/old.md")
+client.rm("ctx://resources/docs/old.md")
 
 # Delete directory recursively
-client.rm("viking://resources/old-project/", recursive=True)
+client.rm("ctx://resources/old-project/", recursive=True)
 ```
 
 **HTTP API**
@@ -678,11 +678,11 @@ DELETE /api/v1/fs?uri={uri}&recursive={bool}
 
 ```bash
 # Delete single file
-curl -X DELETE "http://localhost:1933/api/v1/fs?uri=viking://resources/docs/old.md" \
+curl -X DELETE "http://localhost:1933/api/v1/fs?uri=ctx://resources/docs/old.md" \
   -H "X-API-Key: your-key"
 
 # Delete directory recursively
-curl -X DELETE "http://localhost:1933/api/v1/fs?uri=viking://resources/old-project/&recursive=true" \
+curl -X DELETE "http://localhost:1933/api/v1/fs?uri=ctx://resources/old-project/&recursive=true" \
   -H "X-API-Key: your-key"
 ```
 
@@ -690,10 +690,10 @@ curl -X DELETE "http://localhost:1933/api/v1/fs?uri=viking://resources/old-proje
 
 ```bash
 # Delete single file
-openviking rm viking://resources/docs/old.md
+atom_ctx rm ctx://resources/docs/old.md
 
 # Delete directory recursively
-openviking rm viking://resources/old-project/ --recursive
+atom_ctx rm ctx://resources/old-project/ --recursive
 ```
 
 **Response**
@@ -702,7 +702,7 @@ openviking rm viking://resources/old-project/ --recursive
 {
   "status": "ok",
   "result": {
-    "uri": "viking://resources/docs/old.md"
+    "uri": "ctx://resources/docs/old.md"
   },
   "time": 0.1
 }
@@ -717,17 +717,17 @@ openviking rm viking://resources/old-project/ --recursive
 ```python
 # Link related resources
 client.link(
-    "viking://resources/docs/auth/",
-    "viking://resources/docs/security/",
+    "ctx://resources/docs/auth/",
+    "ctx://resources/docs/security/",
     reason="Security best practices for authentication"
 )
 
 # Multiple links
 client.link(
-    "viking://resources/docs/api/",
+    "ctx://resources/docs/api/",
     [
-        "viking://resources/docs/auth/",
-        "viking://resources/docs/errors/"
+        "ctx://resources/docs/auth/",
+        "ctx://resources/docs/errors/"
     ],
     reason="Related documentation"
 )
@@ -745,8 +745,8 @@ curl -X POST http://localhost:1933/api/v1/relations/link \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
-    "from_uri": "viking://resources/docs/auth/",
-    "to_uris": "viking://resources/docs/security/",
+    "from_uri": "ctx://resources/docs/auth/",
+    "to_uris": "ctx://resources/docs/security/",
     "reason": "Security best practices for authentication"
   }'
 
@@ -755,8 +755,8 @@ curl -X POST http://localhost:1933/api/v1/relations/link \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
-    "from_uri": "viking://resources/docs/api/",
-    "to_uris": ["viking://resources/docs/auth/", "viking://resources/docs/errors/"],
+    "from_uri": "ctx://resources/docs/api/",
+    "to_uris": ["ctx://resources/docs/auth/", "ctx://resources/docs/errors/"],
     "reason": "Related documentation"
   }'
 ```
@@ -764,7 +764,7 @@ curl -X POST http://localhost:1933/api/v1/relations/link \
 **CLI**
 
 ```bash
-openviking link viking://resources/docs/auth/ viking://resources/docs/security/ --reason "Security best practices"
+atom_ctx link ctx://resources/docs/auth/ ctx://resources/docs/security/ --reason "Security best practices"
 ```
 
 **Response**
@@ -773,8 +773,8 @@ openviking link viking://resources/docs/auth/ viking://resources/docs/security/ 
 {
   "status": "ok",
   "result": {
-    "from": "viking://resources/docs/auth/",
-    "to": "viking://resources/docs/security/"
+    "from": "ctx://resources/docs/auth/",
+    "to": "ctx://resources/docs/security/"
   },
   "time": 0.1
 }
@@ -787,7 +787,7 @@ openviking link viking://resources/docs/auth/ viking://resources/docs/security/ 
 **Python SDK (Embedded / HTTP)**
 
 ```python
-relations = client.relations("viking://resources/docs/auth/")
+relations = client.relations("ctx://resources/docs/auth/")
 for rel in relations:
     print(f"{rel['uri']}: {rel['reason']}")
 ```
@@ -799,14 +799,14 @@ GET /api/v1/relations?uri={uri}
 ```
 
 ```bash
-curl -X GET "http://localhost:1933/api/v1/relations?uri=viking://resources/docs/auth/" \
+curl -X GET "http://localhost:1933/api/v1/relations?uri=ctx://resources/docs/auth/" \
   -H "X-API-Key: your-key"
 ```
 
 **CLI**
 
 ```bash
-openviking relations viking://resources/docs/auth/
+atom_ctx relations ctx://resources/docs/auth/
 ```
 
 **Response**
@@ -815,8 +815,8 @@ openviking relations viking://resources/docs/auth/
 {
   "status": "ok",
   "result": [
-    {"uri": "viking://resources/docs/security/", "reason": "Security best practices"},
-    {"uri": "viking://resources/docs/errors/", "reason": "Error handling"}
+    {"uri": "ctx://resources/docs/security/", "reason": "Security best practices"},
+    {"uri": "ctx://resources/docs/errors/", "reason": "Error handling"}
   ],
   "time": 0.1
 }
@@ -830,8 +830,8 @@ openviking relations viking://resources/docs/auth/
 
 ```python
 client.unlink(
-    "viking://resources/docs/auth/",
-    "viking://resources/docs/security/"
+    "ctx://resources/docs/auth/",
+    "ctx://resources/docs/security/"
 )
 ```
 
@@ -846,15 +846,15 @@ curl -X DELETE http://localhost:1933/api/v1/relations/link \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
-    "from_uri": "viking://resources/docs/auth/",
-    "to_uri": "viking://resources/docs/security/"
+    "from_uri": "ctx://resources/docs/auth/",
+    "to_uri": "ctx://resources/docs/security/"
   }'
 ```
 
 **CLI**
 
 ```bash
-openviking unlink viking://resources/docs/auth/ viking://resources/docs/security/
+atom_ctx unlink ctx://resources/docs/auth/ ctx://resources/docs/security/
 ```
 
 **Response**
@@ -863,8 +863,8 @@ openviking unlink viking://resources/docs/auth/ viking://resources/docs/security
 {
   "status": "ok",
   "result": {
-    "from": "viking://resources/docs/auth/",
-    "to": "viking://resources/docs/security/"
+    "from": "ctx://resources/docs/auth/",
+    "to": "ctx://resources/docs/security/"
   },
   "time": 0.1
 }
@@ -877,7 +877,7 @@ openviking unlink viking://resources/docs/auth/ viking://resources/docs/security
 ### Organize by Project
 
 ```
-viking://resources/
+ctx://resources/
 +-- project-a/
 |   +-- docs/
 |   +-- specs/

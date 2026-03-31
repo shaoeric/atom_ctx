@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OpenViking MCP Server - Expose RAG query capabilities through Model Context Protocol
+AtomCtx MCP Server - Expose RAG query capabilities through Model Context Protocol
 
 Provides MCP tools for:
   - query: Full RAG pipeline (search + LLM generation)
@@ -9,7 +9,7 @@ Provides MCP tools for:
 
 Usage:
   uv run server.py
-  uv run server.py --config ./ov.conf --data ./data --port 2033
+  uv run server.py --config ./ctx.conf --data ./data --port 2033
 """
 
 import argparse
@@ -26,15 +26,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from common.recipe import Recipe
 from mcp.server.fastmcp import FastMCP
 
-import openviking as ov
-from openviking_cli.utils.config.open_viking_config import OpenVikingConfig
+import atom_ctx as ctx
+from atom_ctx_cli.utils.config.ctx_config import AtomCtxConfig
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("openviking-mcp")
+logger = logging.getLogger("atom_ctx-mcp")
 
 # Global state
 _recipe: Optional[Recipe] = None
-_config_path: str = "./ov.conf"
+_config_path: str = "./ctx.conf"
 _data_path: str = "./data"
 _api_key: str = ""
 _default_uri: str = ""
@@ -53,9 +53,9 @@ def _get_recipe() -> Recipe:
 def create_server(host: str = "127.0.0.1", port: int = 2033) -> FastMCP:
     """Create and configure the MCP server."""
     mcp = FastMCP(
-        name="openviking-mcp",
+        name="atom_ctx-mcp",
         instructions=(
-            "OpenViking MCP Server provides RAG (Retrieval-Augmented Generation) capabilities. "
+            "AtomCtx MCP Server provides RAG (Retrieval-Augmented Generation) capabilities. "
             "Use 'query' for full RAG answers, 'search' for semantic search only, "
             "and 'add_resource' to ingest new documents."
         ),
@@ -77,7 +77,7 @@ def create_server(host: str = "127.0.0.1", port: int = 2033) -> FastMCP:
         """
         Ask a question and get an answer using RAG (Retrieval-Augmented Generation).
 
-        Searches the OpenViking database for relevant context, then generates an answer
+        Searches the AtomCtx database for relevant context, then generates an answer
         using an LLM with the retrieved context.
 
         Args:
@@ -130,7 +130,7 @@ def create_server(host: str = "127.0.0.1", port: int = 2033) -> FastMCP:
         target_uri: str = "",
     ) -> str:
         """
-        Search the OpenViking database for relevant content (no LLM generation).
+        Search the AtomCtx database for relevant content (no LLM generation).
 
         Performs semantic search and returns matching documents with relevance scores.
         Use this when you only need to find relevant documents without generating an answer.
@@ -167,7 +167,7 @@ def create_server(host: str = "127.0.0.1", port: int = 2033) -> FastMCP:
     @mcp.tool()
     async def add_resource(resource_path: str) -> str:
         """
-        Add a document, file, directory, or URL to the OpenViking database.
+        Add a document, file, directory, or URL to the AtomCtx database.
 
         The resource will be parsed, chunked, and indexed for future search/query operations.
         Supported formats: PDF, Markdown, Text, HTML, and more.
@@ -183,8 +183,8 @@ def create_server(host: str = "127.0.0.1", port: int = 2033) -> FastMCP:
             with open(config_path, "r") as f:
                 config_dict = json.load(f)
 
-            config = OpenVikingConfig.from_dict(config_dict)
-            client = ov.SyncOpenViking(path=data_path, config=config)
+            config = AtomCtxConfig.from_dict(config_dict)
+            client = ctx.SyncAtomCtx(path=data_path, config=config)
 
             try:
                 client.initialize()
@@ -216,7 +216,7 @@ def create_server(host: str = "127.0.0.1", port: int = 2033) -> FastMCP:
 
         return await asyncio.to_thread(_add_sync)
 
-    @mcp.resource("openviking://status")
+    @mcp.resource("atom_ctx://status")
     def server_status() -> str:
         """Get the current server status and configuration."""
         info = {
@@ -231,7 +231,7 @@ def create_server(host: str = "127.0.0.1", port: int = 2033) -> FastMCP:
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="OpenViking MCP Server - RAG query capabilities via MCP",
+        description="AtomCtx MCP Server - RAG query capabilities via MCP",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -239,36 +239,36 @@ Examples:
   uv run server.py
 
   # Custom config and port
-  uv run server.py --config ./ov.conf --data ./data --port 9000
+  uv run server.py --config ./ctx.conf --data ./data --port 9000
 
   # Use stdio transport (for Claude Desktop integration)
   uv run server.py --transport stdio
 
   # Connect from Claude CLI (use 127.0.0.1 instead of localhost for Windows compatibility)
-  claude mcp add --transport http openviking http://127.0.0.1:2033/mcp
+  claude mcp add --transport http atom_ctx http://127.0.0.1:2033/mcp
 
   # With API key and default search scope
-  uv run server.py --api-key sk-xxx --default-uri viking://user/memories
+  uv run server.py --api-key sk-xxx --default-uri ctx://user/memories
 
 Environment variables:
-  OV_CONFIG      Path to config file (default: ./ov.conf)
-  OV_DATA        Path to data directory (default: ./data)
-  OV_PORT        Server port (default: 2033)
-  OV_API_KEY     API key for OpenViking server authentication
-  OV_DEFAULT_URI Default target URI for search scoping
-  OV_DEBUG       Enable debug logging (set to 1)
+  CTX_CONFIG      Path to config file (default: ./ctx.conf)
+  CTX_DATA        Path to data directory (default: ./data)
+  CTX_PORT        Server port (default: 2033)
+  CTX_API_KEY     API key for AtomCtx server authentication
+  CTX_DEFAULT_URI Default target URI for search scoping
+  CTX_DEBUG       Enable debug logging (set to 1)
         """,
     )
     parser.add_argument(
         "--config",
         type=str,
-        default=os.getenv("OV_CONFIG", "./ov.conf"),
-        help="Path to config file (default: ./ov.conf)",
+        default=os.getenv("CTX_CONFIG", "./ctx.conf"),
+        help="Path to config file (default: ./ctx.conf)",
     )
     parser.add_argument(
         "--data",
         type=str,
-        default=os.getenv("OV_DATA", "./data"),
+        default=os.getenv("CTX_DATA", "./data"),
         help="Path to data directory (default: ./data)",
     )
     parser.add_argument(
@@ -280,7 +280,7 @@ Environment variables:
     parser.add_argument(
         "--port",
         type=int,
-        default=int(os.getenv("OV_PORT", "2033")),
+        default=int(os.getenv("CTX_PORT", "2033")),
         help="Port to listen on (default: 2033)",
     )
     parser.add_argument(
@@ -293,13 +293,13 @@ Environment variables:
     parser.add_argument(
         "--api-key",
         type=str,
-        default=os.getenv("OV_API_KEY", ""),
-        help="API key for OpenViking server authentication (default: $OV_API_KEY)",
+        default=os.getenv("CTX_API_KEY", ""),
+        help="API key for AtomCtx server authentication (default: $CTX_API_KEY)",
     )
     parser.add_argument(
         "--default-uri",
         type=str,
-        default=os.getenv("OV_DEFAULT_URI", ""),
+        default=os.getenv("CTX_DEFAULT_URI", ""),
         help="Default target URI for search scoping (default: search all)",
     )
     return parser.parse_args()
@@ -314,10 +314,10 @@ def main():
     _api_key = args.api_key
     _default_uri = args.default_uri
 
-    if os.getenv("OV_DEBUG") == "1":
+    if os.getenv("CTX_DEBUG") == "1":
         logging.getLogger().setLevel(logging.DEBUG)
 
-    logger.info("OpenViking MCP Server starting")
+    logger.info("AtomCtx MCP Server starting")
     logger.info(f"  config: {_config_path}")
     logger.info(f"  data:   {_data_path}")
     logger.info(f"  transport: {args.transport}")

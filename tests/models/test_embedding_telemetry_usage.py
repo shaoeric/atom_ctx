@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from openviking.models.embedder.openai_embedders import OpenAIDenseEmbedder
-from openviking.models.embedder.volcengine_embedders import VolcengineDenseEmbedder
-from openviking.telemetry.backends.memory import MemoryOperationTelemetry
-from openviking.telemetry.context import bind_telemetry
+from atom_ctx.models.embedder.openai_embedders import OpenAIDenseEmbedder
+from atom_ctx.models.embedder.volcengine_embedders import VolcengineDenseEmbedder
+from atom_ctx.telemetry.backends.memory import MemoryOperationTelemetry
+from atom_ctx.telemetry.context import bind_telemetry
 
 
 def _usage(prompt_tokens: int, total_tokens: int):

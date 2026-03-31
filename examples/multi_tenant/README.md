@@ -1,6 +1,6 @@
-# OpenViking Multi-Tenant 示例
+# AtomCtx Multi-Tenant 示例
 
-演示 OpenViking 多租户管理功能：账户创建、用户注册、角色管理、Key 管理、数据访问。
+演示 AtomCtx 多租户管理功能：账户创建、用户注册、角色管理、Key 管理、数据访问。
 
 ## 架构
 
@@ -14,10 +14,10 @@
                                 │
                                 ▼
 ┌──────────┐  User Key   ┌──────────────────┐  Root Key   ┌──────────┐
-│  Alice   │ ──────────► │  OpenViking      │ ◄────────── │  Admin   │
+│  Alice   │ ──────────► │  AtomCtx      │ ◄────────── │  Admin   │
 │  (ADMIN) │             │  Server          │             │  (ROOT)  │
 └──────────┘             │                  │             └──────────┘
-┌──────────┐  User Key   │  ov.conf:        │
+┌──────────┐  User Key   │  ctx.conf:        │
 │  Bob     │ ──────────► │  root_api_key    │
 │  (USER)  │             └──────────────────┘
 └──────────┘
@@ -27,7 +27,7 @@
 
 | Key 类型 | 创建方式 | 角色 | 能力 |
 |----------|---------|------|------|
-| Root Key | `ov.conf` 中配置 | ROOT | 全部操作 + Admin API |
+| Root Key | `ctx.conf` 中配置 | ROOT | 全部操作 + Admin API |
 | User Key | Admin API 创建 | ADMIN 或 USER | 按 account 访问 |
 
 | 角色 | 作用域 | 能力 |
@@ -43,8 +43,8 @@
 复制配置文件并填入你的模型 API Key：
 
 ```bash
-cp ov.conf.example ov.conf
-# 编辑 ov.conf，填入 embedding 和 vlm 的 api_key
+cp ctx.conf.example ctx.conf
+# 编辑 ctx.conf，填入 embedding 和 vlm 的 api_key
 ```
 
 关键配置项——`root_api_key` 启用多租户认证：
@@ -63,11 +63,11 @@ cp ov.conf.example ov.conf
 
 ```bash
 # 方式一：指定配置文件
-openviking-server --config ./ov.conf
+ctx-server --config ./ctx.conf
 
 # 方式二：放到默认路径
-cp ov.conf ~/.openviking/ov.conf
-openviking-server
+cp ctx.conf ~/.ctx/ctx.conf
+ctx-server
 
 # 验证
 curl http://localhost:1933/health
@@ -122,24 +122,24 @@ ROOT_KEY=my-root-key SERVER=http://localhost:1933 bash admin_workflow.sh
 
 ```bash
 # Account 管理
-openviking admin create-account <account_id> --admin <admin_user_id>
-openviking admin list-accounts
-openviking admin delete-account <account_id>
+atom_ctx admin create-account <account_id> --admin <admin_user_id>
+atom_ctx admin list-accounts
+atom_ctx admin delete-account <account_id>
 
 # User 管理
-openviking admin register-user <account_id> <user_id> [--role user|admin]
-openviking admin list-users <account_id>
-openviking admin remove-user <account_id> <user_id>
-openviking admin set-role <account_id> <user_id> <role>
-openviking admin regenerate-key <account_id> <user_id>
+atom_ctx admin register-user <account_id> <user_id> [--role user|admin]
+atom_ctx admin list-users <account_id>
+atom_ctx admin remove-user <account_id> <user_id>
+atom_ctx admin set-role <account_id> <user_id> <role>
+atom_ctx admin regenerate-key <account_id> <user_id>
 ```
 
 ## 文件说明
 
 ```
 admin_workflow.py    Python SDK 示例（httpx 调用 Admin API + SyncHTTPClient 访问数据）
-admin_workflow.sh    CLI 示例（openviking admin 命令，同等流程）
-ov.conf.example      Server 配置文件模板（含 root_api_key）
+admin_workflow.sh    CLI 示例（atom_ctx admin 命令，同等流程）
+ctx.conf.example      Server 配置文件模板（含 root_api_key）
 pyproject.toml       项目依赖
 README.md            本文件
 ```

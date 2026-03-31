@@ -1,10 +1,10 @@
 # Path Locks and Crash Recovery
 
-OpenViking uses two simple primitives — **path locks** and **redo log** — to protect the consistency of core write operations (`rm`, `mv`, `add_resource`, `session.commit`), ensuring that VikingFS, VectorDB, and QueueManager remain consistent even when failures occur.
+AtomCtx uses two simple primitives — **path locks** and **redo log** — to protect the consistency of core write operations (`rm`, `mv`, `add_resource`, `session.commit`), ensuring that VikingFS, VectorDB, and QueueManager remain consistent even when failures occur.
 
 ## Design Philosophy
 
-OpenViking is a context database where FS is the source of truth and VectorDB is a derived index. A lost index can be rebuilt from source data, but lost source data is unrecoverable. Therefore:
+AtomCtx is a context database where FS is the source of truth and VectorDB is a derived index. A lost index can be rebuilt from source data, but lost source data is unrecoverable. Therefore:
 
 > **Better to miss a search result than to return a bad one.**
 
@@ -61,7 +61,7 @@ class LockHandle:
 **LockContext** is an async context manager encapsulating the lock/unlock lifecycle:
 
 ```python
-from openviking.storage.transaction import LockContext, get_lock_manager
+from atom_ctx.storage.transaction import LockContext, get_lock_manager
 
 async with LockContext(get_lock_manager(), [path], lock_mode="point") as handle:
     # Perform operations under lock protection
@@ -200,7 +200,7 @@ Phase 2 — Memory extraction + write (RedoLog):
 `LockContext` is an **async** context manager that encapsulates lock acquisition and release:
 
 ```python
-from openviking.storage.transaction import LockContext, get_lock_manager
+from atom_ctx.storage.transaction import LockContext, get_lock_manager
 
 lock_manager = get_lock_manager()
 

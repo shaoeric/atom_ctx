@@ -1,6 +1,6 @@
 # Retrieval
 
-OpenViking provides two search methods: `find` for simple semantic search and `search` for complex retrieval with session context.
+AtomCtx provides two search methods: `find` for simple semantic search and `search` for complex retrieval with session context.
 
 ## find vs search
 
@@ -44,7 +44,7 @@ class FindResult:
 
 ```python
 class MatchedContext:
-    uri: str                         # Viking URI
+    uri: str                         # Ctx URI
     context_type: ContextType        # "resource", "memory", or "skill"
     is_leaf: bool                    # Whether it's a leaf node
     abstract: str                    # L0 content
@@ -86,7 +86,7 @@ curl -X POST http://localhost:1933/api/v1/search/find \
 **CLI**
 
 ```bash
-openviking find "how to authenticate users" [--uri viking://resources/] [--limit 10]
+atom_ctx find "how to authenticate users" [--uri ctx://resources/] [--limit 10]
 ```
 
 **Response**
@@ -98,7 +98,7 @@ openviking find "how to authenticate users" [--uri viking://resources/] [--limit
     "memories": [],
     "resources": [
       {
-        "uri": "viking://resources/docs/auth/",
+        "uri": "ctx://resources/docs/auth/",
         "context_type": "resource",
         "is_leaf": false,
         "abstract": "Authentication guide covering OAuth 2.0...",
@@ -121,25 +121,25 @@ openviking find "how to authenticate users" [--uri viking://resources/] [--limit
 # Search only in resources
 results = client.find(
     "authentication",
-    target_uri="viking://resources/"
+    target_uri="ctx://resources/"
 )
 
 # Search only in user memories
 results = client.find(
     "preferences",
-    target_uri="viking://user/memories/"
+    target_uri="ctx://user/memories/"
 )
 
 # Search only in skills
 results = client.find(
     "web search",
-    target_uri="viking://skills/"
+    target_uri="ctx://skills/"
 )
 
 # Search in specific project
 results = client.find(
     "API endpoints",
-    target_uri="viking://resources/my-project/"
+    target_uri="ctx://resources/my-project/"
 )
 ```
 
@@ -152,7 +152,7 @@ curl -X POST http://localhost:1933/api/v1/search/find \
   -H "X-API-Key: your-key" \
   -d '{
     "query": "authentication",
-    "target_uri": "viking://resources/"
+    "target_uri": "ctx://resources/"
   }'
 
 # Search with score threshold
@@ -161,7 +161,7 @@ curl -X POST http://localhost:1933/api/v1/search/find \
   -H "X-API-Key: your-key" \
   -d '{
     "query": "API endpoints",
-    "target_uri": "viking://resources/my-project/",
+    "target_uri": "ctx://resources/my-project/",
     "score_threshold": 0.5,
     "limit": 5
   }'
@@ -188,7 +188,7 @@ Search with session context and intent analysis.
 **Python SDK (Embedded / HTTP)**
 
 ```python
-from openviking.message import TextPart
+from atom_ctx.message import TextPart
 
 # Create session with conversation context
 session = client.session()
@@ -230,7 +230,7 @@ curl -X POST http://localhost:1933/api/v1/search/search \
 **CLI**
 
 ```bash
-openviking search "best practices" [--session-id abc123] [--limit 10]
+atom_ctx search "best practices" [--session-id abc123] [--limit 10]
 ```
 
 **Response**
@@ -242,7 +242,7 @@ openviking search "best practices" [--session-id abc123] [--limit 10]
     "memories": [],
     "resources": [
       {
-        "uri": "viking://resources/docs/oauth-best-practices/",
+        "uri": "ctx://resources/docs/oauth-best-practices/",
         "context_type": "resource",
         "is_leaf": false,
         "abstract": "OAuth 2.0 best practices for login pages...",
@@ -296,7 +296,7 @@ Search content by pattern (regex).
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| uri | str | Yes | - | Viking URI to search in |
+| uri | str | Yes | - | Ctx URI to search in |
 | pattern | str | Yes | - | Search pattern (regex) |
 | case_insensitive | bool | No | False | Ignore case |
 
@@ -304,7 +304,7 @@ Search content by pattern (regex).
 
 ```python
 results = client.grep(
-    "viking://resources/",
+    "ctx://resources/",
     "authentication",
     case_insensitive=True
 )
@@ -326,7 +326,7 @@ curl -X POST http://localhost:1933/api/v1/search/grep \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-key" \
   -d '{
-    "uri": "viking://resources/",
+    "uri": "ctx://resources/",
     "pattern": "authentication",
     "case_insensitive": true
   }'
@@ -335,7 +335,7 @@ curl -X POST http://localhost:1933/api/v1/search/grep \
 **CLI**
 
 ```bash
-openviking grep viking://resources/ "authentication" [--ignore-case]
+atom_ctx grep ctx://resources/ "authentication" [--ignore-case]
 ```
 
 **Response**
@@ -346,7 +346,7 @@ openviking grep viking://resources/ "authentication" [--ignore-case]
   "result": {
     "matches": [
       {
-        "uri": "viking://resources/docs/auth.md",
+        "uri": "ctx://resources/docs/auth.md",
         "line": 15,
         "content": "User authentication is handled by..."
       }
@@ -368,19 +368,19 @@ Match files by glob pattern.
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | pattern | str | Yes | - | Glob pattern (e.g., `**/*.md`) |
-| uri | str | No | "viking://" | Starting URI |
+| uri | str | No | "ctx://" | Starting URI |
 
 **Python SDK (Embedded / HTTP)**
 
 ```python
 # Find all markdown files
-results = client.glob("**/*.md", "viking://resources/")
+results = client.glob("**/*.md", "ctx://resources/")
 print(f"Found {results['count']} markdown files:")
 for uri in results['matches']:
     print(f"  {uri}")
 
 # Find all Python files
-results = client.glob("**/*.py", "viking://resources/")
+results = client.glob("**/*.py", "ctx://resources/")
 print(f"Found {results['count']} Python files")
 ```
 
@@ -396,14 +396,14 @@ curl -X POST http://localhost:1933/api/v1/search/glob \
   -H "X-API-Key: your-key" \
   -d '{
     "pattern": "**/*.md",
-    "uri": "viking://resources/"
+    "uri": "ctx://resources/"
   }'
 ```
 
 **CLI**
 
 ```bash
-openviking glob "**/*.md" [--uri viking://resources/]
+atom_ctx glob "**/*.md" [--uri ctx://resources/]
 ```
 
 **Response**
@@ -413,8 +413,8 @@ openviking glob "**/*.md" [--uri viking://resources/]
   "status": "ok",
   "result": {
     "matches": [
-      "viking://resources/docs/api.md",
-      "viking://resources/docs/guide.md"
+      "ctx://resources/docs/api.md",
+      "ctx://resources/docs/guide.md"
     ],
     "count": 2
   },
@@ -468,11 +468,11 @@ curl -X POST http://localhost:1933/api/v1/search/find \
   -d '{"query": "authentication"}'
 
 # Step 2: Read overview for a directory result
-curl -X GET "http://localhost:1933/api/v1/content/overview?uri=viking://resources/docs/auth/" \
+curl -X GET "http://localhost:1933/api/v1/content/overview?uri=ctx://resources/docs/auth/" \
   -H "X-API-Key: your-key"
 
 # Step 3: Read full content for a file result
-curl -X GET "http://localhost:1933/api/v1/content/read?uri=viking://resources/docs/auth.md" \
+curl -X GET "http://localhost:1933/api/v1/content/read?uri=ctx://resources/docs/auth.md" \
   -H "X-API-Key: your-key"
 ```
 
@@ -496,7 +496,7 @@ for ctx in results.resources:
 
 ```bash
 # Get relations for a resource
-curl -X GET "http://localhost:1933/api/v1/relations?uri=viking://resources/docs/auth/" \
+curl -X GET "http://localhost:1933/api/v1/relations?uri=ctx://resources/docs/auth/" \
   -H "X-API-Key: your-key"
 ```
 
@@ -518,7 +518,7 @@ results = client.find("auth")
 # Search in relevant scope for better results
 results = client.find(
     "error handling",
-    target_uri="viking://resources/my-project/"
+    target_uri="ctx://resources/my-project/"
 )
 ```
 
@@ -526,7 +526,7 @@ results = client.find(
 
 ```python
 # For conversational search, use session
-from openviking.message import TextPart
+from atom_ctx.message import TextPart
 
 session = client.session()
 session.add_message("user", [

@@ -6,12 +6,12 @@ DISALLOWED_PREFIXES = (
     "collector.event(",
 )
 
-ALLOWED_FILES = {"openviking/session/memory_deduplicator.py"}
+ALLOWED_FILES = {"atom_ctx/session/memory_deduplicator.py"}
 
 CHECK_DIRS = (
-    "openviking/service",
-    "openviking/session",
-    "openviking/retrieve",
+    "atom_ctx/service",
+    "atom_ctx/session",
+    "atom_ctx/retrieve",
 )
 
 

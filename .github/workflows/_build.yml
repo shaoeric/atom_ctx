@@ -80,9 +80,9 @@ jobs:
         git reset --hard HEAD
         git clean -fd
         # For sdist, ensure local runtime binaries are not packaged even if present
-        rm -rf openviking/bin openviking/lib third_party/agfs/bin || true
-        rm -f openviking/storage/vectordb/*.so openviking/storage/vectordb/*.dylib openviking/storage/vectordb/*.dll openviking/storage/vectordb/*.exe || true
-        rm -rf openviking/_version.py openviking.egg-info
+        rm -rf atom_ctx/bin atom_ctx/lib third_party/agfs/bin || true
+        rm -f atom_ctx/storage/vectordb/*.so atom_ctx/storage/vectordb/*.dylib atom_ctx/storage/vectordb/*.dll atom_ctx/storage/vectordb/*.exe || true
+        rm -rf atom_ctx/_version.py atom_ctx.egg-info
         # Ignore uv.lock changes to avoid dirty state in setuptools_scm
         git update-index --assume-unchanged uv.lock || true
 
@@ -95,8 +95,8 @@ jobs:
         uv run --frozen python -m setuptools_scm
         echo "=== Git Status (Ignored included) ==="
         git status --ignored
-        echo "=== Check openviking/_version.py ==="
-        if [ -f openviking/_version.py ]; then cat openviking/_version.py; else echo "Not found"; fi
+        echo "=== Check atom_ctx/_version.py ==="
+        if [ -f atom_ctx/_version.py ]; then cat atom_ctx/_version.py; else echo "Not found"; fi
 
     - name: Build sdist
       run: uv build --sdist
@@ -220,29 +220,29 @@ jobs:
     - name: Install build dependencies
       run: uv pip install setuptools setuptools_scm cmake wheel build
 
-    - name: Resolve OpenViking version for Rust CLI (Linux)
+    - name: Resolve AtomCtx version for Rust CLI (Linux)
       shell: bash
       run: |
-        OPENVIKING_VERSION=$(
-          uv run --frozen python -c "from build_support.versioning import resolve_openviking_version; print(resolve_openviking_version())"
+        CTX_VERSION=$(
+          uv run --frozen python -c "from build_support.versioning import resolve_atom_ctx_version; print(resolve_atom_ctx_version())"
         )
-        echo "OPENVIKING_VERSION=$OPENVIKING_VERSION" >> "$GITHUB_ENV"
-        echo "Resolved OpenViking version: $OPENVIKING_VERSION"
+        echo "CTX_VERSION=$CTX_VERSION" >> "$GITHUB_ENV"
+        echo "Resolved AtomCtx version: $CTX_VERSION"
 
     - name: Build Rust CLI (Linux)
-      run: cargo build --release --target ${{ matrix.arch == 'aarch64' && 'aarch64-unknown-linux-gnu' || 'x86_64-unknown-linux-gnu' }} -p ov_cli
+      run: cargo build --release --target ${{ matrix.arch == 'aarch64' && 'aarch64-unknown-linux-gnu' || 'x86_64-unknown-linux-gnu' }} -p ctx_cli
 
     - name: Copy Rust CLI binary (Linux)
       run: |
-        mkdir -p openviking/bin
-        cp target/${{ matrix.arch == 'aarch64' && 'aarch64-unknown-linux-gnu' || 'x86_64-unknown-linux-gnu' }}/release/ov openviking/bin/
-        chmod +x openviking/bin/ov
+        mkdir -p atom_ctx/bin
+        cp target/${{ matrix.arch == 'aarch64' && 'aarch64-unknown-linux-gnu' || 'x86_64-unknown-linux-gnu' }}/release/ctx atom_ctx/bin/
+        chmod +x atom_ctx/bin/ctx
     - name: Clean workspace (force ignore dirty)
       shell: bash
       run: |
         git reset --hard HEAD
         git clean -fd
-        rm -rf openviking/_version.py openviking.egg-info
+        rm -rf atom_ctx/_version.py atom_ctx.egg-info
         # Ignore uv.lock changes to avoid dirty state in setuptools_scm
         git update-index --assume-unchanged uv.lock || true
 
@@ -255,8 +255,8 @@ jobs:
         uv run --frozen python -m setuptools_scm
         echo "=== Git Status (Ignored included) ==="
         git status --ignored
-        echo "=== Check openviking/_version.py ==="
-        if [ -f openviking/_version.py ]; then cat openviking/_version.py; else echo "Not found"; fi
+        echo "=== Check atom_ctx/_version.py ==="
+        if [ -f atom_ctx/_version.py ]; then cat atom_ctx/_version.py; else echo "Not found"; fi
 
     - name: Build package (Wheel Only)
       run: uv build --wheel
@@ -377,40 +377,40 @@ jobs:
     - name: Install build dependencies
       run: uv pip install setuptools setuptools_scm cmake wheel build
 
-    - name: Resolve OpenViking version for Rust CLI (macOS/Windows)
+    - name: Resolve AtomCtx version for Rust CLI (macOS/Windows)
       shell: bash
       run: |
-        OPENVIKING_VERSION=$(
-          uv run --frozen python -c "from build_support.versioning import resolve_openviking_version; print(resolve_openviking_version())"
+        CTX_VERSION=$(
+          uv run --frozen python -c "from build_support.versioning import resolve_atom_ctx_version; print(resolve_atom_ctx_version())"
         )
-        echo "OPENVIKING_VERSION=$OPENVIKING_VERSION" >> "$GITHUB_ENV"
-        echo "Resolved OpenViking version: $OPENVIKING_VERSION"
+        echo "CTX_VERSION=$CTX_VERSION" >> "$GITHUB_ENV"
+        echo "Resolved AtomCtx version: $CTX_VERSION"
 
     - name: Build Rust CLI (macOS/Windows)
       shell: bash
       run: |
         if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-          cargo build --release --target x86_64-pc-windows-msvc -p ov_cli
+          cargo build --release --target x86_64-pc-windows-msvc -p ctx_cli
         else
-          cargo build --release -p ov_cli
+          cargo build --release -p ctx_cli
         fi
 
     - name: Copy Rust CLI binary (macOS/Windows)
       shell: bash
       run: |
-        mkdir -p openviking/bin
+        mkdir -p atom_ctx/bin
         if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-          cp target/x86_64-pc-windows-msvc/release/ov.exe openviking/bin/
+          cp target/x86_64-pc-windows-msvc/release/ctx.exe atom_ctx/bin/
         else
-          cp target/release/ov openviking/bin/
-          chmod +x openviking/bin/ov
+          cp target/release/ctx atom_ctx/bin/
+          chmod +x atom_ctx/bin/ctx
         fi
     - name: Clean workspace (force ignore dirty)
       shell: bash
       run: |
         git reset --hard HEAD
         git clean -fd
-        rm -rf openviking/_version.py openviking.egg-info
+        rm -rf atom_ctx/_version.py atom_ctx.egg-info
         # Ignore uv.lock changes to avoid dirty state in setuptools_scm
         git update-index --assume-unchanged uv.lock || true
 
@@ -423,8 +423,8 @@ jobs:
         uv run --frozen python -m setuptools_scm
         echo "=== Git Status (Ignored included) ==="
         git status --ignored
-        echo "=== Check openviking/_version.py ==="
-        if [ -f openviking/_version.py ]; then cat openviking/_version.py; else echo "Not found"; fi
+        echo "=== Check atom_ctx/_version.py ==="
+        if [ -f atom_ctx/_version.py ]; then cat atom_ctx/_version.py; else echo "Not found"; fi
 
     - name: Build package (Wheel Only)
       run: uv build --wheel
@@ -440,12 +440,12 @@ jobs:
         python - <<'PY'
         import importlib.util
 
-        import openviking.storage.vectordb.engine as engine
+        import atom_ctx.storage.vectordb.engine as engine
 
         print(f"Loaded runtime engine variant {engine.ENGINE_VARIANT}")
         print(f"Available engine variants {engine.AVAILABLE_ENGINE_VARIANTS}")
 
-        module_name = f"openviking.storage.vectordb.engine._{engine.ENGINE_VARIANT}"
+        module_name = f"atom_ctx.storage.vectordb.engine._{engine.ENGINE_VARIANT}"
         backend_spec = importlib.util.find_spec(module_name)
         if backend_spec is None or backend_spec.origin is None:
             raise SystemExit(f"backend module {module_name} was not installed")

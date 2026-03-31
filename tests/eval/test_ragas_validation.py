@@ -54,10 +54,10 @@ def validate_item(item: Dict[str, Any], index: int) -> List[str]:
 def test_eval_types():
     """Test EvalSample and EvalDataset types."""
     print("\n📦 Testing EvalSample and EvalDataset types...")
-    jsonl_path = Path.cwd() / "openviking" / "eval" / "datasets" / "local_doc_example_glm5.jsonl"
+    jsonl_path = Path.cwd() / "atom_ctx" / "eval" / "datasets" / "local_doc_example_glm5.jsonl"
     data = load_jsonl(jsonl_path)
 
-    from openviking.eval.ragas.types import EvalDataset, EvalSample
+    from atom_ctx.eval.ragas.types import EvalDataset, EvalSample
 
     samples = []
     for _i, item in enumerate(data[:3]):
@@ -86,7 +86,7 @@ def test_evaluator_initialization():
     print("\n🔧 Testing RagasEvaluator initialization...")
 
     try:
-        from openviking.eval import RagasEvaluator
+        from atom_ctx.eval import RagasEvaluator
 
         evaluator = RagasEvaluator()
         print("  ✅ RagasEvaluator initialized successfully")
@@ -103,7 +103,7 @@ def test_pipeline_initialization():
     """Test RAGQueryPipeline initialization."""
     print("\n🔧 Testing RAGQueryPipeline initialization...")
 
-    from openviking.eval.ragas.pipeline import RAGQueryPipeline
+    from atom_ctx.eval.ragas.pipeline import RAGQueryPipeline
 
     pipeline = RAGQueryPipeline(config_path="./test.conf", data_path="./test_data/test_ragas")
 
@@ -120,7 +120,7 @@ def test_question_loader():
     """Test question loading from JSONL."""
     print("\n📄 Testing question loader...")
 
-    jsonl_path = Path.cwd() / "openviking" / "eval" / "datasets" / "local_doc_example_glm5.jsonl"
+    jsonl_path = Path.cwd() / "atom_ctx" / "eval" / "datasets" / "local_doc_example_glm5.jsonl"
 
     data = load_jsonl(jsonl_path)
     print(f"  ✅ Loaded {len(data)} questions from JSONL")
@@ -139,11 +139,11 @@ def test_question_loader():
 
 def main():
     print("=" * 60)
-    print("🧪 OpenViking Eval Module Validation")
+    print("🧪 AtomCtx Eval Module Validation")
     print("=" * 60)
 
     jsonl_path = (
-        "/Users/bytedance/workspace/github/OpenViking/openviking/eval/local_doc_example_glm5.jsonl"
+        "/Users/bytedance/workspace/github/AtomCtx/atom_ctx/eval/local_doc_example_glm5.jsonl"
     )
 
     if not Path(jsonl_path).exists():

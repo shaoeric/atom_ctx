@@ -7,7 +7,7 @@ import requests
 class TestGetOverview:
     def test_get_overview(self, api_client):
         try:
-            response = api_client.get_overview("viking://")
+            response = api_client.get_overview("ctx://")
         except requests.exceptions.ConnectionError:
             pytest.fail("Could not connect to server service - service is not running")
 

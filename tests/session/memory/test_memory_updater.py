@@ -8,21 +8,21 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from openviking.session.memory.memory_updater import (
+from atom_ctx.session.memory.memory_updater import (
     MemoryUpdateResult,
     MemoryUpdater,
 )
-from openviking.session.memory.memory_type_registry import MemoryTypeRegistry
-from openviking.session.memory.dataclass import (
+from atom_ctx.session.memory.memory_type_registry import MemoryTypeRegistry
+from atom_ctx.session.memory.dataclass import (
     MemoryTypeSchema,
     MemoryField,
 )
-from openviking.session.memory.merge_op import (
+from atom_ctx.session.memory.merge_op import (
     SearchReplaceBlock,
     StrPatch,
 )
-from openviking.session.memory.merge_op.base import FieldType
-from openviking.session.memory.utils import deserialize_full, serialize_with_metadata
+from atom_ctx.session.memory.merge_op.base import FieldType
+from atom_ctx.session.memory.utils import deserialize_full, serialize_with_metadata
 
 
 class TestMemoryUpdateResult:
@@ -41,7 +41,7 @@ class TestMemoryUpdateResult:
     def test_add_written(self):
         """Test adding written URI."""
         result = MemoryUpdateResult()
-        result.add_written("viking://user/test/memories/profile.md")
+        result.add_written("ctx://user/test/memories/profile.md")
 
         assert len(result.written_uris) == 1
         assert result.has_changes() is True
@@ -49,7 +49,7 @@ class TestMemoryUpdateResult:
     def test_add_edited(self):
         """Test adding edited URI."""
         result = MemoryUpdateResult()
-        result.add_edited("viking://user/test/memories/profile.md")
+        result.add_edited("ctx://user/test/memories/profile.md")
 
         assert len(result.edited_uris) == 1
         assert result.has_changes() is True
@@ -57,7 +57,7 @@ class TestMemoryUpdateResult:
     def test_add_deleted(self):
         """Test adding deleted URI."""
         result = MemoryUpdateResult()
-        result.add_deleted("viking://user/test/memories/to_delete.md")
+        result.add_deleted("ctx://user/test/memories/to_delete.md")
 
         assert len(result.deleted_uris) == 1
         assert result.has_changes() is True
@@ -84,7 +84,7 @@ class TestMemoryUpdater:
         updater = MemoryUpdater()
 
         assert updater is not None
-        assert updater._viking_fs is None
+        assert updater._ctx_fs is None
         assert updater._registry is None
 
     def test_create_with_registry(self):
@@ -127,16 +127,16 @@ Line 4"""
         original_full_content = serialize_with_metadata(original_content, original_metadata)
 
         # Mock VikingFS
-        mock_viking_fs = MagicMock()
-        mock_viking_fs.read_file = AsyncMock(return_value=original_full_content)
+        mock_ctx_fs = MagicMock()
+        mock_ctx_fs.read_file = AsyncMock(return_value=original_full_content)
         written_content = None
 
         async def mock_write_file(uri, content, **kwargs):
             nonlocal written_content
             written_content = content
 
-        mock_viking_fs.write_file = mock_write_file
-        updater._get_viking_fs = MagicMock(return_value=mock_viking_fs)
+        mock_ctx_fs.write_file = mock_write_file
+        updater._get_ctx_fs = MagicMock(return_value=mock_ctx_fs)
 
         # Create StrPatch
         patch = StrPatch(blocks=[
@@ -153,7 +153,7 @@ Line 4"""
         # Apply edit
         await updater._apply_edit(
             {"content": patch},
-            "viking://test/test.md",
+            "ctx://test/test.md",
             mock_ctx
         )
 
@@ -178,16 +178,16 @@ Goodbye"""
         original_full_content = serialize_with_metadata(original_content, original_metadata)
 
         # Mock VikingFS
-        mock_viking_fs = MagicMock()
-        mock_viking_fs.read_file = AsyncMock(return_value=original_full_content)
+        mock_ctx_fs = MagicMock()
+        mock_ctx_fs.read_file = AsyncMock(return_value=original_full_content)
         written_content = None
 
         async def mock_write_file(uri, content, **kwargs):
             nonlocal written_content
             written_content = content
 
-        mock_viking_fs.write_file = mock_write_file
-        updater._get_viking_fs = MagicMock(return_value=mock_viking_fs)
+        mock_ctx_fs.write_file = mock_write_file
+        updater._get_ctx_fs = MagicMock(return_value=mock_ctx_fs)
 
         # StrPatch as dict (this is what JSON parsing gives us)
         patch_dict = {
@@ -206,7 +206,7 @@ Goodbye"""
         # Apply edit
         await updater._apply_edit(
             {"content": patch_dict},
-            "viking://test/test.md",
+            "ctx://test/test.md",
             mock_ctx
         )
 
@@ -228,16 +228,16 @@ Goodbye"""
         original_full_content = serialize_with_metadata(original_content, original_metadata)
 
         # Mock VikingFS
-        mock_viking_fs = MagicMock()
-        mock_viking_fs.read_file = AsyncMock(return_value=original_full_content)
+        mock_ctx_fs = MagicMock()
+        mock_ctx_fs.read_file = AsyncMock(return_value=original_full_content)
         written_content = None
 
         async def mock_write_file(uri, content, **kwargs):
             nonlocal written_content
             written_content = content
 
-        mock_viking_fs.write_file = mock_write_file
-        updater._get_viking_fs = MagicMock(return_value=mock_viking_fs)
+        mock_ctx_fs.write_file = mock_write_file
+        updater._get_ctx_fs = MagicMock(return_value=mock_ctx_fs)
 
         # Simple string replacement
         new_content = "Completely new content"
@@ -248,7 +248,7 @@ Goodbye"""
         # Apply edit
         await updater._apply_edit(
             {"content": new_content},
-            "viking://test/test.md",
+            "ctx://test/test.md",
             mock_ctx
         )
 

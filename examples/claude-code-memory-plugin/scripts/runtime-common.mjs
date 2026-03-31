@@ -8,7 +8,7 @@ import { join } from "node:path";
 export const INSTALL_TIMEOUT_MS = 120000;
 
 const LOCK_STALE_MS = 10 * 60 * 1000;
-const FALLBACK_PLUGIN_DATA_ROOT = join(homedir(), ".openviking", "claude-code-memory-plugin");
+const FALLBACK_PLUGIN_DATA_ROOT = join(homedir(), ".ctx", "claude-code-memory-plugin");
 const RUNTIME_ENV_META_PATH = ".runtime-env.json";
 
 export function getRuntimePaths() {

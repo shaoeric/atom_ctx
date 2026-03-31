@@ -2,12 +2,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from openviking_cli.exceptions import InvalidArgumentError
-from openviking_cli.retrieve.types import FindResult
+from atom_ctx_cli.exceptions import InvalidArgumentError
+from atom_ctx_cli.retrieve.types import FindResult
 
 
 def test_operation_telemetry_summary_includes_memory_extract_breakdown():
-    from openviking.telemetry.operation import OperationTelemetry
+    from atom_ctx.telemetry.operation import OperationTelemetry
 
     telemetry = OperationTelemetry(operation="session.commit", enabled=True)
     telemetry.set("memory.extracted", 5)
@@ -64,11 +64,11 @@ def test_operation_telemetry_summary_includes_memory_extract_breakdown():
 
 
 def test_operation_telemetry_measure_accumulates_duration(monkeypatch):
-    from openviking.telemetry.operation import OperationTelemetry
+    from atom_ctx.telemetry.operation import OperationTelemetry
 
     perf_values = iter([10.0, 10.1, 10.3, 10.5, 10.8, 11.0])
     monkeypatch.setattr(
-        "openviking.telemetry.operation.time.perf_counter", lambda: next(perf_values)
+        "atom_ctx.telemetry.operation.time.perf_counter", lambda: next(perf_values)
     )
 
     telemetry = OperationTelemetry(operation="session.commit", enabled=True)
@@ -83,7 +83,7 @@ def test_operation_telemetry_measure_accumulates_duration(monkeypatch):
 
 
 def test_operation_telemetry_summary_includes_resource_breakdown():
-    from openviking.telemetry.operation import OperationTelemetry
+    from atom_ctx.telemetry.operation import OperationTelemetry
 
     telemetry = OperationTelemetry(operation="resources.add_resource", enabled=True)
     telemetry.set("resource.request.duration_ms", 152.3)
@@ -121,7 +121,7 @@ def test_operation_telemetry_summary_includes_resource_breakdown():
 
 
 def test_operation_telemetry_summary_omits_zero_valued_fields():
-    from openviking.telemetry.operation import OperationTelemetry
+    from atom_ctx.telemetry.operation import OperationTelemetry
 
     telemetry = OperationTelemetry(operation="resources.add_resource", enabled=True)
     telemetry.set("queue.semantic.processed", 0)
@@ -152,7 +152,7 @@ def test_operation_telemetry_summary_omits_zero_valued_fields():
 
 @pytest.mark.asyncio
 async def test_run_with_telemetry_returns_usage_and_payload():
-    from openviking.telemetry.execution import run_with_telemetry
+    from atom_ctx.telemetry.execution import run_with_telemetry
 
     async def _run():
         return {"status": "ok"}
@@ -170,7 +170,7 @@ async def test_run_with_telemetry_returns_usage_and_payload():
 
 @pytest.mark.asyncio
 async def test_run_with_telemetry_raises_invalid_argument_for_bad_request():
-    from openviking.telemetry.execution import run_with_telemetry
+    from atom_ctx.telemetry.execution import run_with_telemetry
 
     async def _run():
         return {"status": "ok"}
@@ -185,7 +185,7 @@ async def test_run_with_telemetry_raises_invalid_argument_for_bad_request():
 
 @pytest.mark.asyncio
 async def test_run_with_telemetry_rejects_events_selection():
-    from openviking.telemetry.execution import run_with_telemetry
+    from atom_ctx.telemetry.execution import run_with_telemetry
 
     async def _run():
         return {"status": "ok"}
@@ -199,10 +199,10 @@ async def test_run_with_telemetry_rejects_events_selection():
 
 
 def test_attach_telemetry_payload_adds_telemetry_to_dict_result():
-    from openviking.telemetry.execution import attach_telemetry_payload
+    from atom_ctx.telemetry.execution import attach_telemetry_payload
 
     result = attach_telemetry_payload(
-        {"root_uri": "viking://resources/demo"},
+        {"root_uri": "ctx://resources/demo"},
         {"id": "tm_123", "summary": {"operation": "resources.add_resource"}},
     )
 
@@ -210,7 +210,7 @@ def test_attach_telemetry_payload_adds_telemetry_to_dict_result():
 
 
 def test_attach_telemetry_payload_does_not_mutate_object_result():
-    from openviking.telemetry.execution import attach_telemetry_payload
+    from atom_ctx.telemetry.execution import attach_telemetry_payload
 
     result = SimpleNamespace(total=1)
 

@@ -8,7 +8,7 @@ import requests
 from config import Config
 
 
-class OpenVikingServiceManager:
+class AtomCtxServiceManager:
     def __init__(self):
         self.server_process: Optional[subprocess.Popen] = None
         self.server_output: list = []
@@ -61,8 +61,8 @@ class OpenVikingServiceManager:
                 print(f"❌ Port {Config.SERVER_PORT} is in use but service is not responding")
                 return False
 
-        print(f"🚀 Starting OpenViking server on {Config.SERVER_URL}...")
-        cmd = ["python", "-m", "openviking.server.bootstrap"]
+        print(f"🚀 Starting AtomCtx server on {Config.SERVER_URL}...")
+        cmd = ["python", "-m", "atom_ctx.server.bootstrap"]
 
         try:
             self.server_process = subprocess.Popen(
@@ -149,7 +149,7 @@ class OpenVikingServiceManager:
 
     def start_all(self) -> bool:
         print("\n" + "=" * 60)
-        print("Starting OpenViking Services")
+        print("Starting AtomCtx Services")
         print("=" * 60 + "\n")
 
         if not self.start_server():
@@ -162,7 +162,7 @@ class OpenVikingServiceManager:
 
     def stop_all(self):
         print("\n" + "=" * 60)
-        print("Stopping OpenViking Services")
+        print("Stopping AtomCtx Services")
         print("=" * 60 + "\n")
         self.stop_server()
         print("\n✅ All services stopped")
@@ -170,7 +170,7 @@ class OpenVikingServiceManager:
 
     def __enter__(self):
         if not self.start_all():
-            raise RuntimeError("Failed to start OpenViking services")
+            raise RuntimeError("Failed to start AtomCtx services")
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

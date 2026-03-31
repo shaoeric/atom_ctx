@@ -1,6 +1,6 @@
 # 操作级 Telemetry 使用指南
 
-操作级 telemetry 用来让 OpenViking 在请求结果里额外返回一份结构化摘要，帮助你了解这次操作实际发生了什么，例如耗时、token 消耗、向量检索情况、队列处理进度，以及资源导入阶段统计。
+操作级 telemetry 用来让 AtomCtx 在请求结果里额外返回一份结构化摘要，帮助你了解这次操作实际发生了什么，例如耗时、token 消耗、向量检索情况、队列处理进度，以及资源导入阶段统计。
 
 适合这些场景：
 
@@ -10,7 +10,7 @@
 
 ## 基本说明
 
-Telemetry 是按需返回的。只有你显式请求时，OpenViking 才会在响应顶层返回 `telemetry` 字段。
+Telemetry 是按需返回的。只有你显式请求时，AtomCtx 才会在响应顶层返回 `telemetry` 字段。
 
 典型响应结构如下：
 
@@ -276,9 +276,9 @@ curl -X POST http://localhost:1933/api/v1/resources \
 ### Python SDK
 
 ```python
-from openviking import AsyncOpenVikingClient
+from atom_ctx import AsyncAtomCtxClient
 
-client = AsyncOpenVikingClient(config_path="/path/to/config.yaml")
+client = AsyncAtomCtxClient(config_path="/path/to/config.yaml")
 await client.initialize()
 
 result = await client.find("memory dedup", telemetry=True)

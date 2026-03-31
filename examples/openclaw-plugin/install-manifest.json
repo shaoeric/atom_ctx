@@ -2,7 +2,7 @@
   "manifestVersion": "1.0",
   "pluginVersion": "2026.3.25",
   "plugin": {
-    "id": "openviking",
+    "id": "atom_ctx",
     "kind": "context-engine",
     "slot": "contextEngine"
   },
@@ -32,6 +32,6 @@
   },
   "compatibility": {
     "minOpenclawVersion": "2026.3.7",
-    "minOpenvikingVersion": "0.2.9"
+    "minCtxVersion": "0.2.9"
   }
 }

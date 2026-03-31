@@ -1,5 +1,5 @@
 #!/bin/bash
-# OpenViking API 测试 - 本地测试脚本
+# AtomCtx API 测试 - 本地测试脚本
 # 模拟 GitHub Actions 流水线的执行流程
 
 set -e
@@ -10,7 +10,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}  OpenViking API 测试 - 本地执行${NC}"
+echo -e "${GREEN}  AtomCtx API 测试 - 本地执行${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
 
@@ -22,11 +22,11 @@ python3 -c "import sys; assert sys.version_info >= (3, 10), 'Python 3.10+ requir
 echo -e "${GREEN}✓ Python 版本检查通过${NC}"
 echo ""
 
-# 2. 安装 OpenViking
-echo -e "${YELLOW}[2/7] 安装 OpenViking...${NC}"
+# 2. 安装 AtomCtx
+echo -e "${YELLOW}[2/7] 安装 AtomCtx...${NC}"
 cd "$(dirname "$0")/../.."
 pip install -e .
-echo -e "${GREEN}✓ OpenViking 安装成功${NC}"
+echo -e "${GREEN}✓ AtomCtx 安装成功${NC}"
 echo ""
 
 # 3. 安装测试依赖
@@ -36,10 +36,10 @@ pip install -r requirements.txt
 echo -e "${GREEN}✓ 测试依赖安装成功${NC}"
 echo ""
 
-# 4. 创建 OpenViking 配置文件
-echo -e "${YELLOW}[4/8] 创建 OpenViking 配置文件...${NC}"
-mkdir -p ~/.openviking
-cat > ~/.openviking/ov.conf << EOF
+# 4. 创建 AtomCtx 配置文件
+echo -e "${YELLOW}[4/8] 创建 AtomCtx 配置文件...${NC}"
+mkdir -p ~/.ctx
+cat > ~/.ctx/ctx.conf << EOF
 {
   "server": {
     "root_api_key": "test-root-api-key"
@@ -84,13 +84,13 @@ echo "使用端口: $SERVER_PORT"
 echo -e "${GREEN}✓ 找到可用端口${NC}"
 echo ""
 
-# 6. 启动 OpenViking Server
-echo -e "${YELLOW}[6/8] 启动 OpenViking Server...${NC}"
+# 6. 启动 AtomCtx Server
+echo -e "${YELLOW}[6/8] 启动 AtomCtx Server...${NC}"
 export ROOT_API_KEY=test-root-api-key
 export SERVER_PORT=$SERVER_PORT
-nohup python -m openviking.server.bootstrap > openviking-server.log 2>&1 &
+nohup python -m atom_ctx.server.bootstrap > ctx-server.log 2>&1 &
 SERVER_PID=$!
-echo $SERVER_PID > openviking-server.pid
+echo $SERVER_PID > ctx-server.pid
 echo "Server PID: $SERVER_PID"
 
 # 等待服务启动
@@ -108,25 +108,25 @@ done
 if ! curl -s http://127.0.0.1:$SERVER_PORT/health | grep -q '"healthy":true'; then
     echo -e "${RED}✗ 服务启动失败！${NC}"
     echo "服务日志："
-    cat openviking-server.log
+    cat ctx-server.log
     exit 1
 fi
 echo ""
 
 # 7. 运行 API 测试
 echo -e "${YELLOW}[7/8] 运行 API 测试...${NC}"
-export OPENVIKING_API_KEY=test-root-api-key
+export ATOM_CTX_API_KEY=test-root-api-key
 export SERVER_URL=http://127.0.0.1:$SERVER_PORT
 python -m pytest . -v --html=api-test-report.html --self-contained-html --ignore=retrieval/ --ignore=resources/test_pack.py --ignore=resources/test_wait_processed.py
 TEST_RESULT=$?
 echo ""
 
 # 8. 停止服务
-echo -e "${YELLOW}[8/8] 停止 OpenViking Server...${NC}"
-if [ -f openviking-server.pid ]; then
+echo -e "${YELLOW}[8/8] 停止 AtomCtx Server...${NC}"
+if [ -f ctx-server.pid ]; then
     kill $SERVER_PID 2>/dev/null || true
-    pkill -f "openviking.server.bootstrap" 2>/dev/null || true
-    rm -f openviking-server.pid
+    pkill -f "atom_ctx.server.bootstrap" 2>/dev/null || true
+    rm -f ctx-server.pid
 fi
 echo -e "${GREEN}✓ 服务已停止${NC}"
 echo ""
@@ -141,7 +141,7 @@ fi
 echo -e "${GREEN}========================================${NC}"
 echo ""
 echo "测试报告: tests/api_test/api-test-report.html"
-echo "服务日志: tests/api_test/openviking-server.log"
+echo "服务日志: tests/api_test/ctx-server.log"
 echo ""
 
 exit $TEST_RESULT

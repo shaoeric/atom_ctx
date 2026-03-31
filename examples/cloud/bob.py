@@ -24,8 +24,8 @@ import json
 import sys
 import time
 
-import openviking as ov
-from openviking_cli.utils.async_utils import run_async
+import atom_ctx as ctx
+from atom_ctx_cli.utils.async_utils import run_async
 
 
 def load_key_from_file(user="bob"):
@@ -58,13 +58,13 @@ def main():
     print("User:   bob")
     print(f"Key:    {api_key[:16]}...")
 
-    client = ov.SyncHTTPClient(url=url, api_key=api_key, agent_id="bob-agent")
+    client = ctx.SyncHTTPClient(url=url, api_key=api_key, agent_id="bob-agent")
     client.initialize()
 
     try:
         # ── 1. 浏览团队已有资源 ──
         print("\n== 1. 浏览团队资源 ==")
-        entries = client.ls("viking://")
+        entries = client.ls("ctx://")
         if not entries:
             print("  （空，Alice 还没添加资源）")
         for entry in entries:
@@ -100,7 +100,7 @@ def main():
         # ── 4. 添加自己的资源 ──
         print("\n== 4. 添加资源: CONTRIBUTING.md ==")
         result = client.add_resource(
-            path="https://raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/CONTRIBUTING.md",
+            path="https://raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/CONTRIBUTING.md",
             reason="贡献指南学习笔记",
         )
         bob_uri = result.get("root_uri", "")
@@ -115,7 +115,7 @@ def main():
         print(f"  Session: {session.session_id}")
 
         messages = [
-            ("user", "我刚入职，需要了解 OpenViking 的贡献流程"),
+            ("user", "我刚入职，需要了解 AtomCtx 的贡献流程"),
             (
                 "assistant",
                 "欢迎！贡献流程主要是：1) Fork 仓库 2) 创建 feature branch "
@@ -127,8 +127,8 @@ def main():
                 "assistant",
                 "本地开发步骤：1) 安装 Python 3.10+ 和 uv "
                 "2) git clone 后执行 uv sync 安装依赖 "
-                "3) 复制 examples/ov.conf.example 为 ~/.openviking/ov.conf 填入 API Key "
-                "4) 运行 openviking-server 启动开发服务。构建 abi3 C++ 扩展需要 cmake。",
+                "3) 复制 examples/ctx.conf.example 为 ~/.ctx/ctx.conf 填入 API Key "
+                "4) 运行 ctx-server 启动开发服务。构建 abi3 C++ 扩展需要 cmake。",
             ),
             ("user", "测试怎么跑？"),
             (

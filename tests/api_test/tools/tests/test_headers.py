@@ -5,9 +5,9 @@ import requests
 
 sys.path.insert(0, ".")
 
-from api.client import OpenVikingAPIClient
+from api.client import AtomCtxAPIClient
 
-client = OpenVikingAPIClient()
+client = AtomCtxAPIClient()
 
 print("Client configuration:")
 print(f"  API Key: {client.api_key}")

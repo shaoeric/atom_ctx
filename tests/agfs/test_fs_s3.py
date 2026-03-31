@@ -12,17 +12,17 @@ import boto3
 import botocore
 import pytest
 
-from openviking.agfs_manager import AGFSManager
-from openviking.storage.transaction import init_lock_manager, reset_lock_manager
-from openviking.storage.viking_fs import VikingFS, init_viking_fs
-from openviking_cli.utils.config.agfs_config import AGFSConfig
+from atom_ctx.agfs_manager import AGFSManager
+from atom_ctx.storage.transaction import init_lock_manager, reset_lock_manager
+from atom_ctx.storage.ctx_fs import VikingFS, init_ctx_fs
+from atom_ctx_cli.utils.config.agfs_config import AGFSConfig
 
 # 1. Simplified Config loading logic
 # Only extract the AGFS part for focused testing
-CONFIG_FILE = os.getenv("OPENVIKING_CONFIG_FILE")
+CONFIG_FILE = os.getenv("CTX_CONFIG_FILE")
 if not CONFIG_FILE:
-    # Try default ov.conf in tests/agfs
-    default_conf = Path(__file__).parent / "ov.conf"
+    # Try default ctx.conf in tests/agfs
+    default_conf = Path(__file__).parent / "ctx.conf"
     if default_conf.exists():
         CONFIG_FILE = str(default_conf)
 
@@ -53,7 +53,7 @@ if AGFS_CONF is not None:
 # 2. Skip tests if no S3 config found or backend is not S3
 pytestmark = pytest.mark.skipif(
     AGFS_CONF is None or AGFS_CONF.backend != "s3",
-    reason="AGFS S3 configuration not found in ov.conf",
+    reason="AGFS S3 configuration not found in ctx.conf",
 )
 
 
@@ -73,9 +73,9 @@ def s3_client():
 
 
 @pytest.fixture(scope="module")
-async def viking_fs_instance():
+async def ctx_fs_instance():
     """Initialize AGFS Manager and VikingFS singleton."""
-    from openviking.utils.agfs_utils import create_agfs_client
+    from atom_ctx.utils.agfs_utils import create_agfs_client
 
     manager = AGFSManager(config=AGFS_CONF)
     manager.start()
@@ -85,7 +85,7 @@ async def viking_fs_instance():
 
     # Initialize LockManager and VikingFS with client
     init_lock_manager(agfs=agfs_client)
-    vfs = init_viking_fs(agfs=agfs_client)
+    vfs = init_ctx_fs(agfs=agfs_client)
 
     yield vfs
 
@@ -98,22 +98,22 @@ async def viking_fs_instance():
 class TestVikingFSS3:
     """Test VikingFS operations with S3 backend and verify via S3 client."""
 
-    async def test_file_operations(self, viking_fs_instance: "VikingFS", s3_client):
+    async def test_file_operations(self, ctx_fs_instance: "VikingFS", s3_client):
         """Test VikingFS file operations and verify with S3 client."""
-        vfs = viking_fs_instance
+        vfs = ctx_fs_instance
         s3_conf = AGFS_CONF.s3
         bucket = s3_conf.bucket
         prefix = s3_conf.prefix or ""
 
         test_filename = f"verify_{uuid.uuid4().hex}.txt"
         test_content = "Hello VikingFS S3! " + uuid.uuid4().hex
-        test_uri = f"viking://temp/{test_filename}"
+        test_uri = f"ctx://temp/{test_filename}"
 
         # 1. Write via VikingFS
         await vfs.write(test_uri, test_content)
 
         # 2. Verify existence and content via S3 client
-        # VikingFS maps viking://temp/{test_filename} to /local/default/temp/{test_filename}
+        # VikingFS maps ctx://temp/{test_filename} to /local/default/temp/{test_filename}
         s3_key = f"{prefix}default/temp/{test_filename}"
         response = s3_client.get_object(Bucket=bucket, Key=s3_key)
         s3_content = response["Body"].read().decode("utf-8")
@@ -125,7 +125,7 @@ class TestVikingFSS3:
         assert not stat_info["isDir"]
 
         # 4. List via VikingFS
-        entries = await vfs.ls("viking://temp/")
+        entries = await vfs.ls("ctx://temp/")
         assert any(e["name"] == test_filename for e in entries)
 
         # 5. Read back via VikingFS
@@ -140,15 +140,15 @@ class TestVikingFSS3:
             s3_client.get_object(Bucket=bucket, Key=s3_key)
         assert excinfo.value.response["Error"]["Code"] in ["NoSuchKey", "404"]
 
-    async def test_directory_operations(self, viking_fs_instance, s3_client):
+    async def test_directory_operations(self, ctx_fs_instance, s3_client):
         """Test VikingFS directory operations and verify with S3 client."""
-        vfs = viking_fs_instance
+        vfs = ctx_fs_instance
         s3_conf = AGFS_CONF.s3
         bucket = s3_conf.bucket
         prefix = s3_conf.prefix or ""
 
         test_dir = f"test_dir_{uuid.uuid4().hex}"
-        test_dir_uri = f"viking://temp/{test_dir}/"
+        test_dir_uri = f"ctx://temp/{test_dir}/"
 
         # 1. Create directory via VikingFS
         await vfs.mkdir(test_dir_uri)
@@ -158,13 +158,13 @@ class TestVikingFSS3:
         file_content = "inner content"
         await vfs.write(file_uri, file_content)
 
-        # VikingFS maps viking://temp/{test_dir}/inner.txt to /local/default/temp/{test_dir}/inner.txt
+        # VikingFS maps ctx://temp/{test_dir}/inner.txt to /local/default/temp/{test_dir}/inner.txt
         s3_key = f"{prefix}default/temp/{test_dir}/inner.txt"
         response = s3_client.get_object(Bucket=bucket, Key=s3_key)
         assert response["Body"].read().decode("utf-8") == file_content
 
         # 3. List via VikingFS
-        root_entries = await vfs.ls("viking://temp/")
+        root_entries = await vfs.ls("ctx://temp/")
         assert any(e["name"] == test_dir and e["isDir"] for e in root_entries)
 
         # 4. Delete directory recursively via VikingFS
@@ -174,19 +174,19 @@ class TestVikingFSS3:
         with pytest.raises(botocore.exceptions.ClientError):
             s3_client.get_object(Bucket=bucket, Key=s3_key)
 
-    async def test_ensure_dirs(self, viking_fs_instance: "VikingFS"):
+    async def test_ensure_dirs(self, ctx_fs_instance: "VikingFS"):
         """Test VikingFS ensure_dirs."""
-        vfs = viking_fs_instance
+        vfs = ctx_fs_instance
         base_dir = f"tree_test_{uuid.uuid4().hex}"
-        sub_dir = f"viking://temp/{base_dir}/a/b/"
+        sub_dir = f"ctx://temp/{base_dir}/a/b/"
         file_uri = f"{sub_dir}leaf.txt"
 
         await vfs.mkdir(sub_dir)
         await vfs.write(file_uri, "leaf content")
 
         # VikingFS.tree provides recursive listing
-        entries = await vfs.tree(f"viking://temp/{base_dir}/")
+        entries = await vfs.tree(f"ctx://temp/{base_dir}/")
         assert any("leaf.txt" in e["uri"] for e in entries)
 
         # Cleanup
-        await vfs.rm(f"viking://temp/{base_dir}/", recursive=True)
+        await vfs.rm(f"ctx://temp/{base_dir}/", recursive=True)

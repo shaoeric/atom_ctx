@@ -2,9 +2,9 @@
 
 ## Context / 背景
 
-本方案讨论在 OpenViking 中集成 OpenClaw Context Engine 的扩展机制，以及围绕新引擎的记忆管理、查询、注入等完整设计。
+本方案讨论在 AtomCtx 中集成 OpenClaw Context Engine 的扩展机制，以及围绕新引擎的记忆管理、查询、注入等完整设计。
 
-This proposal discusses the extension mechanism for integrating OpenClaw Context Engine into OpenViking, along with the complete design for memory management, retrieval, and injection around the new engine.
+This proposal discusses the extension mechanism for integrating OpenClaw Context Engine into AtomCtx, along with the complete design for memory management, retrieval, and injection around the new engine.
 
 ---
 
@@ -14,7 +14,7 @@ This proposal discusses the extension mechanism for integrating OpenClaw Context
 
 1. 当 compact 时一次性把对话上传到 ov。
 
-   Upload conversation to OpenViking in one batch when compact is triggered.
+   Upload conversation to AtomCtx in one batch when compact is triggered.
 
 2. 可选项：compact 时，可以把一些工作记忆（比如 TODO，摘要），留在压缩后的上下文里面（如果有的话），避免断档。
 
@@ -39,7 +39,7 @@ This proposal discusses the extension mechanism for integrating OpenClaw Context
 **Threshold 1: Early Upload (e.g., 50% of context window) / 阈值 1：提前上报（如上下文窗口的 50%）**
 - **Trigger Condition / 触发条件**: When session reaches ~50% of context window limit / 当会话达到上下文窗口限制的约 50% 时
 - **Action / 行为**:
-  - Trigger memory upload to OpenViking in background / 后台触发记忆上报到 OpenViking
+  - Trigger memory upload to AtomCtx in background / 后台触发记忆上报到 AtomCtx
   - **DO NOT block the main flow / 不阻塞主流程**
   - **DO NOT clear session messages / 不清空会话消息**
   - Record the range of messages being uploaded (start_index, end_index) / 记录正在上报的消息范围（start_index, end_index）
@@ -53,7 +53,7 @@ This proposal discusses the extension mechanism for integrating OpenClaw Context
   - Keep the newer messages that arrived after upload started / 保留上报开始后到达的新消息
 
 **Cleanup After Upload Completion (Before Threshold 2) / 上报完成后的清理（阈值 2 前）**
-- **Trigger Condition / 触发条件**: Upload to OpenViking has completed and session hasn't reached Threshold 2 / 上报到 OpenViking 已完成且会话未达到阈值 2
+- **Trigger Condition / 触发条件**: Upload to AtomCtx has completed and session hasn't reached Threshold 2 / 上报到 AtomCtx 已完成且会话未达到阈值 2
 - **Action / 行为**:
   - Clear only the messages that were uploaded (from message_range) / 只清理已上报的消息（从 message_range）
   - Keep the newer messages that arrived after upload started / 保留上报开始后到达的新消息
@@ -79,7 +79,7 @@ This proposal discusses the extension mechanism for integrating OpenClaw Context
 
 这允许 agent 通过 `commit_memory` 工具（或ov cli）主动记录记忆，支持用户请求如：
 
-This allows the agent to actively record memories via a `commit_memory` tool (or ov cli), supporting user requests like:
+This allows the agent to actively record memories via a `commit_memory` tool (or ctx cli), supporting user requests like:
 
 - "Remember that I like dark mode" / "记住我喜欢深色模式"
 - "Don't ask me for confirmation again" / "下次不要再让我确认了"
@@ -154,7 +154,7 @@ Assistant: Based on...
 1. Get current user message / 获取当前用户消息
 2. Check if should skip retrieval / 检查是否应该跳过召回
 3. Build search query from last N user messages / 从最近 N 条用户消息构建搜索查询
-4. Search in OpenViking / 在 OpenViking 中搜索
+4. Search in AtomCtx / 在 AtomCtx 中搜索
 5. Apply relevance threshold filter / 应用相关性阈值过滤
 6. Format memories (L0/L1/L2 based on config) / 格式化记忆（根据配置使用 L0/L1/L2）
 7. Inject into THIS LLM call only (not persisted) / 仅注入到本次 LLM 调用（不持久化）
@@ -169,26 +169,26 @@ In addition to per-turn auto-injection, provide an agent-initiated query mechani
 
 ### Pre-inject Directory Structure / 预先注入目录结构
 
-为了让主动记忆的路径尽可能短，可以默认把 `ov ls viking://` 的结果预先注入到 system prompt 里面，让 agent 预先知道 ov 里有哪些数据可以用。如果能模拟成是 agent 主动调用的，效果可能更好。
+为了让主动记忆的路径尽可能短，可以默认把 `ctx ls ctx://` 的结果预先注入到 system prompt 里面，让 agent 预先知道 ctx 里有哪些数据可以用。如果能模拟成是 agent 主动调用的，效果可能更好。
 
-To make the path to active memory as short as possible, pre-inject the results of `ov ls viking://` into the system prompt by default, so the agent knows in advance what data is available in OpenViking. Effect may be better if simulated as an agent-initiated call.
+To make the path to active memory as short as possible, pre-inject the results of `ctx ls ctx://` into the system prompt by default, so the agent knows in advance what data is available in AtomCtx. Effect may be better if simulated as an agent-initiated call.
 
 **Design / 设计**:
 - At session start / 在会话开始时
-- Run `ov ls viking://` (or equivalent) / 运行 `ov ls viking://`（或等效操作）
+- Run `ctx ls ctx://` (or equivalent) / 运行 `ctx ls ctx://`（或等效操作）
 - Format results as directory tree / 将结果格式化为目录树
 - Inject into system prompt, optionally simulate as function call / 注入到 system prompt，可选模拟为 function call
 
 **Example / 示例**:
 ```
-Assistant: [Function Call] ov_ls({"path": "viking://"})
+Assistant: [Function Call] ctx_ls({"path": "ctx://"})
 
 System: [Function Result] {
   "directories": [
-    "viking://docs/",
-    "viking://user/memories/",
-    "viking://agent/skills/",
-    "viking://assets/"
+    "ctx://docs/",
+    "ctx://user/memories/",
+    "ctx://agent/skills/",
+    "ctx://assets/"
   ]
 }
 ```
@@ -303,11 +303,11 @@ Tool memories can be injected via system prompt.
 
 ---
 
-## Appendix: OpenViking Tool Injection / 附录：OpenViking 工具注入
+## Appendix: AtomCtx Tool Injection / 附录：AtomCtx 工具注入
 
-本节讨论如何将 OpenViking 能力注入到 Agent 中。提出了两种方案，都避免了基于 skill 的注入模式。
+本节讨论如何将 AtomCtx 能力注入到 Agent 中。提出了两种方案，都避免了基于 skill 的注入模式。
 
-This section discusses how to inject OpenViking capabilities into the agent. Two options are proposed, both avoiding the skill-based injection pattern.
+This section discusses how to inject AtomCtx capabilities into the agent. Two options are proposed, both avoiding the skill-based injection pattern.
 
 ### Problem with Skill-based Injection / 基于 Skill 注入的问题
 
@@ -319,9 +319,9 @@ This section discusses how to inject OpenViking capabilities into the agent. Two
 
 ### Option 1: System Prompt + Bash CLI (Recommended if CLI is LLM-friendly) / 方案 1：System Prompt + Bash CLI（如果 CLI 对 LLM 友好，推荐此方案）
 
-直接将 OpenViking CLI 用法说明注入到 system prompt 中。Agent 使用内置的 bash 工具调用 `ov` 命令。
+直接将 AtomCtx CLI 用法说明注入到 system prompt 中。Agent 使用内置的 bash 工具调用 `ctx` 命令。
 
-Inject OpenViking CLI usage instructions directly into the system prompt. The agent uses the built-in bash tool to call `ov` commands.
+Inject AtomCtx CLI usage instructions directly into the system prompt. The agent uses the built-in bash tool to call `ctx` commands.
 
 **Advantages / 优势**:
 - No tool definition needed / 不需要定义 tool
@@ -336,20 +336,20 @@ Inject OpenViking CLI usage instructions directly into the system prompt. The ag
 
 **Example Commands / 示例命令**:
 ```bash
-ov search --query "your query" [--category <category>] [--limit N]
-ov ls memories [--category <category>]
-ov search-docs --query "your query" [--path <directory>]
-ov history [--limit N]
-ov remember --content "what to remember" [--type <type>] [--priority N]
+ctx search --query "your query" [--category <category>] [--limit N]
+ctx ls memories [--category <category>]
+ctx search-docs --query "your query" [--path <directory>]
+ctx history [--limit N]
+ctx remember --content "what to remember" [--type <type>] [--priority N]
 ```
 
 ---
 
 ### Option 2: Tool Definition Injection / 方案 2：工具定义注入
 
-将 OpenViking 能力定义为显式的工具定义（function calling）。
+将 AtomCtx 能力定义为显式的工具定义（function calling）。
 
-Define OpenViking capabilities as explicit tool definitions (function calling).
+Define AtomCtx capabilities as explicit tool definitions (function calling).
 
 **Advantages / 优势**:
 - More predictable triggering / 触发更可预测

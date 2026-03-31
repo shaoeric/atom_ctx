@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openviking.models.embedder import JinaDenseEmbedder
-from openviking.models.embedder.jina_embedders import (
+from atom_ctx.models.embedder import JinaDenseEmbedder
+from atom_ctx.models.embedder.jina_embedders import (
     JINA_MODEL_DIMENSIONS,
 )
 
@@ -71,7 +71,7 @@ class TestJinaDenseEmbedder:
         assert JINA_MODEL_DIMENSIONS["jina-embeddings-v5-text-small"] == 1024
         assert JINA_MODEL_DIMENSIONS["jina-embeddings-v5-text-nano"] == 768
 
-    @patch("openviking.models.embedder.jina_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.jina_embedders.openai.OpenAI")
     def test_embed_single_text(self, mock_openai_class):
         """Test embedding a single text"""
         # Setup mock
@@ -97,7 +97,7 @@ class TestJinaDenseEmbedder:
         assert len(result.dense_vector) == 1024
         mock_client.embeddings.create.assert_called_once()
 
-    @patch("openviking.models.embedder.jina_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.jina_embedders.openai.OpenAI")
     def test_embed_with_dimension(self, mock_openai_class):
         """Test embedding with custom dimension parameter"""
         mock_client = MagicMock()
@@ -121,7 +121,7 @@ class TestJinaDenseEmbedder:
         call_kwargs = mock_client.embeddings.create.call_args[1]
         assert call_kwargs["dimensions"] == 768
 
-    @patch("openviking.models.embedder.jina_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.jina_embedders.openai.OpenAI")
     def test_embed_with_task(self, mock_openai_class):
         """Jina embedder should include task in extra_body when configured."""
         mock_client = MagicMock()
@@ -147,7 +147,7 @@ class TestJinaDenseEmbedder:
         assert "extra_body" in call_kwargs
         assert call_kwargs["extra_body"]["task"] == "retrieval.query"
 
-    @patch("openviking.models.embedder.jina_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.jina_embedders.openai.OpenAI")
     def test_code_model_uses_code_task_defaults(self, mock_openai_class):
         """Jina code models should use code-specific default task names."""
         mock_client = MagicMock()
@@ -170,7 +170,7 @@ class TestJinaDenseEmbedder:
         call_kwargs = mock_client.embeddings.create.call_args[1]
         assert call_kwargs["extra_body"]["task"] == "nl2code.query"
 
-    @patch("openviking.models.embedder.jina_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.jina_embedders.openai.OpenAI")
     def test_code_model_keeps_explicit_task_override(self, mock_openai_class):
         """Explicit task params should override the model-specific defaults."""
         mock_client = MagicMock()
@@ -195,7 +195,7 @@ class TestJinaDenseEmbedder:
         call_kwargs = mock_client.embeddings.create.call_args[1]
         assert call_kwargs["extra_body"]["task"] == "custom.query"
 
-    @patch("openviking.models.embedder.jina_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.jina_embedders.openai.OpenAI")
     def test_embed_with_late_chunking(self, mock_openai_class):
         """Test embedding with late_chunking parameter"""
         mock_client = MagicMock()
@@ -220,7 +220,7 @@ class TestJinaDenseEmbedder:
         assert "extra_body" in call_kwargs
         assert call_kwargs["extra_body"]["late_chunking"] is True
 
-    @patch("openviking.models.embedder.jina_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.jina_embedders.openai.OpenAI")
     def test_embed_batch(self, mock_openai_class):
         """Test batch embedding"""
         mock_client = MagicMock()
@@ -243,7 +243,7 @@ class TestJinaDenseEmbedder:
             assert result.dense_vector is not None
             assert len(result.dense_vector) == 1024
 
-    @patch("openviking.models.embedder.jina_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.jina_embedders.openai.OpenAI")
     def test_embed_batch_empty(self, mock_openai_class):
         """Test batch embedding with empty list"""
         mock_client = MagicMock()
@@ -258,7 +258,7 @@ class TestJinaDenseEmbedder:
         assert results == []
         mock_client.embeddings.create.assert_not_called()
 
-    @patch("openviking.models.embedder.jina_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.jina_embedders.openai.OpenAI")
     def test_embed_api_error(self, mock_openai_class):
         """Test embedding with API error"""
         import openai
@@ -290,7 +290,7 @@ class TestJinaDenseEmbedder:
         )
         assert embedder._build_extra_body() is None
 
-    @patch("openviking.models.embedder.jina_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.jina_embedders.openai.OpenAI")
     def test_build_extra_body_with_params(self, mock_openai_class):
         """_build_extra_body should include task and late_chunking."""
         mock_client = MagicMock()
@@ -325,7 +325,7 @@ class TestJinaDenseEmbedder:
         )
         assert embedder.get_dimension() == 256
 
-    @patch("openviking.models.embedder.jina_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.jina_embedders.openai.OpenAI")
     def test_422_task_error_actionable_message(self, mock_openai_class):
         """422 error mentioning 'task' should produce actionable RuntimeError."""
         import openai
@@ -348,7 +348,7 @@ class TestJinaDenseEmbedder:
         with pytest.raises(RuntimeError, match="query_param.*document_param"):
             embedder.embed("hello")
 
-    @patch("openviking.models.embedder.jina_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.jina_embedders.openai.OpenAI")
     def test_non_422_error_passthrough(self, mock_openai_class):
         """Non-422 API errors should use the generic 'Jina API error' message."""
         import openai

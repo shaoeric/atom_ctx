@@ -6,7 +6,7 @@ import tempfile
 
 import pytest
 
-from openviking.storage.vectordb.utils.stale_lock import clean_stale_rocksdb_locks
+from atom_ctx.storage.vectordb.utils.stale_lock import clean_stale_rocksdb_locks
 
 
 class TestStaleLockCleanup:
@@ -62,7 +62,7 @@ class TestStaleLockCleanup:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific behavior")
     def test_no_error_on_nonexistent_directory(self):
         """No crash when data_dir does not exist."""
-        removed = clean_stale_rocksdb_locks("/tmp/does_not_exist_ov_test")
+        removed = clean_stale_rocksdb_locks("/tmp/does_not_exist_ctx_test")
         assert removed == 0
 
     @pytest.mark.skipif(sys.platform == "win32", reason="POSIX-only: no-op expected")

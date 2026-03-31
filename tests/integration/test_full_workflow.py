@@ -8,34 +8,34 @@ from pathlib import Path
 
 import pytest_asyncio
 
-from openviking import AsyncOpenViking
-from openviking.message import TextPart
-from openviking.storage.transaction import release_all_locks
+from atom_ctx import AsyncAtomCtx
+from atom_ctx.message import TextPart
+from atom_ctx.storage.transaction import release_all_locks
 
 
 @pytest_asyncio.fixture(scope="function")
 async def integration_client(test_data_dir: Path):
     """Integration test client"""
-    await AsyncOpenViking.reset()
+    await AsyncAtomCtx.reset()
 
     # Clean data directory to avoid AGFS "directory already exists" errors
     shutil.rmtree(test_data_dir, ignore_errors=True)
     test_data_dir.mkdir(parents=True, exist_ok=True)
 
-    client = AsyncOpenViking(path=str(test_data_dir))
+    client = AsyncAtomCtx(path=str(test_data_dir))
     await client.initialize()
 
     yield client
 
     await client.close()
-    await AsyncOpenViking.reset()
+    await AsyncAtomCtx.reset()
 
 
 class TestResourceToSearchWorkflow:
     """Full workflow from resource addition to search"""
 
     async def test_add_and_search(
-        self, integration_client: AsyncOpenViking, sample_files: list[Path]
+        self, integration_client: AsyncAtomCtx, sample_files: list[Path]
     ):
         """Test: add resource -> vectorize -> search"""
         client = integration_client
@@ -55,7 +55,7 @@ class TestResourceToSearchWorkflow:
         assert result.total >= 0
 
     async def test_add_search_read_workflow(
-        self, integration_client: AsyncOpenViking, sample_markdown_file: Path
+        self, integration_client: AsyncAtomCtx, sample_markdown_file: Path
     ):
         """Test: add -> search -> read"""
         client = integration_client
@@ -85,7 +85,7 @@ class TestSessionWorkflow:
     """Session management full workflow"""
 
     async def test_session_conversation_workflow(
-        self, integration_client: AsyncOpenViking, sample_markdown_file: Path
+        self, integration_client: AsyncAtomCtx, sample_markdown_file: Path
     ):
         """Test: session create -> multi-turn conversation -> commit -> memory extraction"""
         client = integration_client
@@ -118,7 +118,7 @@ class TestSessionWorkflow:
         # 6. Wait for memory extraction
         await client.wait_processed()
 
-    async def test_session_reload_workflow(self, integration_client: AsyncOpenViking):
+    async def test_session_reload_workflow(self, integration_client: AsyncAtomCtx):
         """Test: session create -> commit -> reload -> continue conversation"""
         client = integration_client
         session_id = "reload_test_session"
@@ -146,7 +146,7 @@ class TestImportExportWorkflow:
     """Import/export full workflow"""
 
     async def test_export_import_roundtrip(
-        self, integration_client: AsyncOpenViking, sample_markdown_file: Path, temp_dir: Path
+        self, integration_client: AsyncAtomCtx, sample_markdown_file: Path, temp_dir: Path
     ):
         """Test: export -> delete -> import -> verify"""
         client = integration_client
@@ -167,8 +167,8 @@ class TestImportExportWorkflow:
                 original_content += await client.read(data["uri"])
 
         # 3. Export
-        export_path = temp_dir / "workflow_export.ovpack"
-        await client.export_ovpack(original_uri, str(export_path))
+        export_path = temp_dir / "workflow_export.ctxpack"
+        await client.export_ctxpack(original_uri, str(export_path))
         assert export_path.exists()
 
         # 4. Delete original resource
@@ -176,8 +176,8 @@ class TestImportExportWorkflow:
         await client.rm(original_uri, recursive=True)
 
         # 5. Import
-        import_uri = await client.import_ovpack(
-            str(export_path), "viking://resources/imported/", vectorize=False
+        import_uri = await client.import_ctxpack(
+            str(export_path), "ctx://resources/imported/", vectorize=False
         )
 
         # 6. Verify content consistency
@@ -193,7 +193,7 @@ class TestFullEndToEndWorkflow:
     """Full end-to-end workflow"""
 
     async def test_complete_workflow(
-        self, integration_client: AsyncOpenViking, sample_files: list[Path], temp_dir: Path
+        self, integration_client: AsyncAtomCtx, sample_files: list[Path], temp_dir: Path
     ):
         """Test complete end-to-end workflow"""
         client = integration_client
@@ -233,12 +233,12 @@ class TestFullEndToEndWorkflow:
         # ===== Phase 4: Import/Export =====
         if resource_uris:
             # Export
-            export_path = temp_dir / "e2e_export.ovpack"
-            await client.export_ovpack(resource_uris[0], str(export_path))
+            export_path = temp_dir / "e2e_export.ctxpack"
+            await client.export_ctxpack(resource_uris[0], str(export_path))
 
             # Import to new location
-            import_uri = await client.import_ovpack(
-                str(export_path), "viking://resources/e2e_imported/"
+            import_uri = await client.import_ctxpack(
+                str(export_path), "ctx://resources/e2e_imported/"
             )
 
             # Verify import success
@@ -246,5 +246,5 @@ class TestFullEndToEndWorkflow:
 
         # ===== Phase 5: Cleanup Verification =====
         # List all resources
-        entries = await client.ls("viking://", recursive=True)
+        entries = await client.ls("ctx://", recursive=True)
         assert isinstance(entries, list)

@@ -8,7 +8,7 @@ Run: pytest tests/integration/test_gemini_e2e.py -v -m integration
 
 import pytest
 
-from openviking.models.embedder.gemini_embedders import GeminiDenseEmbedder
+from atom_ctx.models.embedder.gemini_embedders import GeminiDenseEmbedder
 from tests.integration.conftest import GOOGLE_API_KEY, l2_norm, requires_api_key
 
 pytestmark = [pytest.mark.integration, requires_api_key]
@@ -42,7 +42,7 @@ def test_default_dimension_is_3072(embedder):
 
 class TestGeminiE2ETextEmbedding:
     def test_embed_text_returns_correct_dimension(self, embedder):
-        result = embedder.embed("OpenViking is a knowledge management system")
+        result = embedder.embed("AtomCtx is a knowledge management system")
         assert result.dense_vector is not None
         assert len(result.dense_vector) == 3072
 

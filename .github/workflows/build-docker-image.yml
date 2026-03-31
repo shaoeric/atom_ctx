@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "application version for OpenViking"
+        description: "application version for AtomCtx"
         required: true
         type: string
   push:
@@ -59,4 +59,4 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             # fallback to 0.0.0 if no version is provided
-            OPENVIKING_VERSION=${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.version) || (github.ref_type == 'tag' && github.ref_name) || '0.0.0' }}
+            CTX_VERSION=${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.version) || (github.ref_type == 'tag' && github.ref_name) || '0.0.0' }}

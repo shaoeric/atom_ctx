@@ -1,18 +1,18 @@
-# OpenViking Memory Plugin for OpenCode
+# AtomCtx Memory Plugin for OpenCode
 
-OpenCode plugin example that exposes OpenViking memories as explicit tools and automatically syncs conversation sessions into OpenViking.
+OpenCode plugin example that exposes AtomCtx memories as explicit tools and automatically syncs conversation sessions into AtomCtx.
 
 Chinese install guide: [INSTALL-ZH.md](./INSTALL-ZH.md)
 
 ## Mechanism
 
-This example uses OpenCode's tool mechanism to expose OpenViking capabilities as explicit agent-callable tools.
+This example uses OpenCode's tool mechanism to expose AtomCtx capabilities as explicit agent-callable tools.
 
 In practice, that means:
 
 - the agent sees concrete tools and decides when to call them
-- OpenViking data is fetched on demand through tool execution instead of being pre-injected into every prompt
-- the plugin also keeps an OpenViking session in sync with the OpenCode conversation and triggers background memory extraction with `memcommit`
+- AtomCtx data is fetched on demand through tool execution instead of being pre-injected into every prompt
+- the plugin also keeps an AtomCtx session in sync with the OpenCode conversation and triggers background memory extraction with `memcommit`
 
 This example focuses on explicit memory access, filesystem-style browsing, and session-to-memory synchronization inside OpenCode.
 
@@ -23,8 +23,8 @@ This example focuses on explicit memory access, filesystem-style browsing, and s
   - `memread`
   - `membrowse`
   - `memcommit`
-- Automatically maps each OpenCode session to an OpenViking session
-- Streams user and assistant messages into OpenViking
+- Automatically maps each OpenCode session to an AtomCtx session
+- Streams user and assistant messages into AtomCtx
 - Uses background `commit` tasks to avoid repeated synchronous timeout failures
 - Persists local runtime state for reconnect and recovery
 
@@ -32,20 +32,20 @@ This example focuses on explicit memory access, filesystem-style browsing, and s
 
 This example contains:
 
-- `openviking-memory.ts`: the plugin implementation used by OpenCode
-- `openviking-config.example.json`: template config
+- `atom_ctx-memory.ts`: the plugin implementation used by OpenCode
+- `atom_ctx-config.example.json`: template config
 - `.gitignore`: ignores local runtime files after you copy the example into a workspace
 
 ## Prerequisites
 
 - OpenCode
-- OpenViking HTTP Server
-- A valid OpenViking API key if your server requires authentication
+- AtomCtx HTTP Server
+- A valid AtomCtx API key if your server requires authentication
 
 Start the server first if it is not already running:
 
 ```bash
-openviking-server --config ~/.openviking/ov.conf
+ctx-server --config ~/.ctx/ctx.conf
 ```
 
 ## Install Into OpenCode
@@ -60,12 +60,12 @@ Install with:
 
 ```bash
 mkdir -p ~/.config/opencode/plugins
-cp examples/opencode-memory-plugin/openviking-memory.ts ~/.config/opencode/plugins/openviking-memory.ts
-cp examples/opencode-memory-plugin/openviking-config.example.json ~/.config/opencode/plugins/openviking-config.json
+cp examples/opencode-memory-plugin/atom_ctx-memory.ts ~/.config/opencode/plugins/atom_ctx-memory.ts
+cp examples/opencode-memory-plugin/atom_ctx-config.example.json ~/.config/opencode/plugins/atom_ctx-config.json
 cp examples/opencode-memory-plugin/.gitignore ~/.config/opencode/plugins/.gitignore
 ```
 
-Then edit `~/.config/opencode/plugins/openviking-config.json`.
+Then edit `~/.config/opencode/plugins/atom_ctx-config.json`.
 
 OpenCode auto-discovers first-level `*.ts` and `*.js` files under `~/.config/opencode/plugins`, so no explicit `plugin` entry is required in `~/.config/opencode/opencode.json`.
 
@@ -74,7 +74,7 @@ This plugin also works if you intentionally place it in a workspace-local plugin
 Recommended: provide the API key via environment variable instead of writing it into the config file:
 
 ```bash
-export OPENVIKING_API_KEY="your-api-key-here"
+export ATOM_CTX_API_KEY="your-api-key-here"
 ```
 
 ## Configuration
@@ -94,15 +94,15 @@ Example config:
 }
 ```
 
-The environment variable `OPENVIKING_API_KEY` takes precedence over the config file.
+The environment variable `ATOM_CTX_API_KEY` takes precedence over the config file.
 
 ## Runtime Files
 
 After installation, the plugin creates these local files next to the plugin file:
 
-- `openviking-config.json`
-- `openviking-memory.log`
-- `openviking-session-map.json`
+- `atom_ctx-config.json`
+- `atom_ctx-memory.log`
+- `atom_ctx-session-map.json`
 
 These are runtime artifacts and should not be committed.
 
@@ -115,14 +115,14 @@ Unified search across memories, resources, and skills.
 Parameters:
 
 - `query`: search query
-- `target_uri?`: narrow search to a URI prefix such as `viking://user/memories/`
+- `target_uri?`: narrow search to a URI prefix such as `ctx://user/memories/`
 - `mode?`: `auto | fast | deep`
 - `limit?`: max results
 - `score_threshold?`: optional minimum score
 
 ### `memread`
 
-Read content from a specific `viking://` URI.
+Read content from a specific `ctx://` URI.
 
 Parameters:
 
@@ -131,7 +131,7 @@ Parameters:
 
 ### `membrowse`
 
-Browse the OpenViking filesystem layout.
+Browse the AtomCtx filesystem layout.
 
 Parameters:
 
@@ -146,7 +146,7 @@ Trigger immediate memory extraction for the current session.
 
 Parameters:
 
-- `session_id?`: optional explicit OpenViking session ID
+- `session_id?`: optional explicit AtomCtx session ID
 
 Returns background task progress or completion details, including `task_id`, `memories_extracted`, and `archived`.
 
@@ -157,7 +157,7 @@ Search and then read:
 ```typescript
 const results = await memsearch({
   query: "user coding preferences",
-  target_uri: "viking://user/memories/",
+  target_uri: "ctx://user/memories/",
   mode: "auto"
 })
 
@@ -171,7 +171,7 @@ Browse first:
 
 ```typescript
 const tree = await membrowse({
-  uri: "viking://resources/",
+  uri: "ctx://resources/",
   view: "tree"
 })
 ```
@@ -186,11 +186,11 @@ const result = await memcommit({})
 
 - The plugin is designed to run as a first-level `*.ts` file in the OpenCode plugins directory
 - It intentionally keeps runtime config, logs, and session maps outside the repository example
-- It uses OpenViking background commit tasks to avoid repeated timeout/retry loops during long memory extraction
+- It uses AtomCtx background commit tasks to avoid repeated timeout/retry loops during long memory extraction
 
 ## Troubleshooting
 
-- Plugin not loading: confirm the file exists at `~/.config/opencode/plugins/openviking-memory.ts`
-- Service unavailable: confirm `openviking-server` is running and reachable at the configured endpoint
-- Authentication failed: check `OPENVIKING_API_KEY` or `openviking-config.json`
-- No memories extracted: check that your OpenViking server has working `vlm` and `embedding` configuration
+- Plugin not loading: confirm the file exists at `~/.config/opencode/plugins/atom_ctx-memory.ts`
+- Service unavailable: confirm `ctx-server` is running and reachable at the configured endpoint
+- Authentication failed: check `ATOM_CTX_API_KEY` or `atom_ctx-config.json`
+- No memories extracted: check that your AtomCtx server has working `vlm` and `embedding` configuration

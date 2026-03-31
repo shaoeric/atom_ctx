@@ -4,14 +4,14 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from openviking.models.vlm.backends.litellm_vlm import LiteLLMVLMProvider
-from openviking.models.vlm.backends.openai_vlm import OpenAIVLM
+from atom_ctx.models.vlm.backends.litellm_vlm import LiteLLMVLMProvider
+from atom_ctx.models.vlm.backends.openai_vlm import OpenAIVLM
 
 
 class TestVLMExtraHeaders:
     """Test extra_headers is passed to OpenAI client."""
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.OpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.OpenAI")
     def test_extra_headers_passed_to_sync_client(self, mock_openai_class):
         """extra_headers should be passed as default_headers to sync OpenAI client."""
         mock_client = MagicMock()
@@ -33,7 +33,7 @@ class TestVLMExtraHeaders:
         call_kwargs = mock_openai_class.call_args[1]
         assert call_kwargs.get("default_headers") == headers
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.AsyncOpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.AsyncOpenAI")
     def test_extra_headers_passed_to_async_client(self, mock_async_openai_class):
         """extra_headers should be passed as default_headers to async OpenAI client."""
         mock_client = MagicMock()
@@ -55,7 +55,7 @@ class TestVLMExtraHeaders:
         call_kwargs = mock_async_openai_class.call_args[1]
         assert call_kwargs.get("default_headers") == headers
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.OpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.OpenAI")
     def test_no_extra_headers_omits_default_headers(self, mock_openai_class):
         """When extra_headers is not provided, default_headers should NOT be set."""
         mock_client = MagicMock()
@@ -75,7 +75,7 @@ class TestVLMExtraHeaders:
         call_kwargs = mock_openai_class.call_args[1]
         assert "default_headers" not in call_kwargs
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.OpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.OpenAI")
     def test_extra_headers_empty_dict_omits_default_headers(self, mock_openai_class):
         """When extra_headers is empty dict, default_headers should NOT be set."""
         mock_client = MagicMock()
@@ -97,7 +97,7 @@ class TestVLMExtraHeaders:
         # Empty dict is falsy, so default_headers should not be set
         assert "default_headers" not in call_kwargs
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.OpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.OpenAI")
     def test_dashscope_text_completion_passes_enable_thinking_in_extra_body(
         self, mock_openai_class
     ):
@@ -122,7 +122,7 @@ class TestVLMExtraHeaders:
         call_kwargs = mock_client.chat.completions.create.call_args.kwargs
         assert call_kwargs["extra_body"] == {"enable_thinking": False}
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.AsyncOpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.AsyncOpenAI")
     async def test_dashscope_async_vision_completion_passes_enable_thinking_in_extra_body(
         self, mock_async_openai_class
     ):
@@ -151,7 +151,7 @@ class TestVLMExtraHeaders:
         call_kwargs = mock_client.chat.completions.create.call_args.kwargs
         assert call_kwargs["extra_body"] == {"enable_thinking": True}
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.OpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.OpenAI")
     def test_official_openai_text_completion_does_not_set_enable_thinking(self, mock_openai_class):
         """Official OpenAI API should not receive DashScope-specific extra_body flags."""
         mock_client = MagicMock()
@@ -174,7 +174,7 @@ class TestVLMExtraHeaders:
         call_kwargs = mock_client.chat.completions.create.call_args.kwargs
         assert "extra_body" not in call_kwargs
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.AzureOpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.AzureOpenAI")
     def test_azure_text_completion_does_not_set_enable_thinking(self, mock_azure_openai_class):
         """Azure OpenAI should not receive DashScope-specific extra_body flags."""
         mock_client = MagicMock()
@@ -259,7 +259,7 @@ class TestVLMConfigExtraHeaders:
 
     def test_vlm_config_accepts_extra_headers_in_providers(self):
         """VLMConfig should accept extra_headers in providers config."""
-        from openviking_cli.utils.config.vlm_config import VLMConfig
+        from atom_ctx_cli.utils.config.vlm_config import VLMConfig
 
         config = VLMConfig(
             model="gpt-4o",
@@ -278,7 +278,7 @@ class TestVLMConfigExtraHeaders:
 
     def test_vlm_config_extra_headers_none_when_not_set(self):
         """VLMConfig should not include extra_headers when not set."""
-        from openviking_cli.utils.config.vlm_config import VLMConfig
+        from atom_ctx_cli.utils.config.vlm_config import VLMConfig
 
         config = VLMConfig(
             model="gpt-4o",
@@ -296,7 +296,7 @@ class TestVLMConfigExtraHeaders:
 
     def test_vlm_config_accepts_flat_extra_headers(self):
         """VLMConfig should accept extra_headers as flat config field (legacy style)."""
-        from openviking_cli.utils.config.vlm_config import VLMConfig
+        from atom_ctx_cli.utils.config.vlm_config import VLMConfig
 
         config = VLMConfig(
             model="gpt-4o",

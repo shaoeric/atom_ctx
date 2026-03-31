@@ -8,14 +8,14 @@ from typing import AsyncGenerator
 
 import pytest_asyncio
 
-from openviking import AsyncOpenViking
-from openviking.message import TextPart, ToolPart
-from openviking.service.task_tracker import TaskStatus, get_task_tracker, reset_task_tracker
-from openviking.session import Session
+from atom_ctx import AsyncAtomCtx
+from atom_ctx.message import TextPart, ToolPart
+from atom_ctx.service.task_tracker import TaskStatus, get_task_tracker, reset_task_tracker
+from atom_ctx.session import Session
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def _drain_background_tasks(client: AsyncOpenViking):
+async def _drain_background_tasks(client: AsyncAtomCtx):
     """Wait for background commit tasks to finish before client teardown."""
     reset_task_tracker()
     yield
@@ -32,21 +32,21 @@ async def _drain_background_tasks(client: AsyncOpenViking):
 
 
 @pytest_asyncio.fixture(scope="function")
-async def session(client: AsyncOpenViking) -> AsyncGenerator[Session, None]:
+async def session(client: AsyncAtomCtx) -> AsyncGenerator[Session, None]:
     """Create new Session"""
     session = client.session()
     yield session
 
 
 @pytest_asyncio.fixture(scope="function")
-async def session_with_id(client: AsyncOpenViking) -> AsyncGenerator[Session, None]:
+async def session_with_id(client: AsyncAtomCtx) -> AsyncGenerator[Session, None]:
     """Create Session with specified ID"""
     session = client.session(session_id="test_session_001")
     yield session
 
 
 @pytest_asyncio.fixture(scope="function")
-async def session_with_messages(client: AsyncOpenViking) -> AsyncGenerator[Session, None]:
+async def session_with_messages(client: AsyncAtomCtx) -> AsyncGenerator[Session, None]:
     """Create Session with existing messages"""
     session = client.session(session_id="test_session_with_messages")
 
@@ -60,7 +60,7 @@ async def session_with_messages(client: AsyncOpenViking) -> AsyncGenerator[Sessi
 
 @pytest_asyncio.fixture(scope="function")
 async def session_with_tool_call(
-    client: AsyncOpenViking,
+    client: AsyncAtomCtx,
 ) -> AsyncGenerator[tuple[Session, str, str], None]:
     """Create Session with tool call"""
     session = client.session(session_id="test_session_with_tool")
@@ -69,8 +69,8 @@ async def session_with_tool_call(
     tool_part = ToolPart(
         tool_id=tool_id,
         tool_name="test_tool",
-        tool_uri=f"viking://session/{session.session_id}/tools/{tool_id}",
-        skill_uri="viking://agent/skills/test_skill",
+        tool_uri=f"ctx://session/{session.session_id}/tools/{tool_id}",
+        skill_uri="ctx://agent/skills/test_skill",
         tool_input={"param": "value"},
         tool_status="running",
     )

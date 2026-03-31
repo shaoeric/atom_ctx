@@ -12,7 +12,7 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
-def _make_viking_fs_mock(existing_uris: set[str]):
+def _make_ctx_fs_mock(existing_uris: set[str]):
     """Create a mock VikingFS whose stat() raises for non-existing URIs."""
     fs = MagicMock()
 
@@ -29,76 +29,76 @@ class TestResolveUniqueUri:
     @pytest.mark.asyncio
     async def test_no_conflict(self):
         """When the URI is free, return it unchanged."""
-        from openviking.parse.tree_builder import TreeBuilder
+        from atom_ctx.parse.tree_builder import TreeBuilder
 
-        fs = _make_viking_fs_mock(set())
+        fs = _make_ctx_fs_mock(set())
         builder = TreeBuilder()
 
-        with patch("openviking.parse.tree_builder.get_viking_fs", return_value=fs):
-            result = await builder._resolve_unique_uri("viking://resources/report")
+        with patch("atom_ctx.parse.tree_builder.get_ctx_fs", return_value=fs):
+            result = await builder._resolve_unique_uri("ctx://resources/report")
 
-        assert result == "viking://resources/report"
+        assert result == "ctx://resources/report"
 
     @pytest.mark.asyncio
     async def test_single_conflict(self):
         """When base name exists, should return name_1."""
-        from openviking.parse.tree_builder import TreeBuilder
+        from atom_ctx.parse.tree_builder import TreeBuilder
 
-        existing = {"viking://resources/report"}
-        fs = _make_viking_fs_mock(existing)
+        existing = {"ctx://resources/report"}
+        fs = _make_ctx_fs_mock(existing)
         builder = TreeBuilder()
 
-        with patch("openviking.parse.tree_builder.get_viking_fs", return_value=fs):
-            result = await builder._resolve_unique_uri("viking://resources/report")
+        with patch("atom_ctx.parse.tree_builder.get_ctx_fs", return_value=fs):
+            result = await builder._resolve_unique_uri("ctx://resources/report")
 
-        assert result == "viking://resources/report_1"
+        assert result == "ctx://resources/report_1"
 
     @pytest.mark.asyncio
     async def test_multiple_conflicts(self):
         """When _1 and _2 also exist, should return _3."""
-        from openviking.parse.tree_builder import TreeBuilder
+        from atom_ctx.parse.tree_builder import TreeBuilder
 
         existing = {
-            "viking://resources/report",
-            "viking://resources/report_1",
-            "viking://resources/report_2",
+            "ctx://resources/report",
+            "ctx://resources/report_1",
+            "ctx://resources/report_2",
         }
-        fs = _make_viking_fs_mock(existing)
+        fs = _make_ctx_fs_mock(existing)
         builder = TreeBuilder()
 
-        with patch("openviking.parse.tree_builder.get_viking_fs", return_value=fs):
-            result = await builder._resolve_unique_uri("viking://resources/report")
+        with patch("atom_ctx.parse.tree_builder.get_ctx_fs", return_value=fs):
+            result = await builder._resolve_unique_uri("ctx://resources/report")
 
-        assert result == "viking://resources/report_3"
+        assert result == "ctx://resources/report_3"
 
     @pytest.mark.asyncio
     async def test_max_attempts_exceeded(self):
         """When all candidate names are taken, raise FileExistsError."""
-        from openviking.parse.tree_builder import TreeBuilder
+        from atom_ctx.parse.tree_builder import TreeBuilder
 
-        existing = {"viking://resources/report"} | {
-            f"viking://resources/report_{i}" for i in range(1, 6)
+        existing = {"ctx://resources/report"} | {
+            f"ctx://resources/report_{i}" for i in range(1, 6)
         }
-        fs = _make_viking_fs_mock(existing)
+        fs = _make_ctx_fs_mock(existing)
         builder = TreeBuilder()
 
-        with patch("openviking.parse.tree_builder.get_viking_fs", return_value=fs):
+        with patch("atom_ctx.parse.tree_builder.get_ctx_fs", return_value=fs):
             with pytest.raises(FileExistsError, match="Cannot resolve unique name"):
-                await builder._resolve_unique_uri("viking://resources/report", max_attempts=5)
+                await builder._resolve_unique_uri("ctx://resources/report", max_attempts=5)
 
     @pytest.mark.asyncio
     async def test_gap_in_sequence(self):
         """If _1 exists but _2 does not, should return _2 (not skip to _3)."""
-        from openviking.parse.tree_builder import TreeBuilder
+        from atom_ctx.parse.tree_builder import TreeBuilder
 
         existing = {
-            "viking://resources/report",
-            "viking://resources/report_1",
+            "ctx://resources/report",
+            "ctx://resources/report_1",
         }
-        fs = _make_viking_fs_mock(existing)
+        fs = _make_ctx_fs_mock(existing)
         builder = TreeBuilder()
 
-        with patch("openviking.parse.tree_builder.get_viking_fs", return_value=fs):
-            result = await builder._resolve_unique_uri("viking://resources/report")
+        with patch("atom_ctx.parse.tree_builder.get_ctx_fs", return_value=fs):
+            result = await builder._resolve_unique_uri("ctx://resources/report")
 
-        assert result == "viking://resources/report_2"
+        assert result == "ctx://resources/report_2"

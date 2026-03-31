@@ -2,10 +2,10 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { resolve as resolvePath } from "node:path";
 
-export type MemoryOpenVikingConfig = {
-  /** "local" = plugin starts OpenViking server as child process (like Claude Code); "remote" = use existing HTTP server */
+export type MemoryAtomCtxConfig = {
+  /** "local" = plugin starts AtomCtx server as child process (like Claude Code); "remote" = use existing HTTP server */
   mode?: "local" | "remote";
-  /** Path to ov.conf; used when mode is "local". Default ~/.openviking/ov.conf */
+  /** Path to ctx.conf; used when mode is "local". Default ~/.ctx/ctx.conf */
   configPath?: string;
   /** Port for local server when mode is "local". Ignored when mode is "remote". */
   port?: number;
@@ -28,7 +28,7 @@ export type MemoryOpenVikingConfig = {
   ingestReplyAssistMinSpeakerTurns?: number;
   ingestReplyAssistMinChars?: number;
   /**
-   * When true (default), emit structured `openviking: diag {...}` lines (and any future
+   * When true (default), emit structured `atom_ctx: diag {...}` lines (and any future
    * standard-diagnostics file writes) for assemble/afterTurn. Set false to disable.
    */
   emitStandardDiagnostics?: boolean;
@@ -38,7 +38,7 @@ export type MemoryOpenVikingConfig = {
 
 const DEFAULT_BASE_URL = "http://127.0.0.1:1933";
 const DEFAULT_PORT = 1933;
-const DEFAULT_TARGET_URI = "viking://user/memories";
+const DEFAULT_TARGET_URI = "ctx://user/memories";
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_CAPTURE_MODE = "semantic";
 const DEFAULT_CAPTURE_MAX_LENGTH = 24000;
@@ -52,7 +52,7 @@ const DEFAULT_INGEST_REPLY_ASSIST = true;
 const DEFAULT_INGEST_REPLY_ASSIST_MIN_SPEAKER_TURNS = 2;
 const DEFAULT_INGEST_REPLY_ASSIST_MIN_CHARS = 120;
 const DEFAULT_EMIT_STANDARD_DIAGNOSTICS = false;
-const DEFAULT_LOCAL_CONFIG_PATH = join(homedir(), ".openviking", "ov.conf");
+const DEFAULT_LOCAL_CONFIG_PATH = join(homedir(), ".ctx", "ctx.conf");
 
 const DEFAULT_AGENT_ID = "default";
 
@@ -105,15 +105,15 @@ function assertAllowedKeys(value: Record<string, unknown>, allowed: string[], la
 }
 
 function resolveDefaultBaseUrl(): string {
-  const fromEnv = process.env.OPENVIKING_BASE_URL || process.env.OPENVIKING_URL;
+  const fromEnv = process.env.ATOM_CTX_BASE_URL || process.env.ATOM_CTX_URL;
   if (fromEnv) {
     return fromEnv;
   }
   return DEFAULT_BASE_URL;
 }
 
-export const memoryOpenVikingConfigSchema = {
-  parse(value: unknown): Required<MemoryOpenVikingConfig> {
+export const memoryAtomCtxConfigSchema = {
+  parse(value: unknown): Required<MemoryAtomCtxConfig> {
     if (!value || typeof value !== "object" || Array.isArray(value)) {
       value = {};
     }
@@ -145,7 +145,7 @@ export const memoryOpenVikingConfigSchema = {
         "emitStandardDiagnostics",
         "logFindRequests",
       ],
-      "openviking config",
+      "atom_ctx config",
     );
 
     const mode = (cfg.mode === "local" || cfg.mode === "remote" ? cfg.mode : "local") as
@@ -164,14 +164,14 @@ export const memoryOpenVikingConfigSchema = {
     const rawBaseUrl =
       mode === "local" ? localBaseUrl : (typeof cfg.baseUrl === "string" ? cfg.baseUrl : resolveDefaultBaseUrl());
     const resolvedBaseUrl = resolveEnvVars(rawBaseUrl).replace(/\/+$/, "");
-    const rawApiKey = typeof cfg.apiKey === "string" ? cfg.apiKey : process.env.OPENVIKING_API_KEY;
+    const rawApiKey = typeof cfg.apiKey === "string" ? cfg.apiKey : process.env.ATOM_CTX_API_KEY;
     const captureMode = cfg.captureMode;
     if (
       typeof captureMode !== "undefined" &&
       captureMode !== "semantic" &&
       captureMode !== "keyword"
     ) {
-      throw new Error(`openviking captureMode must be "semantic" or "keyword"`);
+      throw new Error(`atom_ctx captureMode must be "semantic" or "keyword"`);
     }
 
     return {
@@ -234,46 +234,46 @@ export const memoryOpenVikingConfigSchema = {
           : DEFAULT_EMIT_STANDARD_DIAGNOSTICS,
       logFindRequests:
         cfg.logFindRequests === true ||
-        envFlag("OPENVIKING_LOG_ROUTING") ||
-        envFlag("OPENVIKING_DEBUG"),
+        envFlag("ATOM_CTX_LOG_ROUTING") ||
+        envFlag("ATOM_CTX_DEBUG"),
     };
   },
   uiHints: {
     mode: {
       label: "Mode",
-      help: "local = plugin starts OpenViking server (like Claude Code); remote = use existing HTTP server",
+      help: "local = plugin starts AtomCtx server (like Claude Code); remote = use existing HTTP server",
     },
     configPath: {
       label: "Config path (local)",
       placeholder: DEFAULT_LOCAL_CONFIG_PATH,
-      help: "Path to ov.conf when mode is local",
+      help: "Path to ctx.conf when mode is local",
     },
     port: {
       label: "Port (local)",
       placeholder: String(DEFAULT_PORT),
-      help: "Port for local OpenViking server",
+      help: "Port for local AtomCtx server",
       advanced: true,
     },
     baseUrl: {
-      label: "OpenViking Base URL (remote)",
+      label: "AtomCtx Base URL (remote)",
       placeholder: DEFAULT_BASE_URL,
-      help: "HTTP URL when mode is remote (or use ${OPENVIKING_BASE_URL})",
+      help: "HTTP URL when mode is remote (or use ${ATOM_CTX_BASE_URL})",
     },
     agentId: {
       label: "Agent ID",
       placeholder: "auto-generated",
-      help: 'OpenViking X-OpenViking-Agent: non-default values combine with OpenClaw ctx.agentId as "<config>_<sessionAgent>" (then sanitized to [a-zA-Z0-9_-]). Use "default" to send only ctx.agentId.',
+      help: 'AtomCtx X-AtomCtx-Agent: non-default values combine with OpenClaw ctx.agentId as "<config>_<sessionAgent>" (then sanitized to [a-zA-Z0-9_-]). Use "default" to send only ctx.agentId.',
     },
     apiKey: {
-      label: "OpenViking API Key",
+      label: "AtomCtx API Key",
       sensitive: true,
-      placeholder: "${OPENVIKING_API_KEY}",
-      help: "Optional API key for OpenViking server",
+      placeholder: "${ATOM_CTX_API_KEY}",
+      help: "Optional API key for AtomCtx server",
     },
     targetUri: {
       label: "Search Target URI",
       placeholder: DEFAULT_TARGET_URI,
-      help: "Default OpenViking target URI for memory search",
+      help: "Default AtomCtx target URI for memory search",
     },
     timeoutMs: {
       label: "Request Timeout (ms)",
@@ -282,13 +282,13 @@ export const memoryOpenVikingConfigSchema = {
     },
     autoCapture: {
       label: "Auto-Capture",
-      help: "Extract memories from recent conversation messages via OpenViking sessions",
+      help: "Extract memories from recent conversation messages via AtomCtx sessions",
     },
     captureMode: {
       label: "Capture Mode",
       placeholder: DEFAULT_CAPTURE_MODE,
       advanced: true,
-      help: '"semantic" captures all eligible user text and relies on OpenViking extraction; "keyword" uses trigger regex first.',
+      help: '"semantic" captures all eligible user text and relies on AtomCtx extraction; "keyword" uses trigger regex first.',
     },
     captureMaxLength: {
       label: "Capture Max Length",
@@ -298,7 +298,7 @@ export const memoryOpenVikingConfigSchema = {
     },
     autoRecall: {
       label: "Auto-Recall",
-      help: "Inject relevant OpenViking memories into agent context",
+      help: "Inject relevant AtomCtx memories into agent context",
     },
     recallLimit: {
       label: "Recall Limit",
@@ -353,21 +353,21 @@ export const memoryOpenVikingConfigSchema = {
     emitStandardDiagnostics: {
       label: "Standard diagnostics (diag JSON lines)",
       advanced: true,
-      help: "When enabled, emit structured openviking: diag {...} lines for assemble and afterTurn. Disable to reduce log noise.",
+      help: "When enabled, emit structured atom_ctx: diag {...} lines for assemble and afterTurn. Disable to reduce log noise.",
     },
     logFindRequests: {
       label: "Log find requests",
       help:
-        "Log tenant routing: POST /api/v1/search/find (query, target_uri) and session POST .../messages + .../commit (sessionId, X-OpenViking-*). Never logs apiKey. " +
-        "Or set env OPENVIKING_LOG_ROUTING=1 or OPENVIKING_DEBUG=1 (no JSON edit). When on, local-mode OpenViking subprocess stderr is also logged at info.",
+        "Log tenant routing: POST /api/v1/search/find (query, target_uri) and session POST .../messages + .../commit (sessionId, X-AtomCtx-*). Never logs apiKey. " +
+        "Or set env ATOM_CTX_LOG_ROUTING=1 or ATOM_CTX_DEBUG=1 (no JSON edit). When on, local-mode AtomCtx subprocess stderr is also logged at info.",
       advanced: true,
     },
   },
 };
 
-export const DEFAULT_MEMORY_OPENVIKING_DATA_DIR = join(
+export const DEFAULT_MEMORY_ATOM_CTX_DATA_DIR = join(
   homedir(),
   ".openclaw",
   "memory",
-  "openviking",
+  "atom_ctx",
 );

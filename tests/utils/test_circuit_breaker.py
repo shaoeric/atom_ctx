@@ -8,14 +8,14 @@ import pytest
 
 
 def test_circuit_breaker_starts_closed():
-    from openviking.utils.circuit_breaker import CircuitBreaker
+    from atom_ctx.utils.circuit_breaker import CircuitBreaker
 
     cb = CircuitBreaker(failure_threshold=3, reset_timeout=10)
     cb.check()  # should not raise
 
 
 def test_circuit_breaker_opens_after_threshold():
-    from openviking.utils.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
+    from atom_ctx.utils.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 
     cb = CircuitBreaker(failure_threshold=3, reset_timeout=10)
     for _ in range(3):
@@ -25,7 +25,7 @@ def test_circuit_breaker_opens_after_threshold():
 
 
 def test_circuit_breaker_resets_on_success():
-    from openviking.utils.circuit_breaker import CircuitBreaker
+    from atom_ctx.utils.circuit_breaker import CircuitBreaker
 
     cb = CircuitBreaker(failure_threshold=3, reset_timeout=10)
     cb.record_failure(RuntimeError("timeout"))
@@ -37,7 +37,7 @@ def test_circuit_breaker_resets_on_success():
 
 
 def test_circuit_breaker_half_open_after_timeout(monkeypatch):
-    from openviking.utils.circuit_breaker import CircuitBreaker
+    from atom_ctx.utils.circuit_breaker import CircuitBreaker
 
     cb = CircuitBreaker(failure_threshold=1, reset_timeout=5)
     cb.record_failure(RuntimeError("500"))
@@ -48,7 +48,7 @@ def test_circuit_breaker_half_open_after_timeout(monkeypatch):
 
 
 def test_circuit_breaker_half_open_success_closes():
-    from openviking.utils.circuit_breaker import CircuitBreaker
+    from atom_ctx.utils.circuit_breaker import CircuitBreaker
 
     cb = CircuitBreaker(failure_threshold=1, reset_timeout=0)
     cb.record_failure(RuntimeError("500"))
@@ -59,7 +59,7 @@ def test_circuit_breaker_half_open_success_closes():
 
 
 def test_circuit_breaker_half_open_failure_reopens(monkeypatch):
-    from openviking.utils.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
+    from atom_ctx.utils.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 
     cb = CircuitBreaker(failure_threshold=1, reset_timeout=5)
     cb.record_failure(RuntimeError("500"))
@@ -75,7 +75,7 @@ def test_circuit_breaker_half_open_failure_reopens(monkeypatch):
 
 
 def test_permanent_error_trips_immediately():
-    from openviking.utils.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
+    from atom_ctx.utils.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 
     cb = CircuitBreaker(failure_threshold=10, reset_timeout=10)
     cb.record_failure(RuntimeError("403 Forbidden AccountOverdueError"))
@@ -84,7 +84,7 @@ def test_permanent_error_trips_immediately():
 
 
 def test_retry_after_returns_capped_value():
-    from openviking.utils.circuit_breaker import CircuitBreaker
+    from atom_ctx.utils.circuit_breaker import CircuitBreaker
 
     cb = CircuitBreaker(failure_threshold=1, reset_timeout=300)
     cb.record_failure(RuntimeError("500"))
@@ -93,14 +93,14 @@ def test_retry_after_returns_capped_value():
 
 
 def test_retry_after_zero_when_closed():
-    from openviking.utils.circuit_breaker import CircuitBreaker
+    from atom_ctx.utils.circuit_breaker import CircuitBreaker
 
     cb = CircuitBreaker()
     assert cb.retry_after == 0
 
 
 def test_thread_safety():
-    from openviking.utils.circuit_breaker import CircuitBreaker
+    from atom_ctx.utils.circuit_breaker import CircuitBreaker
 
     cb = CircuitBreaker(failure_threshold=100, reset_timeout=300)
     errors = []
@@ -123,7 +123,7 @@ def test_thread_safety():
 
 
 def test_classify_permanent_errors():
-    from openviking.utils.circuit_breaker import classify_api_error
+    from atom_ctx.utils.circuit_breaker import classify_api_error
 
     assert classify_api_error(RuntimeError("403 Forbidden")) == "permanent"
     assert classify_api_error(RuntimeError("AccountOverdueError: 403")) == "permanent"
@@ -132,7 +132,7 @@ def test_classify_permanent_errors():
 
 
 def test_classify_transient_errors():
-    from openviking.utils.circuit_breaker import classify_api_error
+    from atom_ctx.utils.circuit_breaker import classify_api_error
 
     assert classify_api_error(RuntimeError("429 TooManyRequests")) == "transient"
     assert classify_api_error(RuntimeError("RateLimitError")) == "transient"
@@ -144,14 +144,14 @@ def test_classify_transient_errors():
 
 
 def test_classify_unknown_errors():
-    from openviking.utils.circuit_breaker import classify_api_error
+    from atom_ctx.utils.circuit_breaker import classify_api_error
 
     assert classify_api_error(RuntimeError("something unexpected")) == "unknown"
     assert classify_api_error(ValueError("bad value")) == "unknown"
 
 
 def test_classify_chained_exception():
-    from openviking.utils.circuit_breaker import classify_api_error
+    from atom_ctx.utils.circuit_breaker import classify_api_error
 
     cause = RuntimeError("403 Forbidden")
     wrapper = RuntimeError("API call failed")

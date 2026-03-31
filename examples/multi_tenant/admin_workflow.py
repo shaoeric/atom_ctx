@@ -12,14 +12,14 @@ Demonstrates account and user management via the Admin API:
   7. Remove users and delete accounts
 
 Prerequisites:
-    Start server with root_api_key configured in ov.conf:
+    Start server with root_api_key configured in ctx.conf:
       {
         "server": {
           "root_api_key": "my-root-key"
         }
       }
 
-    openviking-server
+    ctx-server
 
 Usage:
     uv run admin_workflow.py
@@ -30,7 +30,7 @@ import argparse
 
 import httpx
 
-import openviking as ov
+import atom_ctx as ctx
 
 PASS = "\033[32m✓\033[0m"
 FAIL = "\033[31m✗\033[0m"
@@ -136,10 +136,10 @@ def admin_api(base_url: str, root_key: str):
 
     # ── 9. Use user key to access data ──
     print("== 9. Access Data with User Key ==")
-    bob_client = ov.SyncHTTPClient(url=base_url, api_key=bob_key, agent_id="demo-agent")
+    bob_client = ctx.SyncHTTPClient(url=base_url, api_key=bob_key, agent_id="demo-agent")
     bob_client.initialize()
     try:
-        entries = bob_client.ls("viking://")
+        entries = bob_client.ls("ctx://")
         print(f"  Bob can list root: {len(entries)} entries")
     finally:
         bob_client.close()
@@ -152,11 +152,11 @@ def admin_api(base_url: str, root_key: str):
     print("  10a. Invalid & missing API key:")
     resp = httpx.get(
         f"{base}/api/v1/fs/ls",
-        params={"uri": "viking://"},
+        params={"uri": "ctx://"},
         headers={"X-API-Key": "this-is-not-a-valid-key"},
     )
     expect_error(resp, "Random key rejected")
-    resp = httpx.get(f"{base}/api/v1/fs/ls", params={"uri": "viking://"})
+    resp = httpx.get(f"{base}/api/v1/fs/ls", params={"uri": "ctx://"})
     expect_error(resp, "No key rejected")
 
     # 10b. USER cannot do admin operations
@@ -233,7 +233,7 @@ def admin_api(base_url: str, root_key: str):
     print("  10e. Old key after regeneration:")
     resp = httpx.get(
         f"{base}/api/v1/fs/ls",
-        params={"uri": "viking://"},
+        params={"uri": "ctx://"},
         headers={"X-API-Key": charlie_key},
     )
     expect_error(resp, "Charlie's old key rejected")
@@ -320,7 +320,7 @@ def admin_api(base_url: str, root_key: str):
     # Verify old key no longer works
     resp = httpx.get(
         f"{base}/api/v1/fs/ls",
-        params={"uri": "viking://"},
+        params={"uri": "ctx://"},
         headers={"X-API-Key": new_charlie_key},
     )
     print(f"  Charlie's key after removal -> HTTP {resp.status_code}")
@@ -334,13 +334,13 @@ def admin_api(base_url: str, root_key: str):
     # Verify all keys from deleted account no longer work
     resp = httpx.get(
         f"{base}/api/v1/fs/ls",
-        params={"uri": "viking://"},
+        params={"uri": "ctx://"},
         headers={"X-API-Key": alice_key},
     )
     print(f"  Alice's key after deletion -> HTTP {resp.status_code}")
     resp = httpx.get(
         f"{base}/api/v1/fs/ls",
-        params={"uri": "viking://"},
+        params={"uri": "ctx://"},
         headers={"X-API-Key": bob_key},
     )
     print(f"  Bob's key after deletion -> HTTP {resp.status_code}")

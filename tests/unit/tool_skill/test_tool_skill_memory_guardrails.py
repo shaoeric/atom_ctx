@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 try:
-    from openviking.session.memory_extractor import MemoryExtractor, ToolSkillCandidateMemory
-    from openviking_cli.exceptions import NotFoundError
+    from atom_ctx.session.memory_extractor import MemoryExtractor, ToolSkillCandidateMemory
+    from atom_ctx_cli.exceptions import NotFoundError
 except Exception:  # pragma: no cover - fallback for minimal local test env
     MemoryExtractor = None
     ToolSkillCandidateMemory = None
@@ -19,7 +19,7 @@ except Exception:  # pragma: no cover - fallback for minimal local test env
 
 pytestmark = pytest.mark.skipif(
     MemoryExtractor is None or ToolSkillCandidateMemory is None,
-    reason="openviking.session.memory_extractor not available in this test env",
+    reason="atom_ctx.session.memory_extractor not available in this test env",
 )
 
 
@@ -83,7 +83,7 @@ async def test_merge_tool_memory_read_failure_skips_write(monkeypatch):
         read_file=AsyncMock(side_effect=RuntimeError("read failed")),
         write_file=AsyncMock(),
     )
-    monkeypatch.setattr("openviking.session.memory_extractor.get_viking_fs", lambda: fs)
+    monkeypatch.setattr("atom_ctx.session.memory_extractor.get_ctx_fs", lambda: fs)
 
     ctx = _ctx()
     candidate = _tool_candidate()
@@ -99,7 +99,7 @@ async def test_merge_tool_memory_not_found_allows_create(monkeypatch):
         read_file=AsyncMock(side_effect=NotFoundError("missing", "file")),
         write_file=AsyncMock(),
     )
-    monkeypatch.setattr("openviking.session.memory_extractor.get_viking_fs", lambda: fs)
+    monkeypatch.setattr("atom_ctx.session.memory_extractor.get_ctx_fs", lambda: fs)
 
     ctx = _ctx()
     candidate = _tool_candidate(content="guide")
@@ -117,7 +117,7 @@ async def test_merge_tool_memory_monotonic_violation_skips_write(monkeypatch):
         ),
         write_file=AsyncMock(),
     )
-    monkeypatch.setattr("openviking.session.memory_extractor.get_viking_fs", lambda: fs)
+    monkeypatch.setattr("atom_ctx.session.memory_extractor.get_ctx_fs", lambda: fs)
 
     monkeypatch.setattr(
         extractor,
@@ -139,7 +139,7 @@ async def test_merge_skill_memory_read_failure_skips_write(monkeypatch):
         read_file=AsyncMock(side_effect=RuntimeError("read failed")),
         write_file=AsyncMock(),
     )
-    monkeypatch.setattr("openviking.session.memory_extractor.get_viking_fs", lambda: fs)
+    monkeypatch.setattr("atom_ctx.session.memory_extractor.get_ctx_fs", lambda: fs)
 
     ctx = _ctx()
     candidate = _skill_candidate()
@@ -155,7 +155,7 @@ async def test_merge_skill_memory_not_found_allows_create(monkeypatch):
         read_file=AsyncMock(side_effect=NotFoundError("missing", "file")),
         write_file=AsyncMock(),
     )
-    monkeypatch.setattr("openviking.session.memory_extractor.get_viking_fs", lambda: fs)
+    monkeypatch.setattr("atom_ctx.session.memory_extractor.get_ctx_fs", lambda: fs)
 
     ctx = _ctx()
     candidate = _skill_candidate(content="guide")
@@ -171,7 +171,7 @@ async def test_merge_skill_memory_monotonic_violation_skips_write(monkeypatch):
         read_file=AsyncMock(return_value="总执行次数: 10\n成功率: 100.0%\n"),
         write_file=AsyncMock(),
     )
-    monkeypatch.setattr("openviking.session.memory_extractor.get_viking_fs", lambda: fs)
+    monkeypatch.setattr("atom_ctx.session.memory_extractor.get_ctx_fs", lambda: fs)
 
     monkeypatch.setattr(
         extractor,
@@ -207,7 +207,7 @@ async def test_merge_tool_memory_old_format_upgrades_to_reme(monkeypatch):
         read_file=AsyncMock(return_value=existing),
         write_file=AsyncMock(),
     )
-    monkeypatch.setattr("openviking.session.memory_extractor.get_viking_fs", lambda: fs)
+    monkeypatch.setattr("atom_ctx.session.memory_extractor.get_ctx_fs", lambda: fs)
 
     ctx = _ctx()
     candidate = _tool_candidate(call_time=2, success_time=2, content="new guide\nBest for: docs")
@@ -246,7 +246,7 @@ async def test_merge_tool_memory_content_format_parses_and_merges(monkeypatch):
         read_file=AsyncMock(return_value=existing),
         write_file=AsyncMock(),
     )
-    monkeypatch.setattr("openviking.session.memory_extractor.get_viking_fs", lambda: fs)
+    monkeypatch.setattr("atom_ctx.session.memory_extractor.get_ctx_fs", lambda: fs)
 
     ctx = _ctx()
     candidate = _tool_candidate(call_time=1, success_time=1, content="new guide")
@@ -276,7 +276,7 @@ async def test_merge_skill_memory_old_format_upgrades_to_aligned(monkeypatch):
         read_file=AsyncMock(return_value=existing),
         write_file=AsyncMock(),
     )
-    monkeypatch.setattr("openviking.session.memory_extractor.get_viking_fs", lambda: fs)
+    monkeypatch.setattr("atom_ctx.session.memory_extractor.get_ctx_fs", lambda: fs)
 
     ctx = _ctx()
     candidate = _skill_candidate(content="new guide\nRecommended flow: a->b")

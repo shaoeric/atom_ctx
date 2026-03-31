@@ -6,8 +6,8 @@
 import json
 from datetime import datetime, timezone
 
-from openviking.message import ContextPart, Message, TextPart, ToolPart
-from openviking.message.part import part_from_dict
+from atom_ctx.message import ContextPart, Message, TextPart, ToolPart
+from atom_ctx.message.part import part_from_dict
 
 
 class TestTextPart:
@@ -70,12 +70,12 @@ class TestContextPart:
     def test_custom_values(self):
         """Test custom values."""
         part = ContextPart(
-            uri="viking://resources/docs/test.md",
+            uri="ctx://resources/docs/test.md",
             context_type="resource",
             abstract="This is a test document",
         )
 
-        assert part.uri == "viking://resources/docs/test.md"
+        assert part.uri == "ctx://resources/docs/test.md"
         assert part.context_type == "resource"
         assert part.abstract == "This is a test document"
         assert part.type == "context"
@@ -83,7 +83,7 @@ class TestContextPart:
     def test_memory_context_type(self):
         """Test memory context type."""
         part = ContextPart(
-            uri="viking://memories/profile/test.md",
+            uri="ctx://memories/profile/test.md",
             context_type="memory",
         )
 
@@ -92,7 +92,7 @@ class TestContextPart:
     def test_skill_context_type(self):
         """Test skill context type."""
         part = ContextPart(
-            uri="viking://skills/my-skill/",
+            uri="ctx://skills/my-skill/",
             context_type="skill",
         )
 
@@ -101,7 +101,7 @@ class TestContextPart:
     def test_resource_context_type(self):
         """Test resource context type."""
         part = ContextPart(
-            uri="viking://resources/docs/readme.md",
+            uri="ctx://resources/docs/readme.md",
             context_type="resource",
         )
 
@@ -132,8 +132,8 @@ class TestToolPart:
         part = ToolPart(
             tool_id="call-123",
             tool_name="search",
-            tool_uri="viking://session/test/tools/call-123",
-            skill_uri="viking://agent/test/skills/search",
+            tool_uri="ctx://session/test/tools/call-123",
+            skill_uri="ctx://agent/test/skills/search",
             tool_input={"query": "test"},
             tool_output="Result",
             tool_status="completed",
@@ -144,8 +144,8 @@ class TestToolPart:
 
         assert part.tool_id == "call-123"
         assert part.tool_name == "search"
-        assert part.tool_uri == "viking://session/test/tools/call-123"
-        assert part.skill_uri == "viking://agent/test/skills/search"
+        assert part.tool_uri == "ctx://session/test/tools/call-123"
+        assert part.skill_uri == "ctx://agent/test/skills/search"
         assert part.tool_input == {"query": "test"}
         assert part.tool_output == "Result"
         assert part.tool_status == "completed"
@@ -196,7 +196,7 @@ class TestPartFromDict:
         """Test creating ContextPart from dict."""
         data = {
             "type": "context",
-            "uri": "viking://test/",
+            "uri": "ctx://test/",
             "context_type": "resource",
             "abstract": "Test abstract",
         }
@@ -204,7 +204,7 @@ class TestPartFromDict:
         part = part_from_dict(data)
 
         assert isinstance(part, ContextPart)
-        assert part.uri == "viking://test/"
+        assert part.uri == "ctx://test/"
         assert part.context_type == "resource"
         assert part.abstract == "Test abstract"
 
@@ -214,8 +214,8 @@ class TestPartFromDict:
             "type": "tool",
             "tool_id": "call-123",
             "tool_name": "search",
-            "tool_uri": "viking://session/test/tools/call-123",
-            "skill_uri": "viking://agent/test/skills/search",
+            "tool_uri": "ctx://session/test/tools/call-123",
+            "skill_uri": "ctx://agent/test/skills/search",
             "tool_input": {"query": "test"},
             "tool_output": "Result",
             "tool_status": "completed",
@@ -316,7 +316,7 @@ class TestMessageInit:
             role="assistant",
             parts=[
                 TextPart(text="Here's what I found:"),
-                ContextPart(uri="viking://resources/docs/test.md"),
+                ContextPart(uri="ctx://resources/docs/test.md"),
                 ToolPart(tool_id="call-1", tool_name="search"),
             ],
         )
@@ -342,7 +342,7 @@ class TestMessageContent:
         msg = Message(
             id="msg-1",
             role="assistant",
-            parts=[ContextPart(uri="viking://test/")],
+            parts=[ContextPart(uri="ctx://test/")],
         )
 
         assert msg.content == ""
@@ -353,7 +353,7 @@ class TestMessageContent:
             id="msg-1",
             role="assistant",
             parts=[
-                ContextPart(uri="viking://test/"),
+                ContextPart(uri="ctx://test/"),
                 TextPart(text="Hello"),
                 ToolPart(tool_id="call-1"),
             ],
@@ -402,7 +402,7 @@ class TestMessageToDict:
             role="assistant",
             parts=[
                 TextPart(text="Hello"),
-                ContextPart(uri="viking://test/", context_type="memory"),
+                ContextPart(uri="ctx://test/", context_type="memory"),
             ],
         )
 
@@ -421,7 +421,7 @@ class TestMessageToDict:
                 ToolPart(
                     tool_id="call-1",
                     tool_name="search",
-                    tool_uri="viking://tools/1",
+                    tool_uri="ctx://tools/1",
                     tool_status="completed",
                     duration_ms=100,
                     prompt_tokens=50,
@@ -479,7 +479,7 @@ class TestMessageFromDict:
             "parts": [
                 {
                     "type": "context",
-                    "uri": "viking://test/",
+                    "uri": "ctx://test/",
                     "context_type": "memory",
                     "abstract": "Test",
                 }
@@ -490,7 +490,7 @@ class TestMessageFromDict:
         msg = Message.from_dict(d)
 
         assert isinstance(msg.parts[0], ContextPart)
-        assert msg.parts[0].uri == "viking://test/"
+        assert msg.parts[0].uri == "ctx://test/"
 
     def test_from_dict_with_tool_part(self):
         """Test from_dict with ToolPart."""
@@ -502,7 +502,7 @@ class TestMessageFromDict:
                     "type": "tool",
                     "tool_id": "call-1",
                     "tool_name": "search",
-                    "tool_uri": "viking://tools/1",
+                    "tool_uri": "ctx://tools/1",
                     "tool_status": "completed",
                 }
             ],
@@ -521,7 +521,7 @@ class TestMessageFromDict:
             role="assistant",
             parts=[
                 TextPart(text="Hello"),
-                ContextPart(uri="viking://test/", context_type="memory"),
+                ContextPart(uri="ctx://test/", context_type="memory"),
             ],
         )
 
@@ -566,8 +566,8 @@ class TestMessageFactoryMethods:
         msg = Message.create_assistant(
             content="Here's what I found:",
             context_refs=[
-                {"uri": "viking://test/1.md", "context_type": "memory"},
-                {"uri": "viking://test/2.md", "context_type": "resource"},
+                {"uri": "ctx://test/1.md", "context_type": "memory"},
+                {"uri": "ctx://test/2.md", "context_type": "resource"},
             ],
         )
 
@@ -579,7 +579,7 @@ class TestMessageFactoryMethods:
         msg = Message.create_assistant(
             content="Let me search for that.",
             tool_calls=[
-                {"id": "call-1", "name": "search", "uri": "viking://tools/1"},
+                {"id": "call-1", "name": "search", "uri": "ctx://tools/1"},
             ],
         )
 
@@ -605,9 +605,9 @@ class TestMessageMethods:
             role="assistant",
             parts=[
                 TextPart(text="Hello"),
-                ContextPart(uri="viking://test/1.md"),
+                ContextPart(uri="ctx://test/1.md"),
                 TextPart(text="More text"),
-                ContextPart(uri="viking://test/2.md"),
+                ContextPart(uri="ctx://test/2.md"),
             ],
         )
 

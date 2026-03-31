@@ -8,12 +8,12 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from openviking.server.routers.stats import router
+from atom_ctx.server.routers.stats import router
 
 
 @pytest.fixture
 def mock_service():
-    """Create a mock OpenVikingService."""
+    """Create a mock AtomCtxService."""
     service = MagicMock()
     service.vikingdb_manager = AsyncMock()
     service.vikingdb_manager.query = AsyncMock(return_value=[])
@@ -45,8 +45,8 @@ def client(mock_service, mock_ctx):
     app.include_router(router)
 
     with (
-        patch("openviking.server.routers.stats.get_service", return_value=mock_service),
-        patch("openviking.server.routers.stats.get_request_context", return_value=mock_ctx),
+        patch("atom_ctx.server.routers.stats.get_service", return_value=mock_service),
+        patch("atom_ctx.server.routers.stats.get_request_context", return_value=mock_ctx),
     ):
         yield TestClient(app)
 

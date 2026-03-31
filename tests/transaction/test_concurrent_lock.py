@@ -5,8 +5,8 @@
 import asyncio
 import uuid
 
-from openviking.storage.transaction.lock_handle import LockHandle
-from openviking.storage.transaction.path_lock import PathLock
+from atom_ctx.storage.transaction.lock_handle import LockHandle
+from atom_ctx.storage.transaction.path_lock import PathLock
 
 
 class TestConcurrentLock:

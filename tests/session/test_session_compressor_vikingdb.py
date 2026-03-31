@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from openviking.server.identity import RequestContext, Role
-from openviking.session.compressor import SessionCompressor
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx.session.compressor import SessionCompressor
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 @pytest.mark.asyncio
@@ -16,15 +16,15 @@ async def test_delete_existing_memory_uses_vikingdb_manager():
     compressor = SessionCompressor.__new__(SessionCompressor)
     compressor.vikingdb = AsyncMock()
     compressor._pending_semantic_changes = {}
-    viking_fs = AsyncMock()
+    ctx_fs = AsyncMock()
     memory = SimpleNamespace(
-        uri="viking://user/user1/memories/events/e1",
-        parent_uri="viking://user/user1/memories/events",
+        uri="ctx://user/user1/memories/events/e1",
+        parent_uri="ctx://user/user1/memories/events",
     )
     ctx = RequestContext(user=UserIdentifier("acc1", "user1", "agent1"), role=Role.USER)
 
-    ok = await SessionCompressor._delete_existing_memory(compressor, memory, viking_fs, ctx)
+    ok = await SessionCompressor._delete_existing_memory(compressor, memory, ctx_fs, ctx)
 
     assert ok is True
-    viking_fs.rm.assert_awaited_once_with(memory.uri, recursive=False, ctx=ctx)
+    ctx_fs.rm.assert_awaited_once_with(memory.uri, recursive=False, ctx=ctx)
     compressor.vikingdb.delete_uris.assert_awaited_once_with(ctx, [memory.uri])

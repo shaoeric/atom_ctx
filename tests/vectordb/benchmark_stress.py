@@ -5,8 +5,8 @@ import shutil
 import threading
 import time
 
-from openviking.storage.vectordb.collection.collection import Collection
-from openviking.storage.vectordb.collection.local_collection import get_or_create_local_collection
+from atom_ctx.storage.vectordb.collection.collection import Collection
+from atom_ctx.storage.vectordb.collection.local_collection import get_or_create_local_collection
 
 # --- Configuration ---
 DEFAULT_DIM = 128

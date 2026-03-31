@@ -22,24 +22,24 @@ def _mock_config():
     )
 
 
-# Ensure openviking_cli.utils.config is importable (stub if needed)
-_config_mod_name = "openviking_cli.utils.config"
+# Ensure atom_ctx_cli.utils.config is importable (stub if needed)
+_config_mod_name = "atom_ctx_cli.utils.config"
 try:
     importlib.import_module(_config_mod_name)
 except Exception:
-    for mod_name in ("openviking_cli", "openviking_cli.utils", _config_mod_name):
+    for mod_name in ("atom_ctx_cli", "atom_ctx_cli.utils", _config_mod_name):
         if mod_name not in sys.modules:
             m = ModuleType(mod_name)
             sys.modules[mod_name] = m
-    sys.modules[_config_mod_name].get_openviking_config = _mock_config  # type: ignore[attr-defined]
+    sys.modules[_config_mod_name].get_atom_ctx_config = _mock_config  # type: ignore[attr-defined]
 
-# Load code_hosting_utils directly from file to avoid the heavy openviking/__init__.py chain
+# Load code_hosting_utils directly from file to avoid the heavy atom_ctx/__init__.py chain
 _module_path = (
-    Path(__file__).resolve().parents[1] / "openviking" / "utils" / "code_hosting_utils.py"
+    Path(__file__).resolve().parents[1] / "atom_ctx" / "utils" / "code_hosting_utils.py"
 )
-_spec = importlib.util.spec_from_file_location("openviking.utils.code_hosting_utils", _module_path)
+_spec = importlib.util.spec_from_file_location("atom_ctx.utils.code_hosting_utils", _module_path)
 _module = importlib.util.module_from_spec(_spec)
-sys.modules["openviking.utils.code_hosting_utils"] = _module
+sys.modules["atom_ctx.utils.code_hosting_utils"] = _module
 _spec.loader.exec_module(_module)
 
 parse_code_hosting_url = _module.parse_code_hosting_url
@@ -50,7 +50,7 @@ validate_git_ssh_uri = _module.validate_git_ssh_uri
 
 @pytest.fixture(autouse=True)
 def _patch_config():
-    with patch.object(_module, "get_openviking_config", side_effect=_mock_config):
+    with patch.object(_module, "get_atom_ctx_config", side_effect=_mock_config):
         yield
 
 

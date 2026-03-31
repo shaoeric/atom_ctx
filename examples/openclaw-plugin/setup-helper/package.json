@@ -1,26 +1,26 @@
 {
-  "name": "openclaw-openviking-setup-helper",
+  "name": "openclaw-atom_ctx-setup-helper",
   "version": "0.2.11",
-  "description": "Setup helper for installing OpenViking memory plugin into OpenClaw",
+  "description": "Setup helper for installing AtomCtx memory plugin into OpenClaw",
   "type": "module",
   "bin": {
-    "openclaw-openviking-setup-helper": "install.js",
-    "openclaw-openviking-install": "install.js",
+    "openclaw-atom_ctx-setup-helper": "install.js",
+    "openclaw-atom_ctx-install": "install.js",
     "ov-install": "install.js"
   },
   "keywords": [
-    "openviking",
+    "atom_ctx",
     "openclaw",
     "setup",
     "memory",
     "agent",
     "installer"
   ],
-  "author": "OpenViking",
+  "author": "AtomCtx",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/volcengine/OpenViking.git",
+    "url": "git+https://github.com/volcengine/atom-ctx.git",
     "directory": "examples/openclaw-plugin/setup-helper"
   },
   "files": [

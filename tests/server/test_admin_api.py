@@ -1,19 +1,19 @@
 # Copyright (c) 2026 Beijing Volcano Engine Technology Co., Ltd.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for Admin API endpoints (openviking/server/routers/admin.py)."""
+"""Tests for Admin API endpoints (atom_ctx/server/routers/admin.py)."""
 
 import uuid
 
 import httpx
 import pytest_asyncio
 
-from openviking.server.api_keys import APIKeyManager
-from openviking.server.app import create_app
-from openviking.server.config import ServerConfig
-from openviking.server.dependencies import set_service
-from openviking.service.core import OpenVikingService
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.server.api_keys import APIKeyManager
+from atom_ctx.server.app import create_app
+from atom_ctx.server.config import ServerConfig
+from atom_ctx.server.dependencies import set_service
+from atom_ctx.service.core import AtomCtxService
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 def _uid() -> str:
@@ -25,7 +25,7 @@ ROOT_KEY = "admin-api-test-root-key-abcdef1234567890ab"
 
 @pytest_asyncio.fixture(scope="function")
 async def admin_service(temp_dir):
-    svc = OpenVikingService(
+    svc = AtomCtxService(
         path=str(temp_dir / "admin_data"), user=UserIdentifier.the_default_user("admin_user")
     )
     await svc.initialize()
@@ -39,7 +39,7 @@ async def admin_app(admin_service):
     app = create_app(config=config, service=admin_service)
     set_service(admin_service)
 
-    manager = APIKeyManager(root_key=ROOT_KEY, viking_fs=admin_service.viking_fs)
+    manager = APIKeyManager(root_key=ROOT_KEY, ctx_fs=admin_service.ctx_fs)
     await manager.load()
     app.state.api_key_manager = manager
 
@@ -107,7 +107,7 @@ async def test_delete_account(admin_client: httpx.AsyncClient):
 
     # User key should now be invalid
     resp = await admin_client.get(
-        "/api/v1/fs/ls?uri=viking://",
+        "/api/v1/fs/ls?uri=ctx://",
         headers={"X-API-Key": user_key},
     )
     assert resp.status_code == 401
@@ -153,7 +153,7 @@ async def test_register_user(admin_client: httpx.AsyncClient):
     # Bob's key should work
     bob_key = body["result"]["user_key"]
     resp = await admin_client.get(
-        "/api/v1/fs/ls?uri=viking://",
+        "/api/v1/fs/ls?uri=ctx://",
         headers={"X-API-Key": bob_key},
     )
     assert resp.status_code == 200
@@ -244,7 +244,7 @@ async def test_remove_user(admin_client: httpx.AsyncClient):
 
     # Bob's key should be invalid now
     resp = await admin_client.get(
-        "/api/v1/fs/ls?uri=viking://",
+        "/api/v1/fs/ls?uri=ctx://",
         headers={"X-API-Key": bob_key},
     )
     assert resp.status_code == 401
@@ -300,14 +300,14 @@ async def test_regenerate_key(admin_client: httpx.AsyncClient):
 
     # Old key invalid
     resp = await admin_client.get(
-        "/api/v1/fs/ls?uri=viking://",
+        "/api/v1/fs/ls?uri=ctx://",
         headers={"X-API-Key": old_key},
     )
     assert resp.status_code == 401
 
     # New key valid
     resp = await admin_client.get(
-        "/api/v1/fs/ls?uri=viking://",
+        "/api/v1/fs/ls?uri=ctx://",
         headers={"X-API-Key": new_key},
     )
     assert resp.status_code == 200

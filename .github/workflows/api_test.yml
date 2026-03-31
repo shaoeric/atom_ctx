@@ -65,7 +65,7 @@ jobs:
       - name: Cache C++ extensions
         uses: actions/cache@v5
         with:
-          path: openviking/pyagfs
+          path: atom_ctx/pyagfs
           key: ${{ runner.os }}-cpp-${{ hashFiles('**/CMakeLists.txt', '**/*.cpp', '**/*.h') }}
           restore-keys: |
             ${{ runner.os }}-cpp-
@@ -118,14 +118,14 @@ jobs:
           cd tests/api_test
           uv pip install -r requirements.txt
 
-      - name: Create OpenViking config file
+      - name: Create AtomCtx config file
         id: create-config
         env:
           VLM_API_KEY: ${{ secrets.VLM_API_KEY }}
           EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
         run: |
           # 创建配置目录
-          mkdir -p /home/runner/.openviking
+          mkdir -p /home/runner/.ctx
           
           # 检查是否有有效的 API keys
           HAS_SECRETS=false
@@ -140,7 +140,7 @@ jobs:
           
           if [ "$HAS_SECRETS" = "true" ]; then
             # 完整配置（含 VLM 和 Embedding
-            cat > /home/runner/.openviking/ov.conf << EOF
+            cat > /home/runner/.ctx/ctx.conf << EOF
           {
             "server": {
               "root_api_key": "test-root-api-key"
@@ -167,7 +167,7 @@ jobs:
           EOF
           else
             # 最小配置（使用 dummy API keys，不会实际调用）
-            cat > /home/runner/.openviking/ov.conf << EOF
+            cat > /home/runner/.ctx/ctx.conf << EOF
           {
             "server": {
               "root_api_key": "test-root-api-key"
@@ -194,9 +194,9 @@ jobs:
           EOF
           fi
           
-          echo "Config file created at /home/runner/.openviking/ov.conf"
+          echo "Config file created at /home/runner/.ctx/ctx.conf"
 
-      - name: Find available port and start OpenViking Server
+      - name: Find available port and start AtomCtx Server
         id: start-server
         run: |
           # 找到可用的随机端口
@@ -215,12 +215,12 @@ jobs:
           echo "Using port: $SERVER_PORT"
           echo "SERVER_PORT=$SERVER_PORT" >> $GITHUB_ENV
           
-          echo "Starting OpenViking Server on port $SERVER_PORT..."
+          echo "Starting AtomCtx Server on port $SERVER_PORT..."
           export ROOT_API_KEY=test-root-api-key
           export SERVER_PORT=$SERVER_PORT
-          nohup uv run python -m openviking.server.bootstrap > openviking-server.log 2>&1 &
-          echo $! > openviking-server.pid
-          echo "SERVER_PID=$(cat openviking-server.pid)" >> $GITHUB_ENV
+          nohup uv run python -m atom_ctx.server.bootstrap > ctx-server.log 2>&1 &
+          echo $! > ctx-server.pid
+          echo "SERVER_PID=$(cat ctx-server.pid)" >> $GITHUB_ENV
           
           echo "Waiting for server to start..."
           for i in {1..30}; do
@@ -236,7 +236,7 @@ jobs:
           if ! curl -s http://127.0.0.1:$SERVER_PORT/health | grep -q '"healthy":true'; then
             echo "Server failed to start!"
             echo "Server logs:"
-            cat openviking-server.log
+            cat ctx-server.log
             exit 1
           fi
 
@@ -244,7 +244,7 @@ jobs:
         id: run-tests
         run: |
           cd tests/api_test
-          export OPENVIKING_API_KEY=test-root-api-key
+          export ATOM_CTX_API_KEY=test-root-api-key
           export SERVER_URL=http://127.0.0.1:${{ env.SERVER_PORT }}
           
           if [ "${{ env.HAS_SECRETS }}" = "true" ]; then
@@ -265,15 +265,15 @@ jobs:
           name: api-test-reports-${{ github.run_id }}
           path: |
             tests/api_test/api-test-report.html
-            openviking-server.log
+            ctx-server.log
 
-      - name: Stop OpenViking Server
+      - name: Stop AtomCtx Server
         if: always()
         run: |
-          if [ -f openviking-server.pid ]; then
-            kill $(cat openviking-server.pid) 2>/dev/null || true
+          if [ -f ctx-server.pid ]; then
+            kill $(cat ctx-server.pid) 2>/dev/null || true
             # 确保完全清理
-            pkill -f "openviking.server.bootstrap" 2>/dev/null || true
+            pkill -f "atom_ctx.server.bootstrap" 2>/dev/null || true
           fi
 
       - name: Check test results

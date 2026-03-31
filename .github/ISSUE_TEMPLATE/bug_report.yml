@@ -62,8 +62,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: OpenViking Version
-      description: What version of OpenViking are you using?
+      label: AtomCtx Version
+      description: What version of AtomCtx are you using?
       placeholder: e.g., 0.1.0
     validations:
       required: true

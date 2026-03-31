@@ -1,6 +1,6 @@
 # 更新日志
 
-OpenViking 的所有重要变更都将记录在此文件中。
+AtomCtx 的所有重要变更都将记录在此文件中。
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
@@ -11,7 +11,7 @@ OpenViking 的所有重要变更都将记录在此文件中。
 - 首次公开发布
 - 核心上下文数据库功能
 - 三层信息模型 (L0/L1/L2)
-- Viking URI 系统
+- Ctx URI 系统
 - 会话管理与记忆提取
 - 多模态资源支持（图片、视频、音频）
 - 技能管理与 MCP 工具转换

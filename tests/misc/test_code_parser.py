@@ -8,10 +8,10 @@ import tempfile
 from pathlib import Path
 import sys
 
-# Add parent directory to path to import openviking
+# Add parent directory to path to import atom_ctx
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from openviking.parse.parsers.code import CodeRepositoryParser
+from atom_ctx.parse.parsers.code import CodeRepositoryParser
 
 
 def test_ignore_dirs_compliance():

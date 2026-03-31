@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from openviking.parse.parsers.code.code import CodeRepositoryParser
+from atom_ctx.parse.parsers.code.code import CodeRepositoryParser
 
 
 def _make_zip(entries: dict[str, str], target_path: str) -> None:

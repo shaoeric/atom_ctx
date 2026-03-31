@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import type { FindResultItem } from "../client.js";
 import { postProcessMemories, pickMemoriesForInjection } from "../memory-ranking.js";
-import { memoryOpenVikingConfigSchema } from "../config.js";
+import { memoryAtomCtxConfigSchema } from "../config.js";
 
 /** Helper: create a mock FindResultItem */
 function mockMemory(overrides: Partial<FindResultItem> & { uri: string }): FindResultItem {
@@ -23,13 +23,13 @@ describe("context-bloat #730 — placeholder", () => {
 
 describe("Slice A: recallScoreThreshold default", () => {
   it("should filter memories below 0.15 threshold with default config", () => {
-    const cfg = memoryOpenVikingConfigSchema.parse({});
+    const cfg = memoryAtomCtxConfigSchema.parse({});
 
     const memories = [
-      mockMemory({ uri: "viking://user/memories/1", score: 0.05 }),
-      mockMemory({ uri: "viking://user/memories/2", score: 0.10 }),
-      mockMemory({ uri: "viking://user/memories/3", score: 0.20 }),
-      mockMemory({ uri: "viking://user/memories/4", score: 0.50 }),
+      mockMemory({ uri: "ctx://user/memories/1", score: 0.05 }),
+      mockMemory({ uri: "ctx://user/memories/2", score: 0.10 }),
+      mockMemory({ uri: "ctx://user/memories/3", score: 0.20 }),
+      mockMemory({ uri: "ctx://user/memories/4", score: 0.50 }),
     ];
 
     const result = postProcessMemories(memories, {
@@ -40,13 +40,13 @@ describe("Slice A: recallScoreThreshold default", () => {
     // Only scores >= 0.15 should pass
     expect(result).toHaveLength(2);
     expect(result.map((m) => m.uri)).toEqual([
-      "viking://user/memories/4",
-      "viking://user/memories/3",
+      "ctx://user/memories/4",
+      "ctx://user/memories/3",
     ]);
   });
 
   it("should respect explicit recallScoreThreshold: 0.01 for backward compat", () => {
-    const cfg = memoryOpenVikingConfigSchema.parse({ recallScoreThreshold: 0.01 });
+    const cfg = memoryAtomCtxConfigSchema.parse({ recallScoreThreshold: 0.01 });
     expect(cfg.recallScoreThreshold).toBe(0.01);
   });
 });
@@ -59,13 +59,13 @@ describe("Slice B: prefer abstract over full content fetch", () => {
 
     const memories: FindResultItem[] = [
       mockMemory({
-        uri: "viking://user/memories/1",
+        uri: "ctx://user/memories/1",
         abstract: "Short abstract text",
         level: 2,
         score: 0.8,
       }),
       mockMemory({
-        uri: "viking://user/memories/2",
+        uri: "ctx://user/memories/2",
         abstract: "",
         level: 2,
         score: 0.7,
@@ -80,7 +80,7 @@ describe("Slice B: prefer abstract over full content fetch", () => {
     // Item 1 has abstract — read() should NOT be called for it
     // Item 2 has empty abstract — read() SHOULD be called
     expect(mockRead).toHaveBeenCalledTimes(1);
-    expect(mockRead).toHaveBeenCalledWith("viking://user/memories/2");
+    expect(mockRead).toHaveBeenCalledWith("ctx://user/memories/2");
     expect(lines[0]).toContain("Short abstract text");
   });
 });
@@ -94,7 +94,7 @@ describe("Slice D: recallMaxContentChars truncation", () => {
 
     const memories: FindResultItem[] = [
       mockMemory({
-        uri: "viking://user/memories/1",
+        uri: "ctx://user/memories/1",
         abstract: "",
         level: 2,
         score: 0.8,
@@ -113,7 +113,7 @@ describe("Slice D: recallMaxContentChars truncation", () => {
   });
 
   it("should have recallMaxContentChars and recallPreferAbstract in parsed config", () => {
-    const cfg = memoryOpenVikingConfigSchema.parse({});
+    const cfg = memoryAtomCtxConfigSchema.parse({});
     expect(cfg.recallMaxContentChars).toBe(500);
     expect(cfg.recallPreferAbstract).toBe(true);
   });
@@ -126,7 +126,7 @@ describe("Slice E: tokenBudget enforcement", () => {
     // Each memory ~200 chars -> ~50 tokens per line (200 chars + "- [memory] " prefix)
     const memories: FindResultItem[] = Array.from({ length: 10 }, (_, i) =>
       mockMemory({
-        uri: `viking://user/memories/${i}`,
+        uri: `ctx://user/memories/${i}`,
         abstract: "A".repeat(200),
         level: 2,
         score: 0.8 - i * 0.01,
@@ -162,7 +162,7 @@ describe("Slice E: tokenBudget enforcement", () => {
   });
 
   it("should have recallTokenBudget in parsed config with default 2000", () => {
-    const cfg = memoryOpenVikingConfigSchema.parse({});
+    const cfg = memoryAtomCtxConfigSchema.parse({});
     expect(cfg.recallTokenBudget).toBe(2000);
   });
 });
@@ -170,13 +170,13 @@ describe("Slice E: tokenBudget enforcement", () => {
 describe("Slice C: isLeafLikeMemory narrowing", () => {
   it("should NOT boost .md URI items that are not level 2", () => {
     const mdButNotLeaf = mockMemory({
-      uri: "viking://user/resources/notes.md",
+      uri: "ctx://user/resources/notes.md",
       level: 1,
       score: 0.30,
       abstract: "Some notes file",
     });
     const actualLeaf = mockMemory({
-      uri: "viking://user/memories/real-memory",
+      uri: "ctx://user/memories/real-memory",
       level: 2,
       score: 0.30,
       abstract: "Actual leaf memory",
@@ -189,6 +189,6 @@ describe("Slice C: isLeafLikeMemory narrowing", () => {
     );
 
     // The level-2 item should rank higher (gets boost), .md non-leaf should not
-    expect(result[0]!.uri).toBe("viking://user/memories/real-memory");
+    expect(result[0]!.uri).toBe("ctx://user/memories/real-memory");
   });
 });

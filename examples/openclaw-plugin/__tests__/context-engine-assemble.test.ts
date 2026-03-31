@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { OpenVikingClient } from "../client.js";
-import { memoryOpenVikingConfigSchema } from "../config.js";
-import { createMemoryOpenVikingContextEngine } from "../context-engine.js";
+import type { AtomCtxClient } from "../client.js";
+import { memoryAtomCtxConfigSchema } from "../config.js";
+import { createMemoryAtomCtxContextEngine } from "../context-engine.js";
 
-const cfg = memoryOpenVikingConfigSchema.parse({
+const cfg = memoryAtomCtxConfigSchema.parse({
   mode: "remote",
   baseUrl: "http://127.0.0.1:1933",
   autoCapture: false,
@@ -39,13 +39,13 @@ function makeEngine(contextResult: unknown) {
   const logger = makeLogger();
   const client = {
     getSessionContext: vi.fn().mockResolvedValue(contextResult),
-  } as unknown as OpenVikingClient;
+  } as unknown as AtomCtxClient;
   const getClient = vi.fn().mockResolvedValue(client);
   const resolveAgentId = vi.fn((sessionId: string) => `agent:${sessionId}`);
 
-  const engine = createMemoryOpenVikingContextEngine({
-    id: "openviking",
-    name: "Context Engine (OpenViking)",
+  const engine = createMemoryAtomCtxContextEngine({
+    id: "atom_ctx",
+    name: "Context Engine (AtomCtx)",
     version: "test",
     cfg,
     logger,

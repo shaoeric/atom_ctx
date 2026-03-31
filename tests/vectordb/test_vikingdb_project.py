@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
 
-from openviking.storage.vectordb.project.vikingdb_project import get_or_create_vikingdb_project
+from atom_ctx.storage.vectordb.project.vikingdb_project import get_or_create_vikingdb_project
 
 
 @unittest.skip("Temporarily skip TestVikingDBProject")

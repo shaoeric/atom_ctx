@@ -7,7 +7,7 @@ import httpx
 
 
 async def test_ls_root(client: httpx.AsyncClient):
-    resp = await client.get("/api/v1/fs/ls", params={"uri": "viking://"})
+    resp = await client.get("/api/v1/fs/ls", params={"uri": "ctx://"})
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
@@ -17,7 +17,7 @@ async def test_ls_root(client: httpx.AsyncClient):
 async def test_ls_simple(client: httpx.AsyncClient):
     resp = await client.get(
         "/api/v1/fs/ls",
-        params={"uri": "viking://", "simple": True},
+        params={"uri": "ctx://", "simple": True},
     )
     assert resp.status_code == 200
     body = resp.json()
@@ -26,14 +26,14 @@ async def test_ls_simple(client: httpx.AsyncClient):
     # Each item must be a non-empty URI string (fixes #218)
     for item in body["result"]:
         assert isinstance(item, str)
-        assert item.startswith("viking://")
+        assert item.startswith("ctx://")
 
 
 async def test_ls_simple_agent_output(client: httpx.AsyncClient):
     """Ensure --simple with output=agent returns URI strings, not empty."""
     resp = await client.get(
         "/api/v1/fs/ls",
-        params={"uri": "viking://", "simple": True, "output": "agent"},
+        params={"uri": "ctx://", "simple": True, "output": "agent"},
     )
     assert resp.status_code == 200
     body = resp.json()
@@ -41,26 +41,26 @@ async def test_ls_simple_agent_output(client: httpx.AsyncClient):
     assert isinstance(body["result"], list)
     for item in body["result"]:
         assert isinstance(item, str)
-        assert item.startswith("viking://")
+        assert item.startswith("ctx://")
 
 
 async def test_mkdir_and_ls(client: httpx.AsyncClient):
     resp = await client.post(
         "/api/v1/fs/mkdir",
-        json={"uri": "viking://resources/test_dir/"},
+        json={"uri": "ctx://resources/test_dir/"},
     )
     assert resp.status_code == 200
     assert resp.json()["status"] == "ok"
 
     resp = await client.get(
         "/api/v1/fs/ls",
-        params={"uri": "viking://resources/"},
+        params={"uri": "ctx://resources/"},
     )
     assert resp.status_code == 200
 
 
 async def test_tree(client: httpx.AsyncClient):
-    resp = await client.get("/api/v1/fs/tree", params={"uri": "viking://"})
+    resp = await client.get("/api/v1/fs/tree", params={"uri": "ctx://"})
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
@@ -69,7 +69,7 @@ async def test_tree(client: httpx.AsyncClient):
 async def test_stat_not_found(client: httpx.AsyncClient):
     resp = await client.get(
         "/api/v1/fs/stat",
-        params={"uri": "viking://nonexistent/xyz"},
+        params={"uri": "ctx://nonexistent/xyz"},
     )
     assert resp.status_code in (404, 500)
     body = resp.json()
@@ -90,7 +90,7 @@ async def test_resource_ops(client_with_resource):
     # ls recursive
     resp = await client.get(
         "/api/v1/fs/ls",
-        params={"uri": "viking://", "recursive": True},
+        params={"uri": "ctx://", "recursive": True},
     )
     assert resp.status_code == 200
     body = resp.json()

@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# 卸载新版 openviking 插件的脚本
+# 卸载新版 atom_ctx 插件的脚本
 #
 # 用法：
-#   bash uninstall-openviking.sh
-#   bash uninstall-openviking.sh --workdir ~/.openclaw-dir  # 指定 OpenClaw 目录
+#   bash uninstall-atom_ctx.sh
+#   bash uninstall-atom_ctx.sh --workdir ~/.openclaw-dir  # 指定 OpenClaw 目录
 #
 set -euo pipefail
 
@@ -35,11 +35,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 CONFIG_FILE="${OPENCLAW_DIR}/openclaw.json"
-PLUGIN_ID="openviking"
+PLUGIN_ID="atom_ctx"
 PLUGIN_DIR="${OPENCLAW_DIR}/extensions/${PLUGIN_ID}"
 DISABLED_DIR="${OPENCLAW_DIR}/disabled-extensions"
 PLUGIN_BACKUP_DIR="${DISABLED_DIR}/${PLUGIN_ID}-uninstall-backup-$(date +%Y%m%d%H%M%S)"
-BAK_SUFFIX=".pre-openviking-uninstall.bak"
+BAK_SUFFIX=".pre-atom_ctx-uninstall.bak"
 
 CONFIG_BACKUP_CREATED=0
 PLUGIN_MOVED=0
@@ -100,7 +100,7 @@ fi
 
 info "OpenClaw 目录：${OPENCLAW_DIR}"
 info "配置文件：${CONFIG_FILE}"
-info "OpenViking 服务/运行时：保留，不做卸载"
+info "AtomCtx 服务/运行时：保留，不做卸载"
 echo ""
 
 # ============================================================
@@ -269,10 +269,10 @@ fi
 echo ""
 
 # ============================================================
-# Step 6: 保留 OpenViking 服务/运行时
+# Step 6: 保留 AtomCtx 服务/运行时
 # ============================================================
-info "Step 6: 保留 OpenViking 服务/运行时..."
-info "已保留 Python 包 openviking、~/.openviking 目录及 openviking.env 环境文件"
+info "Step 6: 保留 AtomCtx 服务/运行时..."
+info "已保留 Python 包 atom_ctx、~/.ctx 目录及 atom_ctx.env 环境文件"
 echo ""
 
 # ============================================================
@@ -292,7 +292,7 @@ if [ -d "${PLUGIN_BACKUP_DIR}" ]; then
     info "  3. mv ${PLUGIN_BACKUP_DIR} ${PLUGIN_DIR}"
 fi
 info ""
-info "如需重新安装新版 openviking 插件："
-info "  npm install -g openclaw-openviking-setup-helper && ov-install"
+info "如需重新安装新版 atom_ctx 插件："
+info "  npm install -g openclaw-atom_ctx-setup-helper && ov-install"
 
 trap - ERR

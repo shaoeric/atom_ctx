@@ -3,8 +3,8 @@
 
 """Tests for SemanticConfig, overview budget estimation, and memory chunking."""
 
-from openviking.session.compressor import SessionCompressor
-from openviking_cli.utils.config.parser_config import SemanticConfig
+from atom_ctx.session.compressor import SessionCompressor
+from atom_ctx_cli.utils.config.parser_config import SemanticConfig
 
 
 def test_semantic_config_defaults():

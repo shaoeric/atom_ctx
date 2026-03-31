@@ -12,7 +12,7 @@ Regression tests for two bugs fixed in the ollama factory lambda:
 import pytest
 from unittest.mock import MagicMock, patch
 
-from openviking_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
+from atom_ctx_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
 
 
 def _make_mock_openai_class():

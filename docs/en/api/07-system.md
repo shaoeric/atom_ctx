@@ -1,6 +1,6 @@
 # System and Monitoring
 
-OpenViking provides system health, observability, and debug APIs for monitoring component status.
+AtomCtx provides system health, observability, and debug APIs for monitoring component status.
 
 ## API Reference
 
@@ -29,7 +29,7 @@ curl -X GET http://localhost:1933/health
 **CLI**
 
 ```bash
-openviking health
+atom_ctx health
 ```
 
 **Response**
@@ -66,7 +66,7 @@ curl -X GET http://localhost:1933/api/v1/system/status \
 **CLI**
 
 ```bash
-openviking status
+atom_ctx status
 ```
 
 **Response**
@@ -123,7 +123,7 @@ curl -X POST http://localhost:1933/api/v1/system/wait \
 **CLI**
 
 ```bash
-openviking wait [--timeout 60]
+atom_ctx wait [--timeout 60]
 ```
 
 **Response**
@@ -177,7 +177,7 @@ curl -X GET http://localhost:1933/api/v1/observer/queue \
 **CLI**
 
 ```bash
-openviking observer queue
+atom_ctx observer queue
 ```
 
 **Response**
@@ -230,7 +230,7 @@ curl -X GET http://localhost:1933/api/v1/observer/vikingdb \
 **CLI**
 
 ```bash
-openviking observer vikingdb
+atom_ctx observer vikingdb
 ```
 
 **Response**
@@ -279,7 +279,7 @@ curl -X GET http://localhost:1933/api/v1/observer/vlm \
 **CLI**
 
 ```bash
-openviking observer vlm
+atom_ctx observer vlm
 ```
 
 **Response**
@@ -334,7 +334,7 @@ curl -X GET http://localhost:1933/api/v1/observer/system \
 **CLI**
 
 ```bash
-openviking observer system
+atom_ctx observer system
 ```
 
 **Response**

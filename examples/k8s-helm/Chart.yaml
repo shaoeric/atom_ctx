@@ -1,17 +1,17 @@
 apiVersion: v2
-name: openviking
-description: A Helm chart for OpenViking - RAG and semantic search via OpenViking Context Database MCP server
+name: atom_ctx
+description: A Helm chart for AtomCtx - RAG and semantic search via AtomCtx Context Database MCP server
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
 keywords:
-  - openviking
+  - atom_ctx
   - rag
   - semantic-search
   - mcp
   - knowledge-base
-home: https://github.com/volcengine/OpenViking
+home: https://github.com/volcengine/AtomCtx
 sources:
-  - https://github.com/volcengine/OpenViking
+  - https://github.com/volcengine/AtomCtx
 maintainers:
-  - name: OpenViking Contributors
+  - name: AtomCtx Contributors

@@ -1,7 +1,7 @@
 import pytest
 
-from openviking.resource.watch_scheduler import WatchScheduler
-from openviking.service.resource_service import ResourceService
+from atom_ctx.resource.watch_scheduler import WatchScheduler
+from atom_ctx.service.resource_service import ResourceService
 
 
 class TestWatchSchedulerValidation:

@@ -50,7 +50,7 @@ curl -X POST http://localhost:1933/api/v1/admin/accounts \
 **CLI**
 
 ```bash
-openviking admin create-account acme --admin alice
+atom_ctx admin create-account acme --admin alice
 ```
 
 **Response**
@@ -87,7 +87,7 @@ curl -X GET http://localhost:1933/api/v1/admin/accounts \
 **CLI**
 
 ```bash
-openviking admin list-accounts
+atom_ctx admin list-accounts
 ```
 
 **Response**
@@ -129,7 +129,7 @@ curl -X DELETE http://localhost:1933/api/v1/admin/accounts/acme \
 **CLI**
 
 ```bash
-openviking admin delete-account acme
+atom_ctx admin delete-account acme
 ```
 
 **Response**
@@ -177,7 +177,7 @@ curl -X POST http://localhost:1933/api/v1/admin/accounts/acme/users \
 **CLI**
 
 ```bash
-openviking admin register-user acme bob --role user
+atom_ctx admin register-user acme bob --role user
 ```
 
 **Response**
@@ -220,7 +220,7 @@ curl -X GET http://localhost:1933/api/v1/admin/accounts/acme/users \
 **CLI**
 
 ```bash
-openviking admin list-users acme
+atom_ctx admin list-users acme
 ```
 
 **Response**
@@ -263,7 +263,7 @@ curl -X DELETE http://localhost:1933/api/v1/admin/accounts/acme/users/bob \
 **CLI**
 
 ```bash
-openviking admin remove-user acme bob
+atom_ctx admin remove-user acme bob
 ```
 
 **Response**
@@ -309,7 +309,7 @@ curl -X PUT http://localhost:1933/api/v1/admin/accounts/acme/users/bob/role \
 **CLI**
 
 ```bash
-openviking admin set-role acme bob admin
+atom_ctx admin set-role acme bob admin
 ```
 
 **Response**
@@ -354,7 +354,7 @@ curl -X POST http://localhost:1933/api/v1/admin/accounts/acme/users/bob/key \
 **CLI**
 
 ```bash
-openviking admin regenerate-key acme bob
+atom_ctx admin regenerate-key acme bob
 ```
 
 **Response**
@@ -377,27 +377,27 @@ openviking admin regenerate-key acme bob
 
 ```bash
 # Step 1: ROOT creates workspace with alice as first admin
-openviking admin create-account acme --admin alice
+atom_ctx admin create-account acme --admin alice
 # Returns alice's user_key
 
 # Step 2: alice (admin) registers regular user bob
-openviking admin register-user acme bob --role user
+atom_ctx admin register-user acme bob --role user
 # Returns bob's user_key
 
 # Step 3: List all users in the account
-openviking admin list-users acme
+atom_ctx admin list-users acme
 
 # Step 4: ROOT promotes bob to admin
-openviking admin set-role acme bob admin
+atom_ctx admin set-role acme bob admin
 
 # Step 5: bob lost their key, regenerate (old key immediately invalidated)
-openviking admin regenerate-key acme bob
+atom_ctx admin regenerate-key acme bob
 
 # Step 6: Remove user
-openviking admin remove-user acme bob
+atom_ctx admin remove-user acme bob
 
 # Step 7: Delete entire workspace
-openviking admin delete-account acme
+atom_ctx admin delete-account acme
 ```
 
 ### HTTP API Equivalent

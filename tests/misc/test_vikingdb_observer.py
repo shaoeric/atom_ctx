@@ -7,8 +7,8 @@ Test VikingDBObserver functionality
 
 import asyncio
 
-import openviking as ov
-from openviking.async_client import AsyncOpenViking
+import atom_ctx as ctx
+from atom_ctx.async_client import AsyncAtomCtx
 
 
 async def test_vikingdb_observer():
@@ -16,9 +16,9 @@ async def test_vikingdb_observer():
     print("=== Test VikingDBObserver ===")
 
     # Reset singleton to ensure clean state from previous tests
-    await AsyncOpenViking.reset()
+    await AsyncAtomCtx.reset()
 
-    client = ov.AsyncOpenViking(path="./test_data/test_vikingdb_observer")
+    client = ctx.AsyncAtomCtx(path="./test_data/test_vikingdb_observer")
 
     try:
         # Initialize client
@@ -75,7 +75,7 @@ async def test_vikingdb_observer():
         traceback.print_exc()
 
     finally:
-        await AsyncOpenViking.reset()
+        await AsyncAtomCtx.reset()
         print("Client closed")
 
 
@@ -84,9 +84,9 @@ async def test_sync_client():
     print("\n=== Test sync client ===")
 
     # Reset singleton to ensure clean state from previous tests
-    await AsyncOpenViking.reset()
+    await AsyncAtomCtx.reset()
 
-    client = ov.OpenViking(path="./test_data/test_vikingdb_observer")
+    client = ctx.AtomCtx(path="./test_data/test_vikingdb_observer")
 
     try:
         # Initialize
@@ -114,7 +114,7 @@ async def test_sync_client():
 
     finally:
         client.close()
-        await AsyncOpenViking.reset()
+        await AsyncAtomCtx.reset()
         print("Sync client closed")
 
 

@@ -2,12 +2,12 @@ import os
 
 import psutil
 import pytest
-from api.client import OpenVikingAPIClient
+from api.client import AtomCtxAPIClient
 from config import Config
 
 TEST_CASE_DESCRIPTIONS = {
     "test_add_resource.py::TestAddResource::test_add_resource_simple": "向知识库添加资源",
-    "test_pack.py::TestPack::test_export_ovpack": "导出资源包",
+    "test_pack.py::TestPack::test_export_ctxpack": "导出资源包",
     "test_wait_processed.py::TestWaitProcessed::test_wait_processed": "等待资源处理完成",
     "test_fs_ls.py::TestFsLs::test_fs_ls_root": "列出文件系统根目录",
     "test_fs_mkdir.py::TestFsMkdir::test_fs_mkdir": "创建目录",
@@ -73,7 +73,7 @@ TEST_CASE_DESCRIPTIONS = {
 
 TEST_CASE_APIS = {
     "test_add_resource.py::TestAddResource::test_add_resource_simple": "/api/v1/resources",
-    "test_pack.py::TestPack::test_export_ovpack": "/api/v1/resources/pack",
+    "test_pack.py::TestPack::test_export_ctxpack": "/api/v1/resources/pack",
     "test_wait_processed.py::TestWaitProcessed::test_wait_processed": "/api/v1/resources/wait",
     "test_fs_ls.py::TestFsLs::test_fs_ls_root": "/api/v1/fs/ls",
     "test_fs_mkdir.py::TestFsMkdir::test_fs_mkdir": "/api/v1/fs/mkdir",
@@ -217,7 +217,7 @@ def get_test_category(nodeid):
 
 @pytest.fixture(scope="session")
 def api_client():
-    client = OpenVikingAPIClient(server_url=Config.SERVER_URL, api_key=Config.OPENVIKING_API_KEY)
+    client = AtomCtxAPIClient(server_url=Config.SERVER_URL, api_key=Config.ATOM_CTX_API_KEY)
     return client
 
 
@@ -341,14 +341,14 @@ def pytest_html_results_table_row(report, cells):
 
 
 def pytest_html_report_title(report):
-    report.title = "OpenViking API测试报告"
+    report.title = "AtomCtx API测试报告"
 
 
 def pytest_html_results_summary(prefix, summary, postfix):
     prefix.extend(
         [
             """
-    <p><strong>OpenViking Version:</strong> 0.2.9</p>
+    <p><strong>AtomCtx Version:</strong> 0.2.9</p>
     """
         ]
     )

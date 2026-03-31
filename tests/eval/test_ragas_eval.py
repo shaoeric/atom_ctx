@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from openviking.eval.ragas import (
+from atom_ctx.eval.ragas import (
     EvalDataset,
     EvalSample,
     RagasConfig,
@@ -138,7 +138,7 @@ async def test_run_ragas_evaluation_with_file():
 
     This test requires LLM configuration via:
     - Environment variables: RAGAS_LLM_API_KEY, RAGAS_LLM_API_BASE, RAGAS_LLM_MODEL
-    - Or OpenViking VLM config in ~/.openviking/ov.conf
+    - Or AtomCtx VLM config in ~/.ctx/ctx.conf
     """
     results = load_eval_results()
 
@@ -150,7 +150,7 @@ async def test_run_ragas_evaluation_with_file():
     if evaluator.llm is None:
         pytest.skip(
             "RAGAS LLM not configured. Set RAGAS_LLM_API_KEY, RAGAS_LLM_API_BASE, "
-            "RAGAS_LLM_MODEL environment variables or configure VLM in ~/.openviking/ov.conf"
+            "RAGAS_LLM_MODEL environment variables or configure VLM in ~/.ctx/ctx.conf"
         )
 
     samples = []
@@ -187,7 +187,7 @@ async def test_run_ragas_evaluation_single_sample():
     if evaluator.llm is None:
         pytest.skip(
             "RAGAS LLM not configured. Set RAGAS_LLM_API_KEY, RAGAS_LLM_API_BASE, "
-            "RAGAS_LLM_MODEL environment variables or configure VLM in ~/.openviking/ov.conf"
+            "RAGAS_LLM_MODEL environment variables or configure VLM in ~/.ctx/ctx.conf"
         )
 
     sample = EvalSample(

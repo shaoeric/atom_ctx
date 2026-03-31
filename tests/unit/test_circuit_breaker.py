@@ -7,7 +7,7 @@ import time
 
 import pytest
 
-from openviking.utils.circuit_breaker import (
+from atom_ctx.utils.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
     classify_api_error,

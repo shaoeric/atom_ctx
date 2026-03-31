@@ -1,25 +1,25 @@
 # Quick Start: Server Mode
 
-Run OpenViking as a standalone HTTP server and connect from any client.
+Run AtomCtx as a standalone HTTP server and connect from any client.
 
 ## Prerequisites
 
-- OpenViking installed (`pip install openviking --upgrade --force-reinstall`)
+- AtomCtx installed (`pip install atom-ctx --upgrade --force-reinstall`)
 - Model configuration ready (see [Quick Start](02-quickstart.md) for setup)
 
 ## Start the Server
 
-Make sure you have a config file at `~/.openviking/ov.conf` with your model and storage settings (see [Configuration](../guides/01-configuration.md)).
+Make sure you have a config file at `~/.ctx/ctx.conf` with your model and storage settings (see [Configuration](../guides/01-configuration.md)).
 
 ```bash
-# Config file at default path ~/.openviking/ov.conf — just start
-openviking-server
+# Config file at default path ~/.ctx/ctx.conf — just start
+ctx-server
 
 # Config file at a different location — specify with --config
-openviking-server --config /path/to/ov.conf
+ctx-server --config /path/to/ctx.conf
 
 # Override host/port
-openviking-server --port 8000
+ctx-server --port 8000
 ```
 
 You should see:
@@ -38,23 +38,23 @@ curl http://localhost:1933/health
 ## Connect with Python SDK
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(url="http://localhost:1933")
+client = ctx.SyncHTTPClient(url="http://localhost:1933")
 ```
 
 ### Authentication
 
-When authentication is enabled, pass an API key. OpenViking uses a two-tier key system:
+When authentication is enabled, pass an API key. AtomCtx uses a two-tier key system:
 
 **Regular data access: use a `user_key` (recommended)**
 
 For most scenarios, use a `user_key` — it directly works with tenant-scoped APIs like `add_resource`, `find`, and `ls`:
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(
+client = ctx.SyncHTTPClient(
     url="http://localhost:1933",
     api_key="<user-key>",
     agent_id="my-agent",      # optional
@@ -68,9 +68,9 @@ client = ov.SyncHTTPClient(
 `root_key` is for management operations (creating accounts, system status, etc.). To access tenant-scoped APIs with `root_key`, you **must** also pass `account` and `user`:
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(
+client = ctx.SyncHTTPClient(
     url="http://localhost:1933",
     api_key="<root-key>",
     account="acme",           # required: target tenant
@@ -79,23 +79,23 @@ client = ov.SyncHTTPClient(
 ```
 
 > ⚠️ Using `root_key` for `add_resource`, `find`, etc. without `account`/`user` will return:
-> `ROOT requests to tenant-scoped APIs must include X-OpenViking-Account and X-OpenViking-User headers`
+> `ROOT requests to tenant-scoped APIs must include X-AtomCtx-Account and X-AtomCtx-User headers`
 
 See [Authentication](../guides/04-authentication.md) for details (trusted mode, CLI config, etc.).
 
 **Full example (using `user_key`):**
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(url="http://localhost:1933")
+client = ctx.SyncHTTPClient(url="http://localhost:1933")
 
 try:
     client.initialize()
 
     # Add a resource
     result = client.add_resource(
-        "https://raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md"
+        "https://raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md"
     )
     root_uri = result["root_uri"]
 
@@ -103,7 +103,7 @@ try:
     client.wait_processed()
 
     # Search
-    results = client.find("what is openviking", target_uri=root_uri)
+    results = client.find("what is atom_ctx", target_uri=root_uri)
     for r in results.resources:
         print(f"  {r.uri} (score: {r.score:.4f})")
 
@@ -113,7 +113,7 @@ finally:
 
 ## Connect with CLI
 
-Create a CLI config file `~/.openviking/ovcli.conf` that points to your server:
+Create a CLI config file `~/.ctx/ctx-cli.conf` that points to your server:
 
 ```json
 {
@@ -126,23 +126,23 @@ Once configured, use the CLI to manage resources and query your Agent's memory:
 
 ```bash
 # Check system health
-openviking observer system
+atom_ctx observer system
 
 # Add a resource to memory
-openviking add-resource https://raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md
+atom_ctx add-resource https://raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md
 
 # List all synchronized resources
-openviking ls viking://resources
+atom_ctx ls ctx://resources
 
 # Query
-openviking find "what is openviking"
+atom_ctx find "what is atom_ctx"
 
 ```
 
 If the config file is at a different location, specify it via environment variable:
 
 ```bash
-export OPENVIKING_CLI_CONFIG_FILE=/path/to/ovcli.conf
+export CTX_CLI_CONFIG_FILE=/path/to/ctx-cli.conf
 ```
 
 ## Connect with curl
@@ -153,15 +153,15 @@ Use direct `path` for remote URLs. For local files, upload first with `POST /api
 # Add a resource
 curl -X POST http://localhost:1933/api/v1/resources \
   -H "Content-Type: application/json" \
-  -d '{"path": "https://raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md"}'
+  -d '{"path": "https://raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md"}'
 
 # List resources
-curl "http://localhost:1933/api/v1/fs/ls?uri=viking://resources/"
+curl "http://localhost:1933/api/v1/fs/ls?uri=ctx://resources/"
 
 # Semantic search
 curl -X POST http://localhost:1933/api/v1/search/find \
   -H "Content-Type: application/json" \
-  -d '{"query": "what is openviking"}'
+  -d '{"query": "what is atom_ctx"}'
 ```
 
 ## Recommended Cloud Deployment: Volcengine ECS
@@ -204,7 +204,7 @@ fi
 
 ```
 
-### 3. Installing Dependencies and OpenViking
+### 3. Installing Dependencies and AtomCtx
 
 ```bash
 yum install -y curl git tree
@@ -233,14 +233,14 @@ echo "Python version: $(python --version)"
 
 ```
 
-* **Install OpenViking**: Install the tool within your activated virtual environment:
+* **Install AtomCtx**: Install the tool within your activated virtual environment:
 
 ```bash
-uv tool install openviking --upgrade
+uv tool install atom_ctx --upgrade
 
 ```
 
-### 4. OpenViking Server Configuration and Startup
+### 4. AtomCtx Server Configuration and Startup
 
 Configure your AI models and set up the service to run as a background daemon.
 
@@ -251,14 +251,14 @@ Create the directory and configuration file before starting the service.
 **Create config directory:**
 
 ```bash
-mkdir -p ~/.openviking
+mkdir -p ~/.ctx
 
 ```
 
 **Create and edit the config file:**
 
 ```bash
-vim ~/.openviking/ov.conf
+vim ~/.ctx/ctx.conf
 
 ```
 
@@ -304,10 +304,10 @@ mkdir -p /data/log/
 * **Launch with nohup:**
 
 ```bash
-nohup openviking-server > /data/log/openviking.log 2>&1 &
+nohup ctx-server > /data/log/ctx-server.log 2>&1 &
 
 # Note: Data will be stored in ./data relative to the execution path.
-# To stop the service: pkill openviking; pkill agfs
+# To stop the service: pkill atom_ctx; pkill agfs
 
 ```
 
@@ -317,22 +317,22 @@ nohup openviking-server > /data/log/openviking.log 2>&1 &
 
 * **Check Process:**
 ```bash
-ps aux | grep openviking-server
+ps aux | grep ctx-server
 ```
 
 * **Check Logs:**
 ```bash
-tail -f /data/log/openviking.log # TODO: Implement log rotation
+tail -f /data/log/ctx-server.log # TODO: Implement log rotation
 ```
 
 ### 5. Client Configuration and Testing (CLI)
 
-Ensure `openviking` is also installed locally to use the CLI. You must point the `ovcli.conf` to your server address.
+Ensure `atom_ctx` is also installed locally to use the CLI. You must point the `ctx-cli.conf` to your server address.
 
 * **Prepare client config:**
 
 ```bash
-vim ~/.openviking/ovcli.conf
+vim ~/.ctx/ctx-cli.conf
 ```
 
 * **Add the following (replace with your server's IP):**
@@ -348,20 +348,20 @@ vim ~/.openviking/ovcli.conf
 * **Monitor System Health:**
 
 ```bash
-openviking observer system
+atom_ctx observer system
 ```
 
 * **Functional Testing (Upload & Search):**
 
 ```bash
 # Upload a test resource
-openviking add-resource https://raw.githubusercontent.com/ZaynJarvis/doc-eval/refs/heads/main/text.md
+atom_ctx add-resource https://raw.githubusercontent.com/ZaynJarvis/doc-eval/refs/heads/main/text.md
 
 # List resources
-openviking ls viking://resources
+atom_ctx ls ctx://resources
 
 # Test retrieval
-openviking find "who is Alice"
+atom_ctx find "who is Alice"
 ```
 
 ## Next Steps

@@ -1,6 +1,6 @@
-# OpenViking Tests
+# AtomCtx Tests
 
-Unit tests and integration tests for OpenViking.
+Unit tests and integration tests for AtomCtx.
 
 ## Directory Structure
 
@@ -20,10 +20,10 @@ tests/
 
 ### Configuration
 
-Set the `OPENVIKING_CONFIG_FILE` environment variable to point to your `ov.conf` file, which manages VLM, Embedding, and other model settings in one place:
+Set the `CTX_CONFIG_FILE` environment variable to point to your `ctx.conf` file, which manages VLM, Embedding, and other model settings in one place:
 
 ```bash
-export OPENVIKING_CONFIG_FILE="/path/to/ov.conf"
+export CTX_CONFIG_FILE="/path/to/ctx.conf"
 ```
 
 See [docs/en/guides/configuration.md](../docs/en/guides/configuration.md) for the config file format.
@@ -43,7 +43,7 @@ pip install pytest pytest-asyncio
 pytest tests/client tests/server tests/session tests/vectordb tests/misc tests/integration -v
 
 # Run with coverage
-pytest tests/client tests/server tests/session tests/vectordb tests/misc tests/integration --cov=openviking --cov-report=html
+pytest tests/client tests/server tests/session tests/vectordb tests/misc tests/integration --cov=atom_ctx --cov-report=html
 ```
 
 ### Running Specific Tests
@@ -111,7 +111,7 @@ make
 
 ### client/
 
-Tests for the OpenViking client API (`AsyncOpenViking` / `SyncOpenViking`).
+Tests for the AtomCtx client API (`AsyncAtomCtx` / `SyncAtomCtx`).
 
 | File | Description | Key Test Cases |
 |------|-------------|----------------|
@@ -122,11 +122,11 @@ Tests for the OpenViking client API (`AsyncOpenViking` / `SyncOpenViking`).
 | `test_search.py` | Semantic search | `find()` fast vector search with limit/threshold/target_uri; `search()` with intent analysis and session context |
 | `test_relations.py` | Resource linking | `link()` single/multiple URIs with reason; `unlink()` existing/nonexistent; `relations()` query |
 | `test_file_operations.py` | File manipulation | `rm()` file/directory with recursive; `mv()` rename/move; `grep()` content search with case sensitivity; `glob()` pattern matching |
-| `test_import_export.py` | Import/Export | `export_ovpack()` file/directory; `import_ovpack()` with force/vectorize options; roundtrip verification |
+| `test_import_export.py` | Import/Export | `export_ctxpack()` file/directory; `import_ctxpack()` with force/vectorize options; roundtrip verification |
 
 ### server/
 
-Tests for the OpenViking HTTP server API and AsyncHTTPClient SDK.
+Tests for the AtomCtx HTTP server API and AsyncHTTPClient SDK.
 
 | File | Description | Key Test Cases |
 |------|-------------|----------------|

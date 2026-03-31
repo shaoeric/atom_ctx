@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for _generate_merged_filename uniqueness when headings collide."""
 
-from openviking.parse.parsers.markdown import MarkdownParser
-from openviking_cli.utils.config.parser_config import ParserConfig
+from atom_ctx.parse.parsers.markdown import MarkdownParser
+from atom_ctx_cli.utils.config.parser_config import ParserConfig
 
 
 class TestGenerateMergedFilenameCollision:

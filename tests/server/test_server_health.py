@@ -7,8 +7,8 @@ import asyncio
 
 import httpx
 
-from openviking.server.app import create_app
-from openviking.server.config import ServerConfig
+from atom_ctx.server.app import create_app
+from atom_ctx.server.config import ServerConfig
 
 
 async def test_health_endpoint(client: httpx.AsyncClient):
@@ -33,9 +33,9 @@ async def test_process_time_header(client: httpx.AsyncClient):
     assert value >= 0
 
 
-async def test_openviking_error_handler(client: httpx.AsyncClient):
+async def test_atom_ctx_error_handler(client: httpx.AsyncClient):
     """Requesting a non-existent resource should return structured error."""
-    resp = await client.get("/api/v1/fs/stat", params={"uri": "viking://nonexistent/path"})
+    resp = await client.get("/api/v1/fs/stat", params={"uri": "ctx://nonexistent/path"})
     assert resp.status_code in (404, 500)
     body = resp.json()
     assert body["status"] == "error"

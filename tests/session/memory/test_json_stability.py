@@ -10,7 +10,7 @@ from typing import List, Optional
 import pytest
 from pydantic import BaseModel, Field
 
-from openviking.session.memory.utils import (
+from atom_ctx.session.memory.utils import (
     remove_json_trailing_content,
     extract_json_content,
     parse_memory_file_with_fields,
@@ -259,12 +259,12 @@ class TestMemoryOperationsIntegration:
         # Note: This would need field-level tolerance applied
         content = '''{
             "reasonning": "Removed old memory",
-            "delete_uris": "viking://user/default/memories/old.md"
+            "delete_uris": "ctx://user/default/memories/old.md"
         }'''
         # First parse as raw dict
         data, error = parse_json_with_stability(content)
         assert error is None
-        assert data['delete_uris'] == 'viking://user/default/memories/old.md'
+        assert data['delete_uris'] == 'ctx://user/default/memories/old.md'
 
 
 class TestParseMemoryFileWithFields:

@@ -1,6 +1,6 @@
 # Context Types
 
-Based on a simplified mapping of human cognitive patterns and engineering considerations, OpenViking abstracts context into **three basic types: Resource, Memory, and Skill**, each serving different purposes in Agent applications.
+Based on a simplified mapping of human cognitive patterns and engineering considerations, AtomCtx abstracts context into **three basic types: Resource, Memory, and Skill**, each serving different purposes in Agent applications.
 
 ## Overview
 
@@ -38,7 +38,7 @@ client.add_resource(
 # Search resources
 results = client.find(
     "authentication methods",
-    target_uri="viking://resources/"
+    target_uri="ctx://resources/"
 )
 ```
 
@@ -74,7 +74,7 @@ await session.commit()  # Extracts preference memory
 # Search memories
 results = await client.find(
     "UI preferences",
-    target_uri="viking://user/memories/"
+    target_uri="ctx://user/memories/"
 )
 ```
 
@@ -91,7 +91,7 @@ Skills are capabilities that Agents can invoke, such as current Skills, MCP, etc
 ### Storage Location
 
 ```
-viking://agent/skills/{skill-name}/
+ctx://agent/skills/{skill-name}/
 ├── .abstract.md          # L0: Short description
 ├── SKILL.md              # L1: Detailed overview
 └── scripts               # L2: Full definition
@@ -110,7 +110,7 @@ await client.add_skill({
 # Search skills
 results = await client.find(
     "web search",
-    target_uri="viking://agent/skills/"
+    target_uri="ctx://agent/skills/"
 )
 ```
 
@@ -134,5 +134,5 @@ for ctx in results.skills:
 
 - [Architecture Overview](./01-architecture.md) - System architecture
 - [Context Layers](./03-context-layers.md) - L0/L1/L2 model
-- [Viking URI](./04-viking-uri.md) - URI specification
+- [Ctx URI](./04-ctx-uri.md) - URI specification
 - [Session Management](./08-session.md) - Memory extraction mechanism

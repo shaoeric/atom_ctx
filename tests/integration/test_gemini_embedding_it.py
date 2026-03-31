@@ -44,7 +44,7 @@ def test_batch_over_100(gemini_embedder):
 @pytest.mark.parametrize("model_name,_dim,token_limit", GEMINI_MODELS)
 def test_large_text_chunking(model_name, _dim, token_limit):
     """Text exceeding the model's token limit is auto-chunked by base class."""
-    from openviking.models.embedder.gemini_embedders import GeminiDenseEmbedder
+    from atom_ctx.models.embedder.gemini_embedders import GeminiDenseEmbedder
 
     phrase = "Machine learning is a subset of artificial intelligence. "
     large = phrase * ((token_limit * 2) // len(phrase.split()) + 10)
@@ -70,7 +70,7 @@ def test_large_text_chunking(model_name, _dim, token_limit):
 )
 def test_all_task_types_accepted(task_type):
     """All 8 Gemini task types must be accepted by the API without error."""
-    from openviking.models.embedder.gemini_embedders import GeminiDenseEmbedder
+    from atom_ctx.models.embedder.gemini_embedders import GeminiDenseEmbedder
 
     e = GeminiDenseEmbedder(
         "gemini-embedding-2-preview",
@@ -84,7 +84,7 @@ def test_all_task_types_accepted(task_type):
 
 def test_config_nonsymmetric_routing():
     """Single embedder uses is_query to route query_param/document_param task types."""
-    from openviking_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
+    from atom_ctx_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
 
     cfg = EmbeddingConfig(
         dense=EmbeddingModelConfig(
@@ -105,7 +105,7 @@ def test_config_nonsymmetric_routing():
 
 def test_invalid_api_key_error_message():
     """Wrong API key must raise RuntimeError with 'Invalid API key' hint."""
-    from openviking.models.embedder.gemini_embedders import GeminiDenseEmbedder
+    from atom_ctx.models.embedder.gemini_embedders import GeminiDenseEmbedder
 
     _fake_key = "INVALID_KEY_" + "XYZZY_123"
     bad = GeminiDenseEmbedder("gemini-embedding-2-preview", api_key=_fake_key)
@@ -115,7 +115,7 @@ def test_invalid_api_key_error_message():
 
 def test_invalid_model_error_message():
     """Unknown model name must raise RuntimeError with model-not-found hint."""
-    from openviking.models.embedder.gemini_embedders import GeminiDenseEmbedder
+    from atom_ctx.models.embedder.gemini_embedders import GeminiDenseEmbedder
 
     bad = GeminiDenseEmbedder("gemini-embedding-does-not-exist-xyz", api_key=GOOGLE_API_KEY)
     with pytest.raises(RuntimeError, match="Model not found"):

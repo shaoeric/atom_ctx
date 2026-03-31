@@ -46,26 +46,26 @@ class _FakeVikingFS:
         return None
 
     def _uri_to_path(self, uri, ctx=None):
-        return f"/mock/{uri.replace('viking://', '')}"
+        return f"/mock/{uri.replace('ctx://', '')}"
 
 
 @pytest.mark.asyncio
 async def test_resource_processor_first_add_persist_does_not_await_agfs_mv(monkeypatch):
-    from openviking.utils.resource_processor import ResourceProcessor
+    from atom_ctx.utils.resource_processor import ResourceProcessor
 
     fake_fs = _FakeVikingFS()
 
     monkeypatch.setattr(
-        "openviking.utils.resource_processor.get_current_telemetry",
+        "atom_ctx.utils.resource_processor.get_current_telemetry",
         lambda: _DummyTelemetry(),
     )
-    monkeypatch.setattr("openviking.utils.resource_processor.get_viking_fs", lambda: fake_fs)
+    monkeypatch.setattr("atom_ctx.utils.resource_processor.get_ctx_fs", lambda: fake_fs)
 
     rp = ResourceProcessor(vikingdb=_DummyVikingDB(), media_storage=None)
     rp._get_media_processor = MagicMock()
     rp._get_media_processor.return_value.process = AsyncMock(
         return_value=SimpleNamespace(
-            temp_dir_path="viking://temp/tmpdir",
+            temp_dir_path="ctx://temp/tmpdir",
             source_path="x",
             source_format="text",
             meta={},
@@ -74,12 +74,12 @@ async def test_resource_processor_first_add_persist_does_not_await_agfs_mv(monke
     )
 
     context_tree = SimpleNamespace(
-        root=SimpleNamespace(uri="viking://resources/root", temp_uri="viking://temp/root_tmp")
+        root=SimpleNamespace(uri="ctx://resources/root", temp_uri="ctx://temp/root_tmp")
     )
     rp.tree_builder.finalize_from_temp = AsyncMock(return_value=context_tree)
 
     result = await rp.process_resource(path="x", ctx=object(), build_index=False, summarize=False)
 
     assert result["status"] == "success"
-    assert result["root_uri"] == "viking://resources/root"
+    assert result["root_uri"] == "ctx://resources/root"
     fake_fs.agfs.mv.assert_called_once()

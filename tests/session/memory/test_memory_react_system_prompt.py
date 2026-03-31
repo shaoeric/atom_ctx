@@ -7,7 +7,7 @@ Test that provider instruction correctly instructs LLM.
 import pytest
 from unittest.mock import MagicMock
 
-from openviking.session.memory.session_extract_context_provider import SessionExtractContextProvider
+from atom_ctx.session.memory.session_extract_context_provider import SessionExtractContextProvider
 
 
 class TestProviderInstruction:

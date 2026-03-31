@@ -9,7 +9,7 @@ class TestSanitizeForPath:
     """Test _sanitize_for_path in MarkdownParser and HTMLParser."""
 
     def _make_md_parser(self):
-        from openviking.parse.parsers.markdown import MarkdownParser
+        from atom_ctx.parse.parsers.markdown import MarkdownParser
 
         return MarkdownParser()
 
@@ -65,7 +65,7 @@ class TestSanitizeForPath:
     def test_shell_comment_heading(self):
         """Simulate shell script comments being treated as markdown headings."""
         parser = self._make_md_parser()
-        heading = "Usage: curl -fsSL https://raw.githubusercontent.com/volcengine/openviking/refs/tags/cli@0.1.0/crates/ov_cli/install.sh | bash"
+        heading = "Usage: curl -fsSL https://raw.githubusercontent.com/volcengine/atom_ctx/refs/tags/cli@0.1.0/crates/ctx_cli/install.sh | bash"
         result = parser._sanitize_for_path(heading)
         assert len(result) <= 50
 
@@ -74,7 +74,7 @@ class TestGenerateMergedFilename:
     """Test _generate_merged_filename in MarkdownParser."""
 
     def _make_md_parser(self):
-        from openviking.parse.parsers.markdown import MarkdownParser
+        from atom_ctx.parse.parsers.markdown import MarkdownParser
 
         return MarkdownParser()
 
@@ -112,25 +112,25 @@ class TestShortenComponent:
     """Test VikingFS._shorten_component."""
 
     def test_short_component_unchanged(self):
-        from openviking.storage.viking_fs import VikingFS
+        from atom_ctx.storage.ctx_fs import VikingFS
 
         assert VikingFS._shorten_component("hello") == "hello"
 
     def test_long_component_shortened(self):
-        from openviking.storage.viking_fs import VikingFS
+        from atom_ctx.storage.ctx_fs import VikingFS
 
         long_name = "a" * 300
         result = VikingFS._shorten_component(long_name)
         assert len(result.encode("utf-8")) <= 255
 
     def test_exact_255_bytes_unchanged(self):
-        from openviking.storage.viking_fs import VikingFS
+        from atom_ctx.storage.ctx_fs import VikingFS
 
         name = "a" * 255
         assert VikingFS._shorten_component(name) == name
 
     def test_256_bytes_shortened(self):
-        from openviking.storage.viking_fs import VikingFS
+        from atom_ctx.storage.ctx_fs import VikingFS
 
         name = "a" * 256
         result = VikingFS._shorten_component(name)
@@ -139,7 +139,7 @@ class TestShortenComponent:
         assert result.endswith(f"_{expected_hash}")
 
     def test_unicode_multibyte_handling(self):
-        from openviking.storage.viking_fs import VikingFS
+        from atom_ctx.storage.ctx_fs import VikingFS
 
         # Chinese chars are 3 bytes each in UTF-8
         name = "你" * 100  # 300 bytes
@@ -148,10 +148,10 @@ class TestShortenComponent:
 
     def test_realistic_long_filename(self):
         """Simulate the exact bug from issue #171."""
-        from openviking.storage.viking_fs import VikingFS
+        from atom_ctx.storage.ctx_fs import VikingFS
 
         long_filename = (
-            "tmp5vacylnx_OpenViking_CLI_Installer_Usage_curl_-fsSL_"
+            "tmp5vacylnx_AtomCtx_CLI_Installer_Usage_curl_-fsSL_"
             "httpsrawgithubusercontentcomvolce_Example_curl_-fsSL_"
             "httpsrawgithubusercontentcomvol_Skip_checksum_"
             "SKIP_CHECKSUM1_curl_-fsSL_bash_Colors_for_output_"
@@ -166,20 +166,20 @@ class TestDownloaderGenerateFilename:
     """Test _generate_filename in downloader."""
 
     def test_short_url(self):
-        from openviking_cli.utils.downloader import _generate_filename
+        from atom_ctx_cli.utils.downloader import _generate_filename
 
         result = _generate_filename("https://example.com/file.pdf")
         assert result == "file"
 
     def test_long_path_url(self):
-        from openviking_cli.utils.downloader import _generate_filename
+        from atom_ctx_cli.utils.downloader import _generate_filename
 
         url = "https://example.com/" + "a" * 200 + ".pdf"
         result = _generate_filename(url)
         assert len(result) <= 50
 
     def test_host_only_url(self):
-        from openviking_cli.utils.downloader import _generate_filename
+        from atom_ctx_cli.utils.downloader import _generate_filename
 
         result = _generate_filename("https://example.com/")
         assert result == "example_com"

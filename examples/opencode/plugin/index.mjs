@@ -16,7 +16,7 @@ async function run(cmd, opts = {}) {
 
 async function isHealthy() {
   try {
-    await run("ov health", { timeout: 3000 })
+    await run("ctx health", { timeout: 3000 })
     return true
   } catch {
     return false
@@ -25,7 +25,7 @@ async function isHealthy() {
 
 async function startServer() {
   // Start in background, wait up to 30s for healthy
-  await run("openviking-server > /tmp/openviking.log 2>&1 &")
+  await run("ctx-server > /tmp/ctx-server.log 2>&1 &")
   for (let i = 0; i < 10; i++) {
     await new Promise((r) => setTimeout(r, 3000))
     if (await isHealthy()) return true
@@ -38,15 +38,15 @@ let initPromise = null
 function makeToast(client) {
   return (message, variant = "warning") =>
     client.tui.showToast({
-      body: { title: "OpenViking", message, variant, duration: 8000 },
+      body: { title: "AtomCtx", message, variant, duration: 8000 },
     }).catch(() => {})
 }
 
 // ── Skill auto-install ────────────────────────────────────────────────────────
 
 function installSkill() {
-  const src = join(__dirname, "skills", "openviking", "SKILL.md")
-  const dest = join(homedir(), ".config", "opencode", "skills", "openviking", "SKILL.md")
+  const src = join(__dirname, "skills", "atom_ctx", "SKILL.md")
+  const dest = join(homedir(), ".config", "opencode", "skills", "atom_ctx", "SKILL.md")
   mkdirSync(dirname(dest), { recursive: true })
   const content = readFileSync(src, "utf8")
   if (!existsSync(dest) || readFileSync(dest, "utf8") !== content) {
@@ -66,13 +66,13 @@ async function loadRepos() {
 
   try {
     const { stdout } = await run(
-      "ov --output json ls viking://resources/ --abs-limit 2000"
+      "ctx --output json ls ctx://resources/ --abs-limit 2000"
     )
     const items = JSON.parse(stdout)?.result ?? []
     const repos = items
-      .filter((item) => item.uri?.startsWith("viking://resources/"))
+      .filter((item) => item.uri?.startsWith("ctx://resources/"))
       .map((item) => {
-        const name = item.uri.replace("viking://resources/", "").replace(/\/$/, "")
+        const name = item.uri.replace("ctx://resources/", "").replace(/\/$/, "")
         return item.abstract
           ? `- **${name}** (${item.uri})\n  ${item.abstract}`
           : `- **${name}** (${item.uri})`
@@ -92,25 +92,25 @@ async function _init(client) {
   // server already running
   if (await isHealthy()) return true
 
-  // check if ov is installed
+  // check if ctx is installed
   try {
-    await run("command -v ov", { timeout: 2000 })
+    await run("command -v ctx", { timeout: 2000 })
   } catch {
-    await toast("openviking is not installed. Run: pip install openviking", "error")
+    await toast("atom_ctx is not installed. Run: pip install atom_ctx", "error")
     return false
   }
 
   // installed but no config file — cannot start
-  const ovConf = join(homedir(), ".openviking", "ov.conf")
-  if (!existsSync(ovConf)) {
-    await toast("~/.openviking/ov.conf not found. Please configure API keys before starting the server.", "warning")
+  const ctxConf = join(homedir(), ".ctx", "ctx.conf")
+  if (!existsSync(ctxConf)) {
+    await toast("~/.ctx/ctx.conf not found. Please configure API keys before starting the server.", "warning")
     return false
   }
 
   // installed + config exists — auto-start silently
   const started = await startServer()
   if (!started) {
-    await toast("Failed to start openviking server. Check logs: /tmp/openviking.log", "error")
+    await toast("Failed to start atom_ctx server. Check logs: /tmp/ctx-server.log", "error")
     return false
   }
 
@@ -127,7 +127,7 @@ async function init(client) {
 /**
  * @type {import('@opencode-ai/plugin').Plugin}
  */
-export async function OpenVikingPlugin({ client }) {
+export async function AtomCtxPlugin({ client }) {
   const toast = makeToast(client)
 
   try {
@@ -146,10 +146,10 @@ export async function OpenVikingPlugin({ client }) {
     "experimental.chat.system.transform": (_input, output) => {
       if (!cachedRepos) return
       output.system.push(
-        `## OpenViking — Indexed Code Repositories\n\n` +
+        `## AtomCtx — Indexed Code Repositories\n\n` +
         `The following repos are semantically indexed and searchable.\n` +
         `When the user asks about any of these projects or their internals, ` +
-        `you MUST proactively load skill("openviking") and use the correct ov commands to search and retrieve content before answering.\n\n` +
+        `you MUST proactively load skill("atom_ctx") and use the correct ctx commands to search and retrieve content before answering.\n\n` +
         cachedRepos
       )
     },

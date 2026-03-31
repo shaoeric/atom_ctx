@@ -1,10 +1,10 @@
 # 认证
 
-OpenViking Server 支持两种认证模式，并带有基于角色的访问控制：`api_key` 和 `trusted`。
+AtomCtx Server 支持两种认证模式，并带有基于角色的访问控制：`api_key` 和 `trusted`。
 
 ## 概述
 
-OpenViking 使用两层 API Key 体系：
+AtomCtx 使用两层 API Key 体系：
 
 | Key 类型 | 创建方式 | 角色 | 用途 |
 |----------|---------|------|------|
@@ -18,11 +18,11 @@ OpenViking 使用两层 API Key 体系：
 | 模式 | `server.auth_mode` | 身份来源 | 典型使用场景 |
 |------|--------------------|----------|--------------|
 | API Key 模式 | `"api_key"` | API Key，root 请求可附带租户请求头 | 标准多租户部署 |
-| Trusted 模式 | `"trusted"` | `X-OpenViking-Account` / `X-OpenViking-User` / 可选 `X-OpenViking-Agent` 请求头 | 部署在受信网关或内网边界之后 |
+| Trusted 模式 | `"trusted"` | `X-AtomCtx-Account` / `X-AtomCtx-User` / 可选 `X-AtomCtx-Agent` 请求头 | 部署在受信网关或内网边界之后 |
 
 ## 服务端配置
 
-在 `ov.conf` 的 `server` 段配置认证模式：
+在 `ctx.conf` 的 `server` 段配置认证模式：
 
 ```json
 {
@@ -36,7 +36,7 @@ OpenViking 使用两层 API Key 体系：
 启动服务：
 
 ```bash
-openviking-server
+ctx-server
 ```
 
 ## 管理账户和用户
@@ -61,35 +61,35 @@ curl -X POST http://localhost:1933/api/v1/admin/accounts/acme/users \
 
 ## 客户端使用
 
-OpenViking 支持两种方式传递 API Key：
+AtomCtx 支持两种方式传递 API Key：
 
 **X-API-Key 请求头**
 
 ```bash
-curl http://localhost:1933/api/v1/fs/ls?uri=viking:// \
+curl http://localhost:1933/api/v1/fs/ls?uri=ctx:// \
   -H "X-API-Key: <user-key>"
 ```
 
 **Authorization: Bearer 请求头**
 
 ```bash
-curl http://localhost:1933/api/v1/fs/ls?uri=viking:// \
+curl http://localhost:1933/api/v1/fs/ls?uri=ctx:// \
   -H "Authorization: Bearer <user-key>"
 ```
 
 **Python SDK（HTTP）**
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(
+client = ctx.SyncHTTPClient(
     url="http://localhost:1933",
     api_key="<user-key>",
     agent_id="my-agent"
 )
 ```
 
-**CLI（通过 ovcli.conf）**
+**CLI（通过 ctx-cli.conf）**
 
 ```json
 {
@@ -106,7 +106,7 @@ client = ov.SyncHTTPClient(
 **CLI 覆盖参数**
 
 ```bash
-openviking --account acme --user alice --agent-id my-agent ls viking://
+atom_ctx --account acme --user alice --agent-id my-agent ls ctx://
 ```
 
 ### 使用 Root Key 访问租户数据
@@ -116,18 +116,18 @@ openviking --account acme --user alice --agent-id my-agent ls viking://
 **curl**
 
 ```bash
-curl http://localhost:1933/api/v1/fs/ls?uri=viking:// \
+curl http://localhost:1933/api/v1/fs/ls?uri=ctx:// \
   -H "X-API-Key: your-secret-root-key" \
-  -H "X-OpenViking-Account: acme" \
-  -H "X-OpenViking-User: alice"
+  -H "X-AtomCtx-Account: acme" \
+  -H "X-AtomCtx-User: alice"
 ```
 
 **Python SDK**
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(
+client = ctx.SyncHTTPClient(
     url="http://localhost:1933",
     api_key="your-secret-root-key",
     account="acme",
@@ -135,7 +135,7 @@ client = ov.SyncHTTPClient(
 )
 ```
 
-**ovcli.conf**
+**ctx-cli.conf**
 
 ```json
 {
@@ -162,26 +162,26 @@ Trusted 模式不会查 user key，而是直接信任每个请求显式携带的
 
 Trusted 模式规则：
 
-- 租户级请求必须包含 `X-OpenViking-Account` 和 `X-OpenViking-User`
-- `X-OpenViking-Agent` 可选，缺省为 `default`
+- 租户级请求必须包含 `X-AtomCtx-Account` 和 `X-AtomCtx-User`
+- `X-AtomCtx-Agent` 可选，缺省为 `default`
 - 如果同时配置了 `root_api_key`，每个请求仍然必须带匹配的 API Key
 - 只应部署在受信网络边界之后，或由身份注入网关统一转发
 
 **curl**
 
 ```bash
-curl http://localhost:1933/api/v1/fs/ls?uri=viking:// \
-  -H "X-OpenViking-Account: acme" \
-  -H "X-OpenViking-User: alice" \
-  -H "X-OpenViking-Agent: my-agent"
+curl http://localhost:1933/api/v1/fs/ls?uri=ctx:// \
+  -H "X-AtomCtx-Account: acme" \
+  -H "X-AtomCtx-User: alice" \
+  -H "X-AtomCtx-Agent: my-agent"
 ```
 
 **Python SDK**
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(
+client = ctx.SyncHTTPClient(
     url="http://localhost:1933",
     account="acme",
     user="alice",

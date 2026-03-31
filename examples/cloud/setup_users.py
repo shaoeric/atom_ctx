@@ -4,12 +4,12 @@
 
 前置条件:
     1. 按照 GUIDE.md 完成云服务开通和配置
-    2. 启动 OpenViking Server:
-         export OPENVIKING_CONFIG_FILE=examples/cloud/ov.conf
-         openviking-server
+    2. 启动 AtomCtx Server:
+         export CTX_CONFIG_FILE=examples/cloud/ctx.conf
+         ctx-server
 
 获取用户 API Key 的流程:
-    1. 在 ov.conf 中设置 server.root_api_key（管理员密钥）
+    1. 在 ctx.conf 中设置 server.root_api_key（管理员密钥）
     2. 用 root_api_key 调用 POST /api/v1/admin/accounts 创建租户，返回管理员用户的 API Key
     3. 用管理员 API Key 调用 POST /api/v1/admin/accounts/{id}/users 注册用户，返回用户的 API Key
     4. 每个用户拿到自己的 API Key 后即可独立使用所有数据接口
@@ -31,7 +31,7 @@ import httpx
 def main():
     parser = argparse.ArgumentParser(description="创建租户和用户")
     parser.add_argument("--url", default="http://localhost:1933", help="Server URL")
-    parser.add_argument("--root-key", default="test", help="ov.conf 中的 root_api_key")
+    parser.add_argument("--root-key", default="test", help="ctx.conf 中的 root_api_key")
     args = parser.parse_args()
 
     base = args.url.rstrip("/")

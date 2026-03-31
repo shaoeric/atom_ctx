@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from openviking.retrieve.memory_lifecycle import DEFAULT_HALF_LIFE_DAYS, hotness_score
+from atom_ctx.retrieve.memory_lifecycle import DEFAULT_HALF_LIFE_DAYS, hotness_score
 
 
 NOW = datetime(2026, 2, 26, 12, 0, 0, tzinfo=timezone.utc)

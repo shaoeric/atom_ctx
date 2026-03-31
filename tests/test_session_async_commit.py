@@ -9,20 +9,20 @@ from typing import AsyncGenerator, Tuple
 import httpx
 import pytest_asyncio
 
-from openviking import AsyncOpenViking
-from openviking.message import TextPart
-from openviking.server.app import create_app
-from openviking.server.config import ServerConfig
-from openviking.server.dependencies import set_service
-from openviking.service.core import OpenVikingService
-from openviking.service.task_tracker import TaskStatus, get_task_tracker, reset_task_tracker
+from atom_ctx import AsyncAtomCtx
+from atom_ctx.message import TextPart
+from atom_ctx.server.app import create_app
+from atom_ctx.server.config import ServerConfig
+from atom_ctx.server.dependencies import set_service
+from atom_ctx.service.core import AtomCtxService
+from atom_ctx.service.task_tracker import TaskStatus, get_task_tracker, reset_task_tracker
 
 
 @pytest_asyncio.fixture
-async def api_client(temp_dir) -> AsyncGenerator[Tuple[httpx.AsyncClient, OpenVikingService], None]:
+async def api_client(temp_dir) -> AsyncGenerator[Tuple[httpx.AsyncClient, AtomCtxService], None]:
     """Create in-process HTTP client for API endpoint tests."""
     reset_task_tracker()
-    service = OpenVikingService(path=str(temp_dir / "api_data"))
+    service = AtomCtxService(path=str(temp_dir / "api_data"))
     await service.initialize()
     app = create_app(config=ServerConfig(), service=service)
     set_service(service)
@@ -32,19 +32,19 @@ async def api_client(temp_dir) -> AsyncGenerator[Tuple[httpx.AsyncClient, OpenVi
         yield client, service
 
     await service.close()
-    await AsyncOpenViking.reset()
+    await AsyncAtomCtx.reset()
     reset_task_tracker()
 
 
 @pytest_asyncio.fixture
-async def ov_client(temp_dir) -> AsyncGenerator[AsyncOpenViking, None]:
-    """Create AsyncOpenViking client for unit tests."""
+async def ctx_client(temp_dir) -> AsyncGenerator[AsyncAtomCtx, None]:
+    """Create AsyncAtomCtx client for unit tests."""
     reset_task_tracker()
-    client = AsyncOpenViking(path=str(temp_dir / "ov_data"))
+    client = AsyncAtomCtx(path=str(temp_dir / "ctx_data"))
     await client.initialize()
     yield client
     await client.close()
-    await AsyncOpenViking.reset()
+    await AsyncAtomCtx.reset()
     reset_task_tracker()
 
 
@@ -61,9 +61,9 @@ async def _new_session_with_one_message(client: httpx.AsyncClient) -> str:
     return session_id
 
 
-async def test_commit_async_returns_accepted_with_task_id(ov_client: AsyncOpenViking):
+async def test_commit_async_returns_accepted_with_task_id(ctx_client: AsyncAtomCtx):
     """commit_async should return status=accepted with a task_id."""
-    session = ov_client.session(session_id="async-shape-test")
+    session = ctx_client.session(session_id="async-shape-test")
     session.add_message("user", [TextPart("first")])
     result = await session.commit_async()
 

@@ -11,7 +11,7 @@ config = {
     "log": {"level": os.environ.get("LOG_LEVEL", "INFO")},
 }
 
-config_path = "/etc/openviking/ov.conf"
+config_path = "/etc/ctx/ctx.conf"
 os.makedirs(os.path.dirname(config_path), exist_ok=True)
 
 with open(config_path, "w") as f:

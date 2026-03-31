@@ -6,7 +6,7 @@
  * Triggered by Stop hook.
  * Reads transcript_path from stdin → extracts INCREMENTAL conversation
  * (only new turns since last capture) → keeps user turns by default →
- * sends to OpenViking session/extract pipeline → memories stored automatically.
+ * sends to AtomCtx session/extract pipeline → memories stored automatically.
  *
  * Incremental tracking: uses a state file per session_id to record how many
  * turns have been captured. Only new turns are processed on each invocation.
@@ -24,7 +24,7 @@ const cfg = loadConfig();
 const { log, logError } = createLogger("auto-capture");
 
 // State directory for incremental tracking
-const STATE_DIR = join(tmpdir(), "openviking-cc-capture-state");
+const STATE_DIR = join(tmpdir(), "atom_ctx-cc-capture-state");
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -46,7 +46,7 @@ async function fetchJSON(path, init = {}) {
   try {
     const headers = { "Content-Type": "application/json" };
     if (cfg.apiKey) headers["X-API-Key"] = cfg.apiKey;
-    if (cfg.agentId) headers["X-OpenViking-Agent"] = cfg.agentId;
+    if (cfg.agentId) headers["X-AtomCtx-Agent"] = cfg.agentId;
     const res = await fetch(`${cfg.baseUrl}${path}`, { ...init, headers, signal: controller.signal });
     const body = await res.json();
     if (!res.ok || body.status === "error") return null;
@@ -196,10 +196,10 @@ function extractAllTurns(messages) {
 }
 
 // ---------------------------------------------------------------------------
-// OpenViking session capture
+// AtomCtx session capture
 // ---------------------------------------------------------------------------
 
-async function captureToOpenViking(text) {
+async function captureToAtomCtx(text) {
   const sessionResult = await fetchJSON("/api/v1/sessions", {
     method: "POST",
     body: JSON.stringify({}),
@@ -334,9 +334,9 @@ async function main() {
     return;
   }
 
-  // Send to OpenViking
-  const result = await captureToOpenViking(decision.text);
-  log("openviking_capture", { sessionCreated: result.ok, extractedCount: result.count || 0 });
+  // Send to AtomCtx
+  const result = await captureToAtomCtx(decision.text);
+  log("atom_ctx_capture", { sessionCreated: result.ok, extractedCount: result.count || 0 });
 
   // Update state
   await saveState(sessionId, { capturedTurnCount: allTurns.length });

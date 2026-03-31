@@ -16,7 +16,7 @@ async function main() {
     const state = await loadInstallState(paths);
     const detail = state?.error ? ` Last install error: ${state.error}` : "";
     process.stderr.write(
-      `[openviking-memory] MCP runtime is not ready in ${paths.runtimeRoot}.${detail}\n`,
+      `[atom_ctx-memory] MCP runtime is not ready in ${paths.runtimeRoot}.${detail}\n`,
     );
     process.exit(1);
     return;
@@ -36,7 +36,7 @@ async function main() {
 
   child.on("error", (err) => {
     process.stderr.write(
-      `[openviking-memory] Failed to start MCP server: ${err instanceof Error ? err.message : String(err)}\n`,
+      `[atom_ctx-memory] Failed to start MCP server: ${err instanceof Error ? err.message : String(err)}\n`,
     );
     process.exit(1);
   });
@@ -48,7 +48,7 @@ async function main() {
 
 main().catch((err) => {
   process.stderr.write(
-    `[openviking-memory] MCP launcher failed: ${err instanceof Error ? err.message : String(err)}\n`,
+    `[atom_ctx-memory] MCP launcher failed: ${err instanceof Error ? err.message : String(err)}\n`,
   );
   process.exit(1);
 });

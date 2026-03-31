@@ -9,15 +9,15 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 
-from openviking import AsyncOpenViking
-from openviking.resource.watch_scheduler import WatchScheduler
-from openviking.server.identity import RequestContext, Role
-from openviking.service.resource_service import ResourceService
-from openviking_cli.exceptions import ConflictError
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx import AsyncAtomCtx
+from atom_ctx.resource.watch_scheduler import WatchScheduler
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx.service.resource_service import ResourceService
+from atom_ctx_cli.exceptions import ConflictError
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
-async def get_watch_task(client: AsyncOpenViking, to_uri: str):
+async def get_watch_task(client: AsyncAtomCtx, to_uri: str):
     watch_manager = client._service.resources._watch_scheduler.watch_manager
     return await watch_manager.get_task_by_uri(
         to_uri=to_uri,
@@ -31,18 +31,18 @@ async def get_watch_task(client: AsyncOpenViking, to_uri: str):
 @pytest_asyncio.fixture(scope="function")
 async def e2e_client(test_data_dir: Path):
     """End-to-end test client with watch support."""
-    await AsyncOpenViking.reset()
+    await AsyncAtomCtx.reset()
 
     shutil.rmtree(test_data_dir, ignore_errors=True)
     test_data_dir.mkdir(parents=True, exist_ok=True)
 
-    client = AsyncOpenViking(path=str(test_data_dir))
+    client = AsyncAtomCtx(path=str(test_data_dir))
     await client.initialize()
 
     yield client
 
     await client.close()
-    await AsyncOpenViking.reset()
+    await AsyncAtomCtx.reset()
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -68,12 +68,12 @@ class TestWatchE2EBasicFlow:
 
     @pytest.mark.asyncio
     async def test_create_resource_with_watch(
-        self, e2e_client: AsyncOpenViking, watch_test_file: Path
+        self, e2e_client: AsyncAtomCtx, watch_test_file: Path
     ):
         """Test creating a resource with watch enabled."""
         client = e2e_client
 
-        to_uri = "viking://resources/watch_e2e_test"
+        to_uri = "ctx://resources/watch_e2e_test"
 
         result = await client.add_resource(
             path=str(watch_test_file),
@@ -95,12 +95,12 @@ class TestWatchE2EBasicFlow:
         assert task.next_execution_time is not None
 
     @pytest.mark.asyncio
-    async def test_query_watch_status(self, e2e_client: AsyncOpenViking, watch_test_file: Path):
+    async def test_query_watch_status(self, e2e_client: AsyncAtomCtx, watch_test_file: Path):
         """Test querying watch status for resources."""
         client = e2e_client
 
-        watched_uri = "viking://resources/watched_resource"
-        unwatched_uri = "viking://resources/unwatched_resource"
+        watched_uri = "ctx://resources/watched_resource"
+        unwatched_uri = "ctx://resources/unwatched_resource"
 
         await client.add_resource(
             path=str(watch_test_file),
@@ -123,11 +123,11 @@ class TestWatchE2EBasicFlow:
         assert unwatched_task is None
 
     @pytest.mark.asyncio
-    async def test_update_watch_interval(self, e2e_client: AsyncOpenViking, watch_test_file: Path):
+    async def test_update_watch_interval(self, e2e_client: AsyncAtomCtx, watch_test_file: Path):
         """Test updating watch interval."""
         client = e2e_client
 
-        to_uri = "viking://resources/update_interval_test"
+        to_uri = "ctx://resources/update_interval_test"
 
         await client.add_resource(
             path=str(watch_test_file),
@@ -159,11 +159,11 @@ class TestWatchE2EBasicFlow:
         assert task.task_id == task_id
 
     @pytest.mark.asyncio
-    async def test_cancel_watch(self, e2e_client: AsyncOpenViking, watch_test_file: Path):
+    async def test_cancel_watch(self, e2e_client: AsyncAtomCtx, watch_test_file: Path):
         """Test cancelling watch by setting interval to 0 or negative."""
         client = e2e_client
 
-        to_uri = "viking://resources/cancel_test"
+        to_uri = "ctx://resources/cancel_test"
 
         await client.add_resource(
             path=str(watch_test_file),
@@ -191,12 +191,12 @@ class TestWatchE2EConflictDetection:
 
     @pytest.mark.asyncio
     async def test_conflict_when_active_watch_exists(
-        self, e2e_client: AsyncOpenViking, watch_test_file: Path
+        self, e2e_client: AsyncAtomCtx, watch_test_file: Path
     ):
         """Test that conflict is raised when trying to watch an already watched URI."""
         client = e2e_client
 
-        to_uri = "viking://resources/conflict_test"
+        to_uri = "ctx://resources/conflict_test"
 
         await client.add_resource(
             path=str(watch_test_file),
@@ -216,12 +216,12 @@ class TestWatchE2EConflictDetection:
 
     @pytest.mark.asyncio
     async def test_reactivate_inactive_watch(
-        self, e2e_client: AsyncOpenViking, watch_test_file: Path
+        self, e2e_client: AsyncAtomCtx, watch_test_file: Path
     ):
         """Test reactivating an inactive watch task."""
         client = e2e_client
 
-        to_uri = "viking://resources/reactivate_test"
+        to_uri = "ctx://resources/reactivate_test"
 
         await client.add_resource(
             path=str(watch_test_file),
@@ -270,7 +270,7 @@ class TestWatchE2ESchedulerExecution:
             async def process_resource(self, **kwargs):
                 nonlocal execution_count
                 execution_count += 1
-                return {"root_uri": kwargs.get("to", "viking://resources/test")}
+                return {"root_uri": kwargs.get("to", "ctx://resources/test")}
 
         class MockSkillProcessor:
             async def process_skill(self, **kwargs):
@@ -281,14 +281,14 @@ class TestWatchE2ESchedulerExecution:
 
         resource_service = ResourceService(
             vikingdb=MockVikingDB(),
-            viking_fs=object(),
+            ctx_fs=object(),
             resource_processor=MockResourceProcessor(),
             skill_processor=MockSkillProcessor(),
             watch_scheduler=None,
         )
         scheduler = WatchScheduler(
             resource_service=resource_service,
-            viking_fs=None,
+            ctx_fs=None,
             check_interval=0.1,
         )
         await scheduler.start()
@@ -297,7 +297,7 @@ class TestWatchE2ESchedulerExecution:
 
         task = await watch_manager.create_task(
             path=str(watch_test_file),
-            to_uri="viking://resources/scheduler_test",
+            to_uri="ctx://resources/scheduler_test",
             reason="Scheduler test",
             watch_interval=0.002,
         )
@@ -318,7 +318,7 @@ class TestWatchE2ESchedulerExecution:
 
         class MockResourceProcessor:
             async def process_resource(self, **kwargs):
-                return {"root_uri": kwargs.get("to", "viking://resources/test")}
+                return {"root_uri": kwargs.get("to", "ctx://resources/test")}
 
         class MockSkillProcessor:
             async def process_skill(self, **kwargs):
@@ -329,7 +329,7 @@ class TestWatchE2ESchedulerExecution:
 
         resource_service = ResourceService(
             vikingdb=MockVikingDB(),
-            viking_fs=object(),
+            ctx_fs=object(),
             resource_processor=MockResourceProcessor(),
             skill_processor=MockSkillProcessor(),
             watch_scheduler=None,
@@ -337,7 +337,7 @@ class TestWatchE2ESchedulerExecution:
 
         scheduler = WatchScheduler(
             resource_service=resource_service,
-            viking_fs=None,
+            ctx_fs=None,
             check_interval=0.1,
         )
         await scheduler.start()
@@ -346,7 +346,7 @@ class TestWatchE2ESchedulerExecution:
 
         task = await watch_manager.create_task(
             path=str(watch_test_file),
-            to_uri="viking://resources/execution_time_test",
+            to_uri="ctx://resources/execution_time_test",
             reason="Execution time test",
             watch_interval=0.002,
         )
@@ -371,15 +371,15 @@ class TestWatchE2EMultipleResources:
 
     @pytest.mark.asyncio
     async def test_multiple_watched_resources(
-        self, e2e_client: AsyncOpenViking, watch_test_file: Path
+        self, e2e_client: AsyncAtomCtx, watch_test_file: Path
     ):
         """Test managing multiple watched resources."""
         client = e2e_client
 
         uris = [
-            "viking://resources/multi_test_1",
-            "viking://resources/multi_test_2",
-            "viking://resources/multi_test_3",
+            "ctx://resources/multi_test_1",
+            "ctx://resources/multi_test_2",
+            "ctx://resources/multi_test_3",
         ]
 
         intervals = [30.0, 60.0, 120.0]
@@ -411,13 +411,13 @@ class TestWatchE2EMultipleResources:
 
     @pytest.mark.asyncio
     async def test_independent_watch_tasks(
-        self, e2e_client: AsyncOpenViking, watch_test_file: Path
+        self, e2e_client: AsyncAtomCtx, watch_test_file: Path
     ):
         """Test that watch tasks are independent."""
         client = e2e_client
 
-        uri1 = "viking://resources/independent_1"
-        uri2 = "viking://resources/independent_2"
+        uri1 = "ctx://resources/independent_1"
+        uri2 = "ctx://resources/independent_2"
 
         await client.add_resource(
             path=str(watch_test_file),
@@ -460,7 +460,7 @@ class TestWatchE2EErrorHandling:
 
         class MockResourceProcessor:
             async def process_resource(self, **kwargs):
-                return {"root_uri": kwargs.get("to", "viking://resources/test")}
+                return {"root_uri": kwargs.get("to", "ctx://resources/test")}
 
         class MockSkillProcessor:
             async def process_skill(self, **kwargs):
@@ -468,7 +468,7 @@ class TestWatchE2EErrorHandling:
 
         resource_service = ResourceService(
             vikingdb=object(),
-            viking_fs=object(),
+            ctx_fs=object(),
             resource_processor=MockResourceProcessor(),
             skill_processor=MockSkillProcessor(),
             watch_scheduler=None,
@@ -482,7 +482,7 @@ class TestWatchE2EErrorHandling:
         result = await resource_service.add_resource(
             path=str(watch_test_file),
             ctx=ctx,
-            to="viking://resources/no_watch_test",
+            to="ctx://resources/no_watch_test",
             watch_interval=30.0,
         )
 
@@ -490,7 +490,7 @@ class TestWatchE2EErrorHandling:
         assert "root_uri" in result
 
     @pytest.mark.asyncio
-    async def test_watch_task_nonexistent_resource(self, e2e_client: AsyncOpenViking):
+    async def test_watch_task_nonexistent_resource(self, e2e_client: AsyncAtomCtx):
         client = e2e_client
-        task = await get_watch_task(client, "viking://resources/nonexistent")
+        task = await get_watch_task(client, "ctx://resources/nonexistent")
         assert task is None

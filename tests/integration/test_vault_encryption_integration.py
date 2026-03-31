@@ -15,15 +15,15 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 
-from openviking import AsyncOpenViking
-from openviking.crypto.config import bootstrap_encryption
-from openviking.crypto.encryptor import FileEncryptor
-from openviking.crypto.exceptions import AuthenticationFailedError, ConfigError
-from openviking.crypto.providers import VaultProvider, create_root_key_provider
-from openviking.server.api_keys import APIKeyManager
-from openviking.service.core import OpenVikingService
-from openviking_cli.session.user_id import UserIdentifier
-from openviking_cli.utils.config.open_viking_config import OpenVikingConfigSingleton
+from atom_ctx import AsyncAtomCtx
+from atom_ctx.crypto.config import bootstrap_encryption
+from atom_ctx.crypto.encryptor import FileEncryptor
+from atom_ctx.crypto.exceptions import AuthenticationFailedError, ConfigError
+from atom_ctx.crypto.providers import VaultProvider, create_root_key_provider
+from atom_ctx.server.api_keys import APIKeyManager
+from atom_ctx.service.core import AtomCtxService
+from atom_ctx_cli.session.user_id import UserIdentifier
+from atom_ctx_cli.utils.config.ctx_config import AtomCtxConfigSingleton
 from tests.integration.conftest import VAULT_ADDR, VAULT_TOKEN, requires_vault
 
 pytestmark = [pytest.mark.integration, requires_vault]
@@ -213,10 +213,10 @@ async def vault_file_encryptor():
 
 
 @pytest_asyncio.fixture(scope="function")
-async def openviking_client_with_vault_encryption(test_data_dir: Path, vault_encryption_config):
-    """Fixture that provides an OpenViking client with Vault encryption enabled"""
-    await AsyncOpenViking.reset()
-    OpenVikingConfigSingleton.reset_instance()
+async def atom_ctx_client_with_vault_encryption(test_data_dir: Path, vault_encryption_config):
+    """Fixture that provides an AtomCtx client with Vault encryption enabled"""
+    await AsyncAtomCtx.reset()
+    AtomCtxConfigSingleton.reset_instance()
 
     # Clean data directory
     if test_data_dir.exists():
@@ -241,16 +241,16 @@ async def openviking_client_with_vault_encryption(test_data_dir: Path, vault_enc
     }
 
     # Initialize config singleton
-    OpenVikingConfigSingleton.initialize(config_dict=config_dict)
+    AtomCtxConfigSingleton.initialize(config_dict=config_dict)
 
-    client = AsyncOpenViking(path=str(test_data_dir))
+    client = AsyncAtomCtx(path=str(test_data_dir))
     await client.initialize()
 
     yield client
 
     await client.close()
-    await AsyncOpenViking.reset()
-    OpenVikingConfigSingleton.reset_instance()
+    await AsyncAtomCtx.reset()
+    AtomCtxConfigSingleton.reset_instance()
 
 
 class TestVaultEncryptionBootstrap:
@@ -295,7 +295,7 @@ class TestVaultFileEncryptorIntegration:
         assert decrypted1 == plaintext
 
         # Decrypt with account2 should fail
-        from openviking.crypto.exceptions import KeyMismatchError
+        from atom_ctx.crypto.exceptions import KeyMismatchError
 
         with pytest.raises(KeyMismatchError):
             await vault_file_encryptor.decrypt(account2, ciphertext)
@@ -321,11 +321,11 @@ class TestVikingFSEncryptionWithVault:
     ROOT_KEY = "test-root-key-for-vault-encryption-tests-abcdef123456"
 
     @pytest_asyncio.fixture(scope="function")
-    async def openviking_service_with_vault_encryption(
+    async def atom_ctx_service_with_vault_encryption(
         self, test_data_dir: Path, vault_encryption_config
     ):
         """
-        Fixture provides OpenVikingService instance with Vault encryption.
+        Fixture provides AtomCtxService instance with Vault encryption.
         Also initializes APIKeyManager for account management.
         """
         # Clean data directory
@@ -352,25 +352,25 @@ class TestVikingFSEncryptionWithVault:
         config_dict["server"] = {"root_api_key": self.ROOT_KEY}
 
         # Initialize config singleton
-        OpenVikingConfigSingleton.initialize(config_dict=config_dict)
+        AtomCtxConfigSingleton.initialize(config_dict=config_dict)
 
-        # Create OpenVikingService
-        svc = OpenVikingService(
-            path=str(test_data_dir / "viking"), user=UserIdentifier.the_default_user("test_user")
+        # Create AtomCtxService
+        svc = AtomCtxService(
+            path=str(test_data_dir / "ctx"), user=UserIdentifier.the_default_user("test_user")
         )
         await svc.initialize()
 
         # Create APIKeyManager using VikingFS to ensure system files are encrypted
         api_key_manager = APIKeyManager(
-            root_key=self.ROOT_KEY, viking_fs=svc.viking_fs, encryption_enabled=True
+            root_key=self.ROOT_KEY, ctx_fs=svc.ctx_fs, encryption_enabled=True
         )
         await api_key_manager.load()
 
         yield {"service": svc, "api_key_manager": api_key_manager, "test_data_dir": test_data_dir}
 
         await svc.close()
-        await AsyncOpenViking.reset()
-        OpenVikingConfigSingleton.reset_instance()
+        await AsyncAtomCtx.reset()
+        AtomCtxConfigSingleton.reset_instance()
 
     def _is_file_encrypted(self, file_path: Path) -> bool:
         """
@@ -398,7 +398,7 @@ class TestVikingFSEncryptionWithVault:
         Recursively check if all files in directory are encrypted.
 
         Args:
-            svc: OpenVikingService instance
+            svc: AtomCtxService instance
             ctx: RequestContext instance
             base_uri: Base URI to check
             print_paths: Whether to print encrypted file paths
@@ -407,14 +407,14 @@ class TestVikingFSEncryptionWithVault:
 
         async def _check_recursive(uri: str):
             try:
-                entries = await svc.viking_fs.ls(uri, ctx=ctx)
+                entries = await svc.ctx_fs.ls(uri, ctx=ctx)
                 for entry in entries:
                     entry_uri = entry["uri"]
                     if entry["isDir"]:
                         await _check_recursive(entry_uri)
                     else:
                         # Use VikingFS's _uri_to_path method to get file path
-                        agfs_path = svc.viking_fs._uri_to_path(entry_uri, ctx=ctx)
+                        agfs_path = svc.ctx_fs._uri_to_path(entry_uri, ctx=ctx)
                         raw_content = agfs_client.read(agfs_path)
                         assert raw_content.startswith(b"OVE1"), f"File {entry_uri} is not encrypted"
                         if print_paths:
@@ -429,10 +429,10 @@ class TestVikingFSEncryptionWithVault:
 
     @pytest.mark.asyncio
     async def test_resource_operations_with_encryption(
-        self, openviking_service_with_vault_encryption, tmp_path
+        self, atom_ctx_service_with_vault_encryption, tmp_path
     ):
         """Test 4: Resource operations and encryption verification"""
-        data = openviking_service_with_vault_encryption
+        data = atom_ctx_service_with_vault_encryption
         svc = data["service"]
         api_key_manager = data["api_key_manager"]
 
@@ -441,49 +441,49 @@ class TestVikingFSEncryptionWithVault:
         admin_user_id = "admin"
         await api_key_manager.create_account(account_id, admin_user_id)
 
-        from openviking.server.identity import RequestContext, Role
+        from atom_ctx.server.identity import RequestContext, Role
 
         user = UserIdentifier(account_id, admin_user_id, admin_user_id)
         ctx = RequestContext(user=user, role=Role.ADMIN)
 
         # Create test resource file
         test_content = "This is test resource content for Vault encryption"
-        test_uri = f"viking://{account_id}/resources/test_file.txt"
+        test_uri = f"ctx://{account_id}/resources/test_file.txt"
 
         # Write file
-        await svc.viking_fs.write_file(test_uri, test_content, ctx=ctx)
+        await svc.ctx_fs.write_file(test_uri, test_content, ctx=ctx)
 
         # Verify read content is correct
-        read_content = await svc.viking_fs.read_file(test_uri, ctx=ctx)
+        read_content = await svc.ctx_fs.read_file(test_uri, ctx=ctx)
         assert read_content == test_content
 
         # Verify file is encrypted
         agfs_client = svc._agfs_client
-        agfs_path = svc.viking_fs._uri_to_path(test_uri, ctx=ctx)
+        agfs_path = svc.ctx_fs._uri_to_path(test_uri, ctx=ctx)
         raw_content = agfs_client.read(agfs_path)
         assert raw_content.startswith(b"OVE1")
 
         # Test various operations
-        resources_dir_uri = f"viking://{account_id}/resources"
+        resources_dir_uri = f"ctx://{account_id}/resources"
 
         # ls operation
-        ls_entries = await svc.viking_fs.ls(resources_dir_uri, ctx=ctx)
+        ls_entries = await svc.ctx_fs.ls(resources_dir_uri, ctx=ctx)
         assert len(ls_entries) > 0
 
         # tree operation
-        tree_entries = await svc.viking_fs.tree(resources_dir_uri, ctx=ctx)
+        tree_entries = await svc.ctx_fs.tree(resources_dir_uri, ctx=ctx)
         assert len(tree_entries) > 0
 
         # grep operation
         try:
-            grep_result = await svc.viking_fs.grep(resources_dir_uri, "Vault", ctx=ctx)
+            grep_result = await svc.ctx_fs.grep(resources_dir_uri, "Vault", ctx=ctx)
             assert grep_result is not None
         except Exception as e:
             print(f"[WARNING] grep operation may not be supported: {e}")
 
         # abstract operation
         try:
-            abstract = await svc.viking_fs.abstract(test_uri, ctx=ctx)
+            abstract = await svc.ctx_fs.abstract(test_uri, ctx=ctx)
             assert abstract is not None
             assert "OVE1" not in abstract
         except Exception as e:
@@ -491,16 +491,16 @@ class TestVikingFSEncryptionWithVault:
 
         # overview operation
         try:
-            overview = await svc.viking_fs.overview(test_uri, ctx=ctx)
+            overview = await svc.ctx_fs.overview(test_uri, ctx=ctx)
             assert overview is not None
             assert "OVE1" not in overview
         except Exception as e:
             print(f"[WARNING] overview operation may not be supported: {e}")
 
     @pytest.mark.asyncio
-    async def test_skill_operations_with_encryption(self, openviking_service_with_vault_encryption):
+    async def test_skill_operations_with_encryption(self, atom_ctx_service_with_vault_encryption):
         """Test 5: Skill operations and encryption verification"""
-        data = openviking_service_with_vault_encryption
+        data = atom_ctx_service_with_vault_encryption
         svc = data["service"]
         api_key_manager = data["api_key_manager"]
 
@@ -509,17 +509,17 @@ class TestVikingFSEncryptionWithVault:
         admin_user_id = "admin"
         await api_key_manager.create_account(account_id, admin_user_id)
 
-        from openviking.server.identity import RequestContext, Role
+        from atom_ctx.server.identity import RequestContext, Role
 
         user = UserIdentifier(account_id, admin_user_id, admin_user_id)
         ctx = RequestContext(user=user, role=Role.ADMIN)
 
         # Create skill directory and file
-        skill_dir_uri = f"viking://{account_id}/agent/test-skill"
+        skill_dir_uri = f"ctx://{account_id}/agent/test-skill"
         skill_md_uri = f"{skill_dir_uri}/SKILL.md"
 
         # Create directory
-        await svc.viking_fs.mkdir(skill_dir_uri, ctx=ctx)
+        await svc.ctx_fs.mkdir(skill_dir_uri, ctx=ctx)
 
         # Write skill file
         skill_content = """---
@@ -532,38 +532,38 @@ description: Test skill for Vault encryption
 
 This is a test skill for verifying Vault encryption.
 """
-        await svc.viking_fs.write_file(skill_md_uri, skill_content, ctx=ctx)
+        await svc.ctx_fs.write_file(skill_md_uri, skill_content, ctx=ctx)
 
         # Verify read content is correct
-        read_content = await svc.viking_fs.read_file(skill_md_uri, ctx=ctx)
+        read_content = await svc.ctx_fs.read_file(skill_md_uri, ctx=ctx)
         assert "Test Skill" in read_content
 
         # Verify file is encrypted
         agfs_client = svc._agfs_client
-        agfs_path = svc.viking_fs._uri_to_path(skill_md_uri, ctx=ctx)
+        agfs_path = svc.ctx_fs._uri_to_path(skill_md_uri, ctx=ctx)
         raw_content = agfs_client.read(agfs_path)
         assert raw_content.startswith(b"OVE1")
 
         # Test various operations
-        agent_dir_uri = f"viking://{account_id}/agent"
+        agent_dir_uri = f"ctx://{account_id}/agent"
 
         # ls operation
-        ls_entries = await svc.viking_fs.ls(agent_dir_uri, ctx=ctx)
+        ls_entries = await svc.ctx_fs.ls(agent_dir_uri, ctx=ctx)
         assert len(ls_entries) > 0
 
         # tree operation
         try:
-            tree_entries = await svc.viking_fs.tree(agent_dir_uri, ctx=ctx)
+            tree_entries = await svc.ctx_fs.tree(agent_dir_uri, ctx=ctx)
             assert len(tree_entries) > 0
         except Exception as e:
             print(f"[WARNING] tree operation may not be supported: {e}")
 
     @pytest.mark.asyncio
     async def test_memory_operations_with_encryption(
-        self, openviking_service_with_vault_encryption
+        self, atom_ctx_service_with_vault_encryption
     ):
         """Test 6: Memory operations and encryption verification"""
-        data = openviking_service_with_vault_encryption
+        data = atom_ctx_service_with_vault_encryption
         svc = data["service"]
         api_key_manager = data["api_key_manager"]
 
@@ -572,41 +572,41 @@ This is a test skill for verifying Vault encryption.
         user_id = "test-user"
         await api_key_manager.create_account(account_id, user_id)
 
-        from openviking.server.identity import RequestContext, Role
+        from atom_ctx.server.identity import RequestContext, Role
 
         user = UserIdentifier(account_id, user_id, user_id)
         ctx = RequestContext(user=user, role=Role.USER)
 
         # Create memory directory and file
-        memory_dir_uri = f"viking://{account_id}/user/{user_id}/memories"
+        memory_dir_uri = f"ctx://{account_id}/user/{user_id}/memories"
         memory_file_uri = f"{memory_dir_uri}/preferences.md"
 
         # Create directory
         try:
-            await svc.viking_fs.mkdir(memory_dir_uri, ctx=ctx)
+            await svc.ctx_fs.mkdir(memory_dir_uri, ctx=ctx)
         except Exception:
             pass  # Directory may already exist
 
         # Write memory file
         memory_content = "# User Preferences\n\nTheme: dark\nLanguage: English"
-        await svc.viking_fs.write_file(memory_file_uri, memory_content, ctx=ctx)
+        await svc.ctx_fs.write_file(memory_file_uri, memory_content, ctx=ctx)
 
         # Verify read content is correct
-        read_content = await svc.viking_fs.read_file(memory_file_uri, ctx=ctx)
+        read_content = await svc.ctx_fs.read_file(memory_file_uri, ctx=ctx)
         assert "User Preferences" in read_content
 
         # Verify file is encrypted
         agfs_client = svc._agfs_client
-        agfs_path = svc.viking_fs._uri_to_path(memory_file_uri, ctx=ctx)
+        agfs_path = svc.ctx_fs._uri_to_path(memory_file_uri, ctx=ctx)
         raw_content = agfs_client.read(agfs_path)
         assert raw_content.startswith(b"OVE1")
 
     @pytest.mark.asyncio
     async def test_session_operations_with_encryption(
-        self, openviking_service_with_vault_encryption
+        self, atom_ctx_service_with_vault_encryption
     ):
         """Test 7: Session operations and encryption verification"""
-        data = openviking_service_with_vault_encryption
+        data = atom_ctx_service_with_vault_encryption
         svc = data["service"]
         api_key_manager = data["api_key_manager"]
 
@@ -615,7 +615,7 @@ This is a test skill for verifying Vault encryption.
         user_id = "test-user"
         await api_key_manager.create_account(account_id, user_id)
 
-        from openviking.server.identity import RequestContext, Role
+        from atom_ctx.server.identity import RequestContext, Role
 
         user = UserIdentifier(account_id, user_id, user_id)
         ctx = RequestContext(user=user, role=Role.USER)
@@ -626,12 +626,12 @@ This is a test skill for verifying Vault encryption.
         assert session_id is not None
 
         # Check if session directory files are encrypted
-        session_dir_uri = f"viking://{account_id}/session"
+        session_dir_uri = f"ctx://{account_id}/session"
         await self._check_all_files_encrypted(svc, ctx, session_dir_uri, print_paths=False)
 
     @pytest.mark.asyncio
     async def test_complete_encryption_workflow_with_vault(
-        self, openviking_service_with_vault_encryption
+        self, atom_ctx_service_with_vault_encryption
     ):
         """
         Complete encryption workflow test using Vault as key provider, including:
@@ -642,11 +642,11 @@ This is a test skill for verifying Vault encryption.
         """
         import uuid
 
-        from openviking.server.identity import RequestContext, Role
+        from atom_ctx.server.identity import RequestContext, Role
 
-        svc = openviking_service_with_vault_encryption["service"]
-        api_key_manager = openviking_service_with_vault_encryption["api_key_manager"]
-        openviking_service_with_vault_encryption["test_data_dir"]
+        svc = atom_ctx_service_with_vault_encryption["service"]
+        api_key_manager = atom_ctx_service_with_vault_encryption["api_key_manager"]
+        atom_ctx_service_with_vault_encryption["test_data_dir"]
 
         # 1. Precondition: Create random account and user
         random_account_id = f"test-account-{uuid.uuid4()}"
@@ -662,14 +662,14 @@ This is a test skill for verifying Vault encryption.
 
         # Create resource
         test_content = f"Test content for account {random_account_id} with Vault encryption"
-        test_resource_uri = f"viking://{random_account_id}/resources/test_workflow.txt"
-        await svc.viking_fs.write_file(test_resource_uri, test_content, ctx=ctx)
+        test_resource_uri = f"ctx://{random_account_id}/resources/test_workflow.txt"
+        await svc.ctx_fs.write_file(test_resource_uri, test_content, ctx=ctx)
         print(f"✓ Resource created successfully: {test_resource_uri}")
 
         # Create skill
-        skill_dir_uri = f"viking://{random_account_id}/agent/test-workflow-skill"
+        skill_dir_uri = f"ctx://{random_account_id}/agent/test-workflow-skill"
         skill_md_uri = f"{skill_dir_uri}/SKILL.md"
-        await svc.viking_fs.mkdir(skill_dir_uri, ctx=ctx)
+        await svc.ctx_fs.mkdir(skill_dir_uri, ctx=ctx)
         skill_content = """---
 name: Workflow Test Skill
 version: 1.0.0
@@ -678,18 +678,18 @@ description: Test skill for complete workflow
 
 # Workflow Test Skill
 """
-        await svc.viking_fs.write_file(skill_md_uri, skill_content, ctx=ctx)
+        await svc.ctx_fs.write_file(skill_md_uri, skill_content, ctx=ctx)
         print(f"✓ Skill created successfully: {skill_md_uri}")
 
         # Create memory
-        memory_dir_uri = f"viking://{random_account_id}/user/{random_user_id}/memories"
+        memory_dir_uri = f"ctx://{random_account_id}/user/{random_user_id}/memories"
         memory_file_uri = f"{memory_dir_uri}/test_memory.md"
         try:
-            await svc.viking_fs.mkdir(memory_dir_uri, ctx=ctx)
+            await svc.ctx_fs.mkdir(memory_dir_uri, ctx=ctx)
         except Exception:
             pass
         memory_content = "# Test Memory\n\nThis is a test memory for workflow"
-        await svc.viking_fs.write_file(memory_file_uri, memory_content, ctx=ctx)
+        await svc.ctx_fs.write_file(memory_file_uri, memory_content, ctx=ctx)
         print(f"✓ Memory created successfully: {memory_file_uri}")
 
         # Create session
@@ -701,7 +701,7 @@ description: Test skill for complete workflow
         print("\n=== Encryption verification ===")
 
         # Check if all files are encrypted
-        account_root_uri = f"viking://{random_account_id}"
+        account_root_uri = f"ctx://{random_account_id}"
         await self._check_all_files_encrypted(svc, ctx, account_root_uri, print_paths=True)
 
         # 4. Postcondition: Delete account

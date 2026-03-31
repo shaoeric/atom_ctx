@@ -5,7 +5,7 @@
 
 import pytest
 
-from openviking import AsyncOpenViking
+from atom_ctx import AsyncAtomCtx
 
 
 class TestLs:
@@ -31,19 +31,19 @@ class TestLs:
 
         assert isinstance(entries, list)
         assert all(isinstance(e, str) for e in entries)
-        assert all(e.startswith("viking://") for e in entries)
+        assert all(e.startswith("ctx://") for e in entries)
 
     async def test_ls_recursive(self, client_with_resource):
         """Test recursive listing"""
         client, _ = client_with_resource
 
-        entries = await client.ls("viking://", recursive=True)
+        entries = await client.ls("ctx://", recursive=True)
 
         assert isinstance(entries, list)
 
-    async def test_ls_root(self, client: AsyncOpenViking):
+    async def test_ls_root(self, client: AsyncAtomCtx):
         """Test listing root directory"""
-        entries = await client.ls("viking://")
+        entries = await client.ls("ctx://")
 
         assert isinstance(entries, list)
 
@@ -63,10 +63,10 @@ class TestRead:
                 assert len(content) > 0
                 assert "Sample Document" in content
 
-    async def test_read_nonexistent_file(self, client: AsyncOpenViking):
+    async def test_read_nonexistent_file(self, client: AsyncAtomCtx):
         """Test reading nonexistent file"""
         with pytest.raises(Exception):  # noqa: B017
-            await client.read("viking://nonexistent/file.txt")
+            await client.read("ctx://nonexistent/file.txt")
 
 
 class TestAbstract:
@@ -103,7 +103,7 @@ class TestTree:
         """Test getting directory tree"""
         client, _ = client_with_resource
 
-        tree = await client.tree("viking://")
+        tree = await client.tree("ctx://")
 
         assert isinstance(tree, (list, dict))
 

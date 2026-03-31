@@ -11,7 +11,7 @@ export function waitForHealth(baseUrl: string, timeoutMs: number, intervalMs: nu
   return new Promise((resolve, reject) => {
     const tick = () => {
       if (Date.now() > deadline) {
-        reject(new Error(`OpenViking health check timeout at ${baseUrl}`));
+        reject(new Error(`AtomCtx health check timeout at ${baseUrl}`));
         return;
       }
       fetch(`${baseUrl}/health`)
@@ -138,9 +138,9 @@ export interface ProcessLogger {
 }
 
 /**
- * Prepare a port for local OpenViking startup.
+ * Prepare a port for local AtomCtx startup.
  *
- * 1. If the port hosts an OpenViking instance (health check passes) → kill it, return same port.
+ * 1. If the port hosts an AtomCtx instance (health check passes) → kill it, return same port.
  * 2. If the port is occupied by something else → auto-find the next free port.
  * 3. If the port is free → return it as-is.
  */
@@ -149,9 +149,9 @@ export async function prepareLocalPort(
   logger: ProcessLogger,
   maxRetries: number = 10,
 ): Promise<number> {
-  const isOpenViking = await quickHealthCheck(`http://127.0.0.1:${port}`, 2000);
-  if (isOpenViking) {
-    logger.info?.(`openviking: killing stale OpenViking on port ${port}`);
+  const isAtomCtx = await quickHealthCheck(`http://127.0.0.1:${port}`, 2000);
+  if (isAtomCtx) {
+    logger.info?.(`atom_ctx: killing stale AtomCtx on port ${port}`);
     await killProcessOnPort(port, logger);
     return port;
   }
@@ -161,18 +161,18 @@ export async function prepareLocalPort(
     return port;
   }
 
-  // Port occupied by non-OpenViking process — find next free port
-  logger.warn?.(`openviking: port ${port} is occupied by another process, searching for a free port...`);
+  // Port occupied by non-AtomCtx process — find next free port
+  logger.warn?.(`atom_ctx: port ${port} is occupied by another process, searching for a free port...`);
   for (let candidate = port + 1; candidate <= port + maxRetries; candidate++) {
     if (candidate > 65535) break;
     const taken = await quickTcpProbe("127.0.0.1", candidate, 300);
     if (!taken) {
-      logger.info?.(`openviking: using free port ${candidate} instead of ${port}`);
+      logger.info?.(`atom_ctx: using free port ${candidate} instead of ${port}`);
       return candidate;
     }
   }
   throw new Error(
-    `openviking: port ${port} is occupied and no free port found in range ${port + 1}-${port + maxRetries}`,
+    `atom_ctx: port ${port} is occupied and no free port found in range ${port + 1}-${port + maxRetries}`,
   );
 }
 
@@ -194,7 +194,7 @@ async function killProcessOnPortWin(port: number, logger: ProcessLogger): Promis
     }
     for (const pid of pids) {
       if (pid > 0) {
-        logger.info?.(`openviking: killing pid ${pid} on port ${port}`);
+        logger.info?.(`atom_ctx: killing pid ${pid} on port ${port}`);
         try { execSync(`taskkill /PID ${pid} /F`, { shell: "cmd.exe" }); } catch { /* already gone */ }
       }
     }
@@ -225,7 +225,7 @@ async function killProcessOnPortUnix(port: number, logger: ProcessLogger): Promi
       } catch { /* ss not available */ }
     }
     for (const pid of pids) {
-      logger.info?.(`openviking: killing pid ${pid} on port ${port}`);
+      logger.info?.(`atom_ctx: killing pid ${pid} on port ${port}`);
       try { process.kill(pid, "SIGKILL"); } catch { /* already gone */ }
     }
     if (pids.length) await new Promise((r) => setTimeout(r, 500));
@@ -234,28 +234,28 @@ async function killProcessOnPortUnix(port: number, logger: ProcessLogger): Promi
 
 export function resolvePythonCommand(logger: ProcessLogger): string {
   const defaultPy = IS_WIN ? "python" : "python3";
-  let pythonCmd = process.env.OPENVIKING_PYTHON;
+  let pythonCmd = process.env.ATOM_CTX_PYTHON;
 
   if (!pythonCmd) {
     if (IS_WIN) {
       const { join } = require("node:path") as typeof import("node:path");
       const { homedir } = require("node:os") as typeof import("node:os");
-      const envBat = join(homedir(), ".openclaw", "openviking.env.bat");
+      const envBat = join(homedir(), ".openclaw", "atom_ctx.env.bat");
       if (existsSync(envBat)) {
         try {
           const content = readFileSync(envBat, "utf-8");
-          const m = content.match(/set\s+OPENVIKING_PYTHON=(.+)/i);
+          const m = content.match(/set\s+ATOM_CTX_PYTHON=(.+)/i);
           if (m?.[1]) pythonCmd = m[1].trim();
         } catch { /* ignore */ }
       }
     } else {
       const { join } = require("node:path") as typeof import("node:path");
       const { homedir } = require("node:os") as typeof import("node:os");
-      const envFile = join(homedir(), ".openclaw", "openviking.env");
+      const envFile = join(homedir(), ".openclaw", "atom_ctx.env");
       if (existsSync(envFile)) {
         try {
           const content = readFileSync(envFile, "utf-8");
-          const m = content.match(/OPENVIKING_PYTHON=['"]([^'"]+)['"]/);
+          const m = content.match(/ATOM_CTX_PYTHON=['"]([^'"]+)['"]/);
           if (m?.[1]) pythonCmd = m[1];
         } catch {
           /* ignore */
@@ -286,8 +286,8 @@ export function resolvePythonCommand(logger: ProcessLogger): string {
 
   if (pythonCmd === defaultPy) {
     logger.info?.(
-      `openviking: 未解析到 ${defaultPy} 路径，将用 "${defaultPy}"。若 openviking 在自定义 Python 下，请设置 OPENVIKING_PYTHON` +
-      (IS_WIN ? ' 或 call "%USERPROFILE%\\.openclaw\\openviking.env.bat"' : " 或 source ~/.openclaw/openviking.env"),
+      `atom_ctx: 未解析到 ${defaultPy} 路径，将用 "${defaultPy}"。若 atom_ctx 在自定义 Python 下，请设置 ATOM_CTX_PYTHON` +
+      (IS_WIN ? ' 或 call "%USERPROFILE%\\.openclaw\\atom_ctx.env.bat"' : " 或 source ~/.openclaw/atom_ctx.env"),
     );
   }
 

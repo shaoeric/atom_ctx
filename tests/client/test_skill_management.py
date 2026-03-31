@@ -5,13 +5,13 @@
 
 from pathlib import Path
 
-from openviking import AsyncOpenViking
+from atom_ctx import AsyncAtomCtx
 
 
 class TestAddSkill:
     """Test add_skill"""
 
-    async def test_add_skill_from_file(self, client: AsyncOpenViking, temp_dir: Path):
+    async def test_add_skill_from_file(self, client: AsyncAtomCtx, temp_dir: Path):
         """Test adding skill from file"""
         # Create skill file in SKILL.md format
         skill_file = temp_dir / "test_skill.md"
@@ -27,7 +27,7 @@ tags:
 # Test Skill
 
 ## Description
-This is a test skill for unit testing OpenViking skill management.
+This is a test skill for unit testing AtomCtx skill management.
 
 ## Usage
 Use this skill when you need to test skill functionality.
@@ -42,9 +42,9 @@ Use this skill when you need to test skill functionality.
         result = await client.add_skill(data=skill_file)
 
         assert "uri" in result
-        assert "viking://agent/skills/" in result["uri"]
+        assert "ctx://agent/skills/" in result["uri"]
 
-    async def test_add_skill_from_string(self, client: AsyncOpenViking):
+    async def test_add_skill_from_string(self, client: AsyncAtomCtx):
         """Test adding skill from string"""
         skill_content = """---
 name: string-skill
@@ -61,9 +61,9 @@ This skill was created from a string.
         result = await client.add_skill(data=skill_content)
 
         assert "uri" in result
-        assert "viking://agent/skills/" in result["uri"]
+        assert "ctx://agent/skills/" in result["uri"]
 
-    async def test_add_skill_from_mcp_tool(self, client: AsyncOpenViking):
+    async def test_add_skill_from_mcp_tool(self, client: AsyncAtomCtx):
         """Test adding skill from MCP Tool format"""
         mcp_tool = {
             "name": "mcp_test_tool",
@@ -78,7 +78,7 @@ This skill was created from a string.
 
         assert "uri" in result
 
-    async def test_add_skill_from_directory(self, client: AsyncOpenViking, temp_dir: Path):
+    async def test_add_skill_from_directory(self, client: AsyncAtomCtx, temp_dir: Path):
         """Test adding skill from directory"""
         # Create skill directory
         skill_dir = temp_dir / "dir_skill"
@@ -106,13 +106,13 @@ This skill was loaded from a directory.
         result = await client.add_skill(data=skill_dir)
 
         assert "uri" in result
-        assert "viking://agent/skills/" in result["uri"]
+        assert "ctx://agent/skills/" in result["uri"]
 
 
 class TestSkillSearch:
     """Test skill search"""
 
-    async def test_find_skill(self, client: AsyncOpenViking, temp_dir: Path):
+    async def test_find_skill(self, client: AsyncAtomCtx, temp_dir: Path):
         """Test searching skills"""
         # Add skill first
         skill_file = temp_dir / "search_skill.md"

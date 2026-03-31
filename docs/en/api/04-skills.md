@@ -111,7 +111,7 @@ curl -X POST http://localhost:1933/api/v1/skills \
 **CLI**
 
 ```bash
-openviking add-skill ./my-skill/ [--wait]
+atom_ctx add-skill ./my-skill/ [--wait]
 ```
 
 **Response**
@@ -121,7 +121,7 @@ openviking add-skill ./my-skill/ [--wait]
   "status": "ok",
   "result": {
     "status": "success",
-    "uri": "viking://agent/skills/search-web/",
+    "uri": "ctx://agent/skills/search-web/",
     "name": "search-web",
     "auxiliary_files": 0
   },
@@ -274,19 +274,19 @@ Concrete examples of skill invocation.
 
 ```python
 # List all skills
-skills = client.ls("viking://agent/skills/")
+skills = client.ls("ctx://agent/skills/")
 for skill in skills:
     print(f"{skill['name']}")
 
 # Simple list (names only)
-names = client.ls("viking://agent/skills/", simple=True)
+names = client.ls("ctx://agent/skills/", simple=True)
 print(names)
 ```
 
 **HTTP API**
 
 ```bash
-curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=viking://agent/skills/" \
+curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=ctx://agent/skills/" \
   -H "X-API-Key: your-key"
 ```
 
@@ -295,7 +295,7 @@ curl -X GET "http://localhost:1933/api/v1/fs/ls?uri=viking://agent/skills/" \
 **Python SDK (Embedded / HTTP)**
 
 ```python
-uri = "viking://agent/skills/search-web/"
+uri = "ctx://agent/skills/search-web/"
 
 # L0: Brief description
 abstract = client.abstract(uri)
@@ -314,15 +314,15 @@ print(f"Content: {content}")
 
 ```bash
 # L0: Brief description
-curl -X GET "http://localhost:1933/api/v1/content/abstract?uri=viking://agent/skills/search-web/" \
+curl -X GET "http://localhost:1933/api/v1/content/abstract?uri=ctx://agent/skills/search-web/" \
   -H "X-API-Key: your-key"
 
 # L1: Parameters and usage overview
-curl -X GET "http://localhost:1933/api/v1/content/overview?uri=viking://agent/skills/search-web/" \
+curl -X GET "http://localhost:1933/api/v1/content/overview?uri=ctx://agent/skills/search-web/" \
   -H "X-API-Key: your-key"
 
 # L2: Full skill documentation
-curl -X GET "http://localhost:1933/api/v1/content/read?uri=viking://agent/skills/search-web/" \
+curl -X GET "http://localhost:1933/api/v1/content/read?uri=ctx://agent/skills/search-web/" \
   -H "X-API-Key: your-key"
 ```
 
@@ -334,7 +334,7 @@ curl -X GET "http://localhost:1933/api/v1/content/read?uri=viking://agent/skills
 # Semantic search for skills
 results = client.find(
     "search the internet",
-    target_uri="viking://agent/skills/",
+    target_uri="ctx://agent/skills/",
     limit=5
 )
 
@@ -352,7 +352,7 @@ curl -X POST http://localhost:1933/api/v1/search/find \
   -H "X-API-Key: your-key" \
   -d '{
     "query": "search the internet",
-    "target_uri": "viking://agent/skills/",
+    "target_uri": "ctx://agent/skills/",
     "limit": 5
   }'
 ```
@@ -362,13 +362,13 @@ curl -X POST http://localhost:1933/api/v1/search/find \
 **Python SDK (Embedded / HTTP)**
 
 ```python
-client.rm("viking://agent/skills/old-skill/", recursive=True)
+client.rm("ctx://agent/skills/old-skill/", recursive=True)
 ```
 
 **HTTP API**
 
 ```bash
-curl -X DELETE "http://localhost:1933/api/v1/fs?uri=viking://agent/skills/old-skill/&recursive=true" \
+curl -X DELETE "http://localhost:1933/api/v1/fs?uri=ctx://agent/skills/old-skill/&recursive=true" \
   -H "X-API-Key: your-key"
 ```
 
@@ -376,7 +376,7 @@ curl -X DELETE "http://localhost:1933/api/v1/fs?uri=viking://agent/skills/old-sk
 
 ## MCP Conversion
 
-OpenViking automatically detects and converts MCP tool definitions to skill format.
+AtomCtx automatically detects and converts MCP tool definitions to skill format.
 
 **Detection**
 
@@ -450,10 +450,10 @@ This tool wraps the MCP tool `search-web`. Call this when the user needs functio
 
 ## Skill Storage Structure
 
-Skills are stored at `viking://agent/skills/`:
+Skills are stored at `ctx://agent/skills/`:
 
 ```
-viking://agent/skills/
+ctx://agent/skills/
 +-- search-web/
 |   +-- .abstract.md      # L0: Brief description
 |   +-- .overview.md      # L1: Parameters and usage

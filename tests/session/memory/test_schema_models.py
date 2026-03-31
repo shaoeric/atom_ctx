@@ -9,16 +9,16 @@ from typing import Union
 import pytest
 import yaml
 
-from openviking.session.memory.dataclass import (
+from atom_ctx.session.memory.dataclass import (
     MemoryField,
     MemoryTypeSchema,
 )
-from openviking.session.memory.merge_op.base import FieldType, MergeOp
-from openviking.session.memory.memory_type_registry import (
+from atom_ctx.session.memory.merge_op.base import FieldType, MergeOp
+from atom_ctx.session.memory.memory_type_registry import (
     MemoryTypeRegistry,
     create_default_registry,
 )
-from openviking.session.memory.schema_model_generator import (
+from atom_ctx.session.memory.schema_model_generator import (
     SchemaModelGenerator,
     SchemaPromptGenerator,
     to_pascal_case,
@@ -82,7 +82,7 @@ class TestSchemaModelGenerator:
     @pytest.fixture
     def real_registry(self):
         """Create a registry with real schemas."""
-        schemas_dir = Path(__file__).parent.parent.parent.parent / "openviking" / "prompts" / "templates" / "memory"
+        schemas_dir = Path(__file__).parent.parent.parent.parent / "atom_ctx" / "prompts" / "templates" / "memory"
         return create_default_registry(str(schemas_dir))
 
     def test_create_flat_data_model(self, sample_memory_type, registry_with_sample):
@@ -224,7 +224,7 @@ class TestSchemaPromptGenerator:
     @pytest.fixture
     def real_registry(self):
         """Create a registry with real schemas."""
-        schemas_dir = Path(__file__).parent.parent.parent.parent / "openviking" / "prompts" / "templates" / "memory"
+        schemas_dir = Path(__file__).parent.parent.parent.parent / "atom_ctx" / "prompts" / "templates" / "memory"
         return create_default_registry(str(schemas_dir))
 
     def test_generate_type_descriptions(self, real_registry):
@@ -290,7 +290,7 @@ class TestIntegration:
 
     def test_end_to_end_model_generation_and_validation(self):
         """Test end-to-end: load schemas, generate models, validate data."""
-        schemas_dir = Path(__file__).parent.parent.parent.parent / "openviking" / "prompts" / "templates" / "memory"
+        schemas_dir = Path(__file__).parent.parent.parent.parent / "atom_ctx" / "prompts" / "templates" / "memory"
         registry = create_default_registry(str(schemas_dir))
 
         # Create generator

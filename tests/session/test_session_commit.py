@@ -8,11 +8,11 @@ import json
 
 import pytest
 
-from openviking import AsyncOpenViking
-from openviking.message import TextPart
-from openviking.service.task_tracker import get_task_tracker
-from openviking.session import Session
-from openviking_cli.exceptions import FailedPreconditionError
+from atom_ctx import AsyncAtomCtx
+from atom_ctx.message import TextPart
+from atom_ctx.service.task_tracker import get_task_tracker
+from atom_ctx.session import Session
+from atom_ctx_cli.exceptions import FailedPreconditionError
 
 
 async def _wait_for_task(task_id: str, timeout: float = 30.0) -> dict:
@@ -39,7 +39,7 @@ class TestCommit:
         assert result.get("task_id") is not None
 
     async def test_commit_extracts_memories(
-        self, session_with_messages: Session, client: AsyncOpenViking
+        self, session_with_messages: Session, client: AsyncAtomCtx
     ):
         """Test commit kicks off background memory extraction"""
         result = await session_with_messages.commit_async()
@@ -72,7 +72,7 @@ class TestCommit:
         assert isinstance(result, dict)
         assert result.get("archived") is False
 
-    async def test_commit_multiple_times(self, client: AsyncOpenViking):
+    async def test_commit_multiple_times(self, client: AsyncAtomCtx):
         """Test multiple commits"""
         session = client.session(session_id="multi_commit_test")
 
@@ -94,7 +94,7 @@ class TestCommit:
         assert result2.get("task_id") is not None
 
     async def test_commit_uses_latest_archive_overview_for_summary_and_extraction(
-        self, client: AsyncOpenViking
+        self, client: AsyncAtomCtx
     ):
         """Second commit should pass the latest completed archive overview into Phase 2."""
         session = client.session(session_id="latest_overview_threading_test")
@@ -104,7 +104,7 @@ class TestCommit:
         result1 = await session.commit_async()
         await _wait_for_task(result1["task_id"])
 
-        previous_overview = await session._viking_fs.read_file(
+        previous_overview = await session._ctx_fs.read_file(
             f"{result1['archive_uri']}/.overview.md",
             ctx=session.ctx,
         )
@@ -134,12 +134,12 @@ class TestCommit:
         assert seen["summary"] == previous_overview
         assert seen["extract"] == previous_overview
 
-    async def test_commit_with_usage_records(self, client: AsyncOpenViking):
+    async def test_commit_with_usage_records(self, client: AsyncAtomCtx):
         """Test commit with usage records"""
         session = client.session(session_id="usage_commit_test")
 
         session.add_message("user", [TextPart("Test message")])
-        session.used(contexts=["viking://user/test/resources/doc.md"])
+        session.used(contexts=["ctx://user/test/resources/doc.md"])
         session.add_message("assistant", [TextPart("Response")])
 
         result = await session.commit_async()
@@ -206,7 +206,7 @@ class TestCommit:
             f"active_count not incremented: before={count_before}, after={count_after}"
         )
 
-    async def test_commit_blocks_after_failed_archive(self, client: AsyncOpenViking):
+    async def test_commit_blocks_after_failed_archive(self, client: AsyncAtomCtx):
         """A failed archive should block the next commit until it is resolved."""
         session = client.session(session_id="failed_archive_blocks_new_commit")
 
@@ -222,7 +222,7 @@ class TestCommit:
 
         assert task_result["status"] == "failed"
 
-        failed_marker = await session._viking_fs.read_file(
+        failed_marker = await session._ctx_fs.read_file(
             f"{result['archive_uri']}/.failed.json",
             ctx=session.ctx,
         )

@@ -5,10 +5,10 @@
 
 import sys
 
-from openviking_cli.utils.config.agfs_config import AGFSConfig, S3Config
-from openviking_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
-from openviking_cli.utils.config.vectordb_config import VectorDBBackendConfig
-from openviking_cli.utils.config.vlm_config import VLMConfig
+from atom_ctx_cli.utils.config.agfs_config import AGFSConfig, S3Config
+from atom_ctx_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
+from atom_ctx_cli.utils.config.vectordb_config import VectorDBBackendConfig
+from atom_ctx_cli.utils.config.vlm_config import VLMConfig
 
 
 def test_agfs_validation():

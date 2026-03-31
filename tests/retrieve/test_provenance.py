@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from openviking_cli.retrieve.types import (
+from atom_ctx_cli.retrieve.types import (
     ContextType,
     FindResult,
     MatchedContext,
@@ -18,7 +18,7 @@ class TestFindResultProvenance:
     def _make_find_result(self) -> FindResult:
         """Build a FindResult with query_results for testing."""
         ctx = MatchedContext(
-            uri="viking://resources/docs/arch.md",
+            uri="ctx://resources/docs/arch.md",
             context_type=ContextType.RESOURCE,
             level=2,
             abstract="Architecture doc",
@@ -63,7 +63,7 @@ class TestFindResultProvenance:
         assert len(prov["matched_contexts"]) == 1
 
         ctx = prov["matched_contexts"][0]
-        assert ctx["uri"] == "viking://resources/docs/arch.md"
+        assert ctx["uri"] == "ctx://resources/docs/arch.md"
         assert ctx["tier"] == "L2"
         assert ctx["context_type"] == "resource"
         assert ctx["score"] == 0.87

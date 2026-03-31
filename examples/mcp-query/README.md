@@ -1,6 +1,6 @@
-# OpenViking MCP Server
+# AtomCtx MCP Server
 
-MCP (Model Context Protocol) HTTP server that exposes OpenViking RAG capabilities as tools.
+MCP (Model Context Protocol) HTTP server that exposes AtomCtx RAG capabilities as tools.
 
 ## Tools
 
@@ -14,8 +14,8 @@ MCP (Model Context Protocol) HTTP server that exposes OpenViking RAG capabilitie
 
 ```bash
 # Setup config
-cp ov.conf.example ov.conf
-# Edit ov.conf with your API keys
+cp ctx.conf.example ctx.conf
+# Edit ctx.conf with your API keys
 
 # Install dependencies
 uv sync
@@ -30,7 +30,7 @@ The server will be available at `http://127.0.0.1:2033/mcp`.
 
 ```bash
 # Add as MCP server in Claude CLI
-claude mcp add --transport http openviking http://localhost:2033/mcp
+claude mcp add --transport http atom_ctx http://localhost:2033/mcp
 ```
 
 Or add to `.mcp.json`:
@@ -38,7 +38,7 @@ Or add to `.mcp.json`:
 ```json
 {
   "mcpServers": {
-    "openviking": {
+    "atom_ctx": {
       "type": "http",
       "url": "http://localhost:2033/mcp"
     }
@@ -51,10 +51,10 @@ Or add to `.mcp.json`:
 ```
 uv run server.py [OPTIONS]
 
-  --config PATH       Config file path (default: ./ov.conf, env: OV_CONFIG)
-  --data PATH         Data directory path (default: ./data, env: OV_DATA)
+  --config PATH       Config file path (default: ./ctx.conf, env: CTX_CONFIG)
+  --data PATH         Data directory path (default: ./data, env: CTX_DATA)
   --host HOST         Bind address (default: 127.0.0.1)
-  --port PORT         Listen port (default: 2033, env: OV_PORT)
+  --port PORT         Listen port (default: 2033, env: CTX_PORT)
   --transport TYPE    streamable-http | stdio (default: streamable-http)
 ```
 

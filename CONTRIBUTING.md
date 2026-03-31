@@ -1,6 +1,6 @@
 # Contributing Guide
 
-Thank you for your interest in OpenViking! We welcome contributions of all kinds:
+Thank you for your interest in AtomCtx! We welcome contributions of all kinds:
 
 - Bug reports
 - Feature requests
@@ -15,7 +15,7 @@ Thank you for your interest in OpenViking! We welcome contributions of all kinds
 
 - **Python**: 3.10+
 - **Go**: 1.22+ (Required for building AGFS components from source)
-- **Rust**: 1.88+ (Required for source builds because the bundled `ov` CLI is built during packaging)
+- **Rust**: 1.88+ (Required for source builds because the bundled `ctx` CLI is built during packaging)
 - **C++ Compiler**: GCC 9+ or Clang 11+ (Required for building core extensions, must support C++17)
 - **CMake**: 3.12+
 
@@ -27,7 +27,7 @@ Thank you for your interest in OpenViking! We welcome contributions of all kinds
 
 #### Supported Platforms (Pre-compiled Wheels)
 
-OpenViking provides pre-compiled **Wheel** packages for the following environments:
+AtomCtx provides pre-compiled **Wheel** packages for the following environments:
 
 - **Windows**: x86_64
 - **macOS**: x86_64, arm64 (Apple Silicon)
@@ -38,8 +38,8 @@ For other platforms (e.g., FreeBSD), the package will be automatically compiled 
 ### 1. Fork and Clone
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/openviking.git
-cd openviking
+git clone https://github.com/YOUR_USERNAME/atom_ctx.git
+cd atom_ctx
 ```
 
 ### 2. Install Dependencies
@@ -58,17 +58,17 @@ source .venv/bin/activate  # Linux/macOS
 
 #### Local Development & Native Rebuilds
 
-OpenViking defaults to `binding-client` mode for AGFS, which requires pre-built native artifacts. If you modify the **AGFS (Go)** code, the bundled **Rust CLI**, or the **C++ extensions**, or if the pre-built artifacts are not found, you need to re-compile and re-install them. Run the following command in the project root:
+AtomCtx defaults to `binding-client` mode for AGFS, which requires pre-built native artifacts. If you modify the **AGFS (Go)** code, the bundled **Rust CLI**, or the **C++ extensions**, or if the pre-built artifacts are not found, you need to re-compile and re-install them. Run the following command in the project root:
 
 ```bash
 uv pip install -e . --force-reinstall
 ```
 
-This command ensures that `setup.py` is re-executed, triggering rebuilds for AGFS, the bundled `ov` CLI, and the C++ components.
+This command ensures that `setup.py` is re-executed, triggering rebuilds for AGFS, the bundled `ctx` CLI, and the C++ components.
 
 ### 3. Configure Environment
 
-Create a configuration file `~/.openviking/ov.conf`:
+Create a configuration file `~/.ctx/ctx.conf`:
 
 ```json
 {
@@ -93,19 +93,19 @@ Create a configuration file `~/.openviking/ov.conf`:
 Set the environment variable:
 
 ```bash
-export OPENVIKING_CONFIG_FILE=~/.openviking/ov.conf
+export CTX_CONFIG_FILE=~/.ctx/ctx.conf
 ```
 
 ### 4. Verify Installation
 
 ```python
 import asyncio
-import openviking as ov
+import atom_ctx as ctx
 
 async def main():
-    client = ov.AsyncOpenViking(path="./test_data")
+    client = ctx.AsyncAtomCtx(path="./test_data")
     await client.initialize()
-    print("OpenViking initialized successfully!")
+    print("AtomCtx initialized successfully!")
     await client.close()
 
 asyncio.run(main())
@@ -113,34 +113,34 @@ asyncio.run(main())
 
 ### 5. Build Rust CLI (Optional)
 
-The Rust CLI (`ov`) provides a high-performance command-line client for interacting with OpenViking Server.
+The Rust CLI (`ctx`) provides a high-performance command-line client for interacting with AtomCtx Server.
 
-Even if you do not plan to use `ov` directly, the Rust toolchain is still required when building OpenViking from source because packaging also builds the bundled CLI binary.
+Even if you do not plan to use `ctx` directly, the Rust toolchain is still required when building AtomCtx from source because packaging also builds the bundled CLI binary.
 
 ```bash
 # Build and install from source
-cargo install --path crates/ov_cli
+cargo install --path crates/ctx_cli
 
 # Or use the quick install script (downloads pre-built binary)
-curl -fsSL https://raw.githubusercontent.com/volcengine/OpenViking/main/crates/ov_cli/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/volcengine/AtomCtx/main/crates/ctx_cli/install.sh | bash
 ```
 
-After installation, run `ov --help` to see all available commands. CLI connection config goes in `~/.openviking/ovcli.conf`.
+After installation, run `ctx --help` to see all available commands. CLI connection config goes in `~/.ctx/ctx-cli.conf`.
 
 ---
 
 ## Project Structure
 
 ```
-openviking/
+atom_ctx/
 ├── pyproject.toml        # Project configuration
 ├── Cargo.toml            # Rust workspace configuration
 ├── third_party/          # Third-party dependencies
 │   └── agfs/             # AGFS filesystem
 │
-├── openviking/           # Python SDK
-│   ├── async_client.py   # AsyncOpenViking client
-│   ├── sync_client.py    # SyncOpenViking client
+├── atom_ctx/           # Python SDK
+│   ├── async_client.py   # AsyncAtomCtx client
+│   ├── sync_client.py    # SyncAtomCtx client
 │   ├── client/           # Local and HTTP client implementations
 │   ├── console/          # Standalone console UI and proxy service
 │   ├── core/             # Core data models and directory abstractions
@@ -159,7 +159,7 @@ openviking/
 │   └── prompts/          # Prompt templates
 │
 ├── crates/               # Rust components
-│   └── ov_cli/           # Rust CLI client
+│   └── ctx_cli/           # Rust CLI client
 │       ├── src/          # CLI source code
 │       └── install.sh    # Quick install script
 │
@@ -216,13 +216,13 @@ Now, `ruff` (check & format) will run automatically when you run `git commit`. I
 
 ```bash
 # Format code
-ruff format openviking/
+ruff format atom_ctx/
 
 # Lint
-ruff check openviking/
+ruff check atom_ctx/
 
 # Type check
-mypy openviking/
+mypy atom_ctx/
 ```
 
 ### Style Guidelines
@@ -258,7 +258,7 @@ pytest tests/client/test_lifecycle.py::TestClientInitialization::test_initialize
 pytest -k "search" -v
 
 # Run with coverage
-pytest --cov=openviking --cov-report=term-missing
+pytest --cov=atom_ctx --cov-report=term-missing
 ```
 
 ### Writing Tests
@@ -267,25 +267,25 @@ Tests are organized in subdirectories under `tests/`. The project uses `asyncio_
 
 ```python
 # tests/client/test_example.py
-from openviking import AsyncOpenViking
+from atom_ctx import AsyncAtomCtx
 
 
-class TestAsyncOpenViking:
-    async def test_initialize(self, uninitialized_client: AsyncOpenViking):
+class TestAsyncAtomCtx:
+    async def test_initialize(self, uninitialized_client: AsyncAtomCtx):
         await uninitialized_client.initialize()
         assert uninitialized_client._service is not None
         await uninitialized_client.close()
 
-    async def test_add_resource(self, client: AsyncOpenViking, sample_markdown_file):
+    async def test_add_resource(self, client: AsyncAtomCtx, sample_markdown_file):
         result = await client.add_resource(
             path=str(sample_markdown_file),
             reason="test document"
         )
         assert "root_uri" in result
-        assert result["root_uri"].startswith("viking://")
+        assert result["root_uri"].startswith("ctx://")
 ```
 
-Common fixtures are defined in `tests/conftest.py`, including `client` (initialized `AsyncOpenViking`), `uninitialized_client`, `temp_dir`, `sample_markdown_file`, and more.
+Common fixtures are defined in `tests/conftest.py`, including `client` (initialized `AsyncAtomCtx`), `uninitialized_client`, `temp_dir`, `sample_markdown_file`, and more.
 
 ---
 
@@ -505,7 +505,7 @@ Please provide:
 
 1. **Environment**
    - Python version
-   - OpenViking version
+   - AtomCtx version
    - Operating system
 
 2. **Steps to Reproduce**
@@ -556,8 +556,8 @@ By participating in this project, you agree to:
 
 If you have questions:
 
-- [GitHub Issues](https://github.com/volcengine/openviking/issues)
-- [Discussions](https://github.com/volcengine/openviking/discussions)
+- [GitHub Issues](https://github.com/volcengine/atom-ctx/issues)
+- [Discussions](https://github.com/volcengine/atom-ctx/discussions)
 
 ---
 

@@ -6,7 +6,7 @@ Tests for DebugService and ObserverService.
 
 from unittest.mock import MagicMock, patch
 
-from openviking.service.debug_service import (
+from atom_ctx.service.debug_service import (
     ComponentStatus,
     DebugService,
     ObserverService,
@@ -132,8 +132,8 @@ class TestObserverService:
         assert service._vikingdb is mock_vikingdb
         assert service._config is mock_config
 
-    @patch("openviking.service.debug_service.get_queue_manager")
-    @patch("openviking.service.debug_service.QueueObserver")
+    @patch("atom_ctx.service.debug_service.get_queue_manager")
+    @patch("atom_ctx.service.debug_service.QueueObserver")
     def test_queue_property(self, mock_observer_cls, mock_get_queue_manager):
         """Test queue property returns ComponentStatus."""
         mock_queue_manager = MagicMock()
@@ -155,7 +155,7 @@ class TestObserverService:
         assert status.status == "Queue Status Table"
         mock_observer_cls.assert_called_once_with(mock_queue_manager)
 
-    @patch("openviking.service.debug_service.VikingDBObserver")
+    @patch("atom_ctx.service.debug_service.VikingDBObserver")
     def test_vikingdb_property(self, mock_observer_cls):
         """Test vikingdb property returns ComponentStatus."""
         mock_vikingdb = MagicMock()
@@ -175,7 +175,7 @@ class TestObserverService:
         assert status.status == "VikingDB Status Table"
         mock_observer_cls.assert_called_once_with(mock_vikingdb)
 
-    @patch("openviking.service.debug_service.VLMObserver")
+    @patch("atom_ctx.service.debug_service.VLMObserver")
     def test_vlm_property(self, mock_observer_cls):
         """Test vlm property returns ComponentStatus."""
         mock_config = MagicMock()
@@ -198,10 +198,10 @@ class TestObserverService:
         assert status.status == "VLM Status Table"
         mock_observer_cls.assert_called_once_with(mock_vlm_instance)
 
-    @patch("openviking.service.debug_service.get_queue_manager")
-    @patch("openviking.service.debug_service.QueueObserver")
-    @patch("openviking.service.debug_service.VikingDBObserver")
-    @patch("openviking.service.debug_service.VLMObserver")
+    @patch("atom_ctx.service.debug_service.get_queue_manager")
+    @patch("atom_ctx.service.debug_service.QueueObserver")
+    @patch("atom_ctx.service.debug_service.VikingDBObserver")
+    @patch("atom_ctx.service.debug_service.VLMObserver")
     def test_system_property_all_healthy(
         self, mock_vlm_cls, mock_vikingdb_cls, mock_queue_cls, mock_get_queue_manager
     ):
@@ -224,10 +224,10 @@ class TestObserverService:
         non_transaction_errors = [e for e in status.errors if "transaction" not in e]
         assert non_transaction_errors == []
 
-    @patch("openviking.service.debug_service.get_queue_manager")
-    @patch("openviking.service.debug_service.QueueObserver")
-    @patch("openviking.service.debug_service.VikingDBObserver")
-    @patch("openviking.service.debug_service.VLMObserver")
+    @patch("atom_ctx.service.debug_service.get_queue_manager")
+    @patch("atom_ctx.service.debug_service.QueueObserver")
+    @patch("atom_ctx.service.debug_service.VikingDBObserver")
+    @patch("atom_ctx.service.debug_service.VLMObserver")
     def test_system_property_with_errors(
         self, mock_vlm_cls, mock_vikingdb_cls, mock_queue_cls, mock_get_queue_manager
     ):
@@ -264,10 +264,10 @@ class TestObserverService:
         assert "queue has errors" in non_transaction_errors
         assert "vlm has errors" in non_transaction_errors
 
-    @patch("openviking.service.debug_service.get_queue_manager")
-    @patch("openviking.service.debug_service.QueueObserver")
-    @patch("openviking.service.debug_service.VikingDBObserver")
-    @patch("openviking.service.debug_service.VLMObserver")
+    @patch("atom_ctx.service.debug_service.get_queue_manager")
+    @patch("atom_ctx.service.debug_service.QueueObserver")
+    @patch("atom_ctx.service.debug_service.VikingDBObserver")
+    @patch("atom_ctx.service.debug_service.VLMObserver")
     def test_is_healthy_returns_true(
         self, mock_vlm_cls, mock_vikingdb_cls, mock_queue_cls, mock_get_queue_manager
     ):
@@ -316,10 +316,10 @@ class TestObserverService:
         assert isinstance(status, SystemStatus)
         assert status.is_healthy is False
 
-    @patch("openviking.service.debug_service.get_queue_manager")
-    @patch("openviking.service.debug_service.QueueObserver")
-    @patch("openviking.service.debug_service.VikingDBObserver")
-    @patch("openviking.service.debug_service.VLMObserver")
+    @patch("atom_ctx.service.debug_service.get_queue_manager")
+    @patch("atom_ctx.service.debug_service.QueueObserver")
+    @patch("atom_ctx.service.debug_service.VikingDBObserver")
+    @patch("atom_ctx.service.debug_service.VLMObserver")
     def test_is_healthy_returns_false(
         self, mock_vlm_cls, mock_vikingdb_cls, mock_queue_cls, mock_get_queue_manager
     ):

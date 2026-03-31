@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Beijing Volcano Engine Technology Co., Ltd.
 # SPDX-License-Identifier: Apache-2.0
 
-from openviking.session.memory_deduplicator import MemoryDeduplicator
+from atom_ctx.session.memory_deduplicator import MemoryDeduplicator
 
 
 class TestExtractFacetKey:

@@ -1,7 +1,7 @@
 {
-  "name": "openviking-opencode",
+  "name": "atom_ctx-opencode",
   "version": "0.3.3",
-  "description": "OpenCode plugin for OpenViking — injects indexed repo context into the AI assistant and auto-installs the openviking skill",
+  "description": "OpenCode plugin for AtomCtx — injects indexed repo context into the AI assistant and auto-installs the atom_ctx skill",
   "type": "module",
   "main": "index.mjs",
   "exports": {
@@ -10,13 +10,13 @@
   "keywords": [
     "opencode",
     "opencode-plugin",
-    "openviking",
+    "atom_ctx",
     "rag",
     "code-search"
   ],
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/volcengine/OpenViking"
+    "url": "https://github.com/volcengine/atom-ctx"
   }
 }

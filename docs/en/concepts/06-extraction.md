@@ -1,6 +1,6 @@
 # Context Extraction
 
-OpenViking uses a three-layer async architecture for document parsing and context extraction.
+AtomCtx uses a three-layer async architecture for document parsing and context extraction.
 
 ## Overview
 
@@ -38,7 +38,7 @@ Parser handles document format conversion and structuring, creating file structu
 parse_result = registry.parse("/path/to/doc.md")
 
 # 2. Returns temp directory URI
-parse_result.temp_dir_path  # viking://temp/abc123
+parse_result.temp_dir_path  # ctx://temp/abc123
 ```
 
 ### Smart Splitting
@@ -72,7 +72,7 @@ TreeBuilder moves temp directory to AGFS and queues semantic processing.
 
 ```python
 building_tree = tree_builder.finalize_from_temp(
-    temp_dir_path="viking://temp/abc123",
+    temp_dir_path="ctx://temp/abc123",
     scope="resources",  # resources/user/agent
 )
 ```
@@ -89,9 +89,9 @@ building_tree = tree_builder.finalize_from_temp(
 
 | scope | Base URI |
 |-------|----------|
-| resources | `viking://resources` |
-| user | `viking://user` |
-| agent | `viking://agent` |
+| resources | `ctx://resources` |
+| user | `ctx://user` |
+| agent | `ctx://agent` |
 
 ## SemanticQueue
 
@@ -133,11 +133,11 @@ Leaf directories → Parent directories → Root
 
 ## Code Skeleton Extraction (AST Mode)
 
-For code files, OpenViking supports AST-based skeleton extraction via tree-sitter as a lightweight alternative to LLM summarization, significantly reducing processing cost.
+For code files, AtomCtx supports AST-based skeleton extraction via tree-sitter as a lightweight alternative to LLM summarization, significantly reducing processing cost.
 
 ### Modes
 
-Controlled by `code_summary_mode` in `ov.conf` (see [Configuration](../guides/01-configuration.md#code)):
+Controlled by `code_summary_mode` in `ctx.conf` (see [Configuration](../guides/01-configuration.md#code)):
 
 | Mode | Description |
 |------|-------------|
@@ -181,7 +181,7 @@ The following conditions trigger automatic fallback to LLM, with the reason logg
 ### File Structure
 
 ```
-openviking/parse/parsers/code/ast/
+atom_ctx/parse/parsers/code/ast/
 ├── extractor.py      # Language detection and dispatch
 ├── skeleton.py       # CodeSkeleton / FunctionSig / ClassSkeleton data structures
 └── languages/        # Per-language extractors
@@ -194,7 +194,7 @@ openviking/parse/parsers/code/ast/
 | Phase | Resource | Memory | Skill |
 |-------|----------|--------|-------|
 | **Parser** | Common flow | Common flow | Common flow |
-| **Base URI** | `viking://resources` | `viking://user/memories` | `viking://agent/skills` |
+| **Base URI** | `ctx://resources` | `ctx://user/memories` | `ctx://agent/skills` |
 | **TreeBuilder scope** | resources | user/agent | agent |
 | **SemanticMsg type** | resource | memory | skill |
 
@@ -219,7 +219,7 @@ await client.add_skill({
     "content": "# search-web\\n..."
 })
 
-# Flow: Direct write to viking://agent/skills/{name}/ → SemanticQueue
+# Flow: Direct write to ctx://agent/skills/{name}/ → SemanticQueue
 ```
 
 ### Memory Extraction

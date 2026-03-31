@@ -13,8 +13,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openviking.models.embedder import OpenAIDenseEmbedder
-from openviking_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
+from atom_ctx.models.embedder import OpenAIDenseEmbedder
+from atom_ctx_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
 
 
 def _make_mock_client():
@@ -30,7 +30,7 @@ def _make_mock_client():
 class TestExtraHeadersDirectConstruction:
     """Test extra_headers behaviour when constructing OpenAIDenseEmbedder directly."""
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_extra_headers_passed_as_default_headers(self, mock_openai_class):
         """extra_headers dict must arrive as default_headers kwarg in openai.OpenAI()."""
         mock_openai_class.return_value = _make_mock_client()
@@ -46,7 +46,7 @@ class TestExtraHeadersDirectConstruction:
         call_kwargs = mock_openai_class.call_args[1]
         assert call_kwargs.get("default_headers") == headers
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_no_extra_headers_omits_default_headers(self, mock_openai_class):
         """When extra_headers is not provided, default_headers must NOT appear in openai.OpenAI()."""
         mock_openai_class.return_value = _make_mock_client()
@@ -125,7 +125,7 @@ class TestEmbeddingModelConfigExtraHeaders:
 class TestApiKeyValidationFix:
     """Test the api_key dead-code bug fix: validate only when both api_key and api_base are absent."""
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_api_key_not_required_when_api_base_set(self, mock_openai_class):
         """No ValueError should be raised when api_base is provided without api_key."""
         mock_openai_class.return_value = _make_mock_client()
@@ -137,7 +137,7 @@ class TestApiKeyValidationFix:
         )
         assert embedder is not None
 
-    @patch("openviking.models.embedder.openai_embedders.openai.OpenAI")
+    @patch("atom_ctx.models.embedder.openai_embedders.openai.OpenAI")
     def test_api_key_required_when_no_api_base(self, mock_openai_class):
         """ValueError must be raised when neither api_key nor api_base is provided."""
         mock_openai_class.return_value = _make_mock_client()

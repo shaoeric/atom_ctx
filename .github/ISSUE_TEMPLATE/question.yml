@@ -1,12 +1,12 @@
 name: Question
-description: Ask a question about OpenViking usage
+description: Ask a question about AtomCtx usage
 title: "[Question]: "
 labels: ["question"]
 body:
   - type: markdown
     attributes:
       value: |
-        Have a question about OpenViking? We're here to help!
+        Have a question about AtomCtx? We're here to help!
 
   - type: textarea
     id: question
@@ -51,5 +51,5 @@ body:
     attributes:
       label: Before Asking
       options:
-        - label: I have checked the [documentation](https://www.openviking.ai/docs)
+        - label: I have checked the [documentation](https://www.ctx.ai/docs)
           required: true

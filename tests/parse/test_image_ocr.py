@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from PIL import Image
 
-from openviking.parse.parsers.media.image import ImageParser
-from openviking_cli.utils.config.parser_config import ImageConfig
+from atom_ctx.parse.parsers.media.image import ImageParser
+from atom_ctx_cli.utils.config.parser_config import ImageConfig
 
 
 def _create_test_image(width: int = 100, height: int = 50) -> bytes:

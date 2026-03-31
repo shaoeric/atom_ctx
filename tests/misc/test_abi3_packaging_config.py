@@ -20,7 +20,7 @@ def test_packaging_only_includes_abi3_engine_extensions():
 
 
 def test_windows_engine_loader_registers_dll_search_paths():
-    engine_init = _read_text("openviking/storage/vectordb/engine/__init__.py")
+    engine_init = _read_text("atom_ctx/storage/vectordb/engine/__init__.py")
 
     assert "add_dll_directory" in engine_init
     assert "module_path" in engine_init
@@ -70,7 +70,7 @@ def test_build_workflow_smoke_tests_windows_wheel_engine_import():
     assert "Smoke test built wheel (Windows)" in build_workflow
     assert "python -m pip install --force-reinstall dist/*.whl" in build_workflow
     assert 'cd "$RUNNER_TEMP"' in build_workflow
-    assert "import openviking.storage.vectordb.engine as engine" in build_workflow
+    assert "import atom_ctx.storage.vectordb.engine as engine" in build_workflow
     assert "engine.ENGINE_VARIANT" in build_workflow
 
 
@@ -78,9 +78,9 @@ def test_windows_abi3_backend_uses_stable_python_linkage():
     setup_py = _read_text("setup.py")
     src_cmake = _read_text("src/CMakeLists.txt")
 
-    assert "OV_PYTHON_SABI_LIBRARY" in setup_py
+    assert "CTX_PYTHON_SABI_LIBRARY" in setup_py
     assert "python3.dll" in setup_py
-    assert "OV_PYTHON_SABI_LIBRARY" in src_cmake
+    assert "CTX_PYTHON_SABI_LIBRARY" in src_cmake
     assert "Python3::Python" not in src_cmake
 
 
@@ -106,6 +106,6 @@ def test_repo_no_longer_contains_pybind11_engine_bindings():
 
 
 def test_python_engine_exports_only_live_abi3_api():
-    import openviking.storage.vectordb.engine as engine
+    import atom_ctx.storage.vectordb.engine as engine
 
     assert not hasattr(engine, "FetchDataResult")

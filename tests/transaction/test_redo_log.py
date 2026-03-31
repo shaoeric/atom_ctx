@@ -6,7 +6,7 @@ import uuid
 
 import pytest
 
-from openviking.storage.transaction.redo_log import RedoLog
+from atom_ctx.storage.transaction.redo_log import RedoLog
 
 
 @pytest.fixture
@@ -17,12 +17,12 @@ def redo(agfs_client):
 class TestRedoLogBasic:
     def test_write_and_read(self, redo):
         task_id = uuid.uuid4().hex
-        info = {"archive_uri": "viking://test/archive", "session_uri": "viking://test/session"}
+        info = {"archive_uri": "ctx://test/archive", "session_uri": "ctx://test/session"}
         redo.write_pending(task_id, info)
 
         result = redo.read(task_id)
-        assert result["archive_uri"] == "viking://test/archive"
-        assert result["session_uri"] == "viking://test/session"
+        assert result["archive_uri"] == "ctx://test/archive"
+        assert result["session_uri"] == "ctx://test/session"
 
         redo.mark_done(task_id)
 

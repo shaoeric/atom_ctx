@@ -1,6 +1,6 @@
 """Tests for URL filename preservation when importing resources via URL.
 
-Verifies fix for https://github.com/volcengine/OpenViking/issues/251:
+Verifies fix for https://github.com/volcengine/atom-ctx/issues/251:
 - Original filename preserved (not temp file name)
 - File extension preserved (.py stays .py, not converted to .md)
 - URL-encoded characters decoded properly
@@ -9,7 +9,7 @@ Verifies fix for https://github.com/volcengine/OpenViking/issues/251:
 
 import pytest
 
-from openviking.parse.parsers.html import HTMLParser, URLType, URLTypeDetector
+from atom_ctx.parse.parsers.html import HTMLParser, URLType, URLTypeDetector
 
 
 class TestExtractFilenameFromUrl:

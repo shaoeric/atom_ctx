@@ -5,9 +5,9 @@ import json
 import tempfile
 from pathlib import Path
 
-from openviking.eval.ragas.generator import DatasetGenerator
-from openviking.eval.ragas.pipeline import RAGQueryPipeline
-from openviking.eval.ragas.types import EvalDataset, EvalSample
+from atom_ctx.eval.ragas.generator import DatasetGenerator
+from atom_ctx.eval.ragas.pipeline import RAGQueryPipeline
+from atom_ctx.eval.ragas.types import EvalDataset, EvalSample
 
 
 def test_eval_types():
@@ -38,7 +38,7 @@ def test_pipeline_initialization():
 
 def test_question_loader():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
-        f.write('{"question": "What is OpenViking?"}\n')
+        f.write('{"question": "What is AtomCtx?"}\n')
         f.write('{"question": "How does memory work?", "ground_truth": "Hierarchical"}\n')
         f.write("\n")
         f.write('{"invalid": "no question field"}\n')
@@ -59,7 +59,7 @@ def test_question_loader():
                     pass
 
         assert len(questions) == 2
-        assert questions[0]["question"] == "What is OpenViking?"
+        assert questions[0]["question"] == "What is AtomCtx?"
         assert questions[1]["ground_truth"] == "Hierarchical"
     finally:
         Path(temp_path).unlink()

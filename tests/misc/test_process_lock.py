@@ -3,7 +3,7 @@
 import os
 import tempfile
 
-from openviking.utils.process_lock import (
+from atom_ctx.utils.process_lock import (
     LOCK_FILENAME,
     DataDirectoryLocked,
     acquire_data_dir_lock,
@@ -57,5 +57,5 @@ class TestProcessLock:
                 acquire_data_dir_lock(tmpdir)
             except DataDirectoryLocked as exc:
                 msg = str(exc)
-                assert "openviking-server" in msg
+                assert "ctx-server" in msg
                 assert "separate data directories" in msg

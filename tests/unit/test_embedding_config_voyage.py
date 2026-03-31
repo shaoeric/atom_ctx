@@ -4,8 +4,8 @@
 
 import pytest
 
-from openviking.models.embedder import VoyageDenseEmbedder
-from openviking_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
+from atom_ctx.models.embedder import VoyageDenseEmbedder
+from atom_ctx_cli.utils.config.embedding_config import EmbeddingConfig, EmbeddingModelConfig
 
 
 def test_voyage_provider_requires_api_key():

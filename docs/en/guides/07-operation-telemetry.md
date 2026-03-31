@@ -1,6 +1,6 @@
 # Operation Telemetry
 
-Operation telemetry lets you ask OpenViking to return a compact summary of what happened during a request, such as duration, token usage, vector retrieval activity, queue progress, and resource-processing stages.
+Operation telemetry lets you ask AtomCtx to return a compact summary of what happened during a request, such as duration, token usage, vector retrieval activity, queue progress, and resource-processing stages.
 
 Use it when you want to:
 
@@ -10,7 +10,7 @@ Use it when you want to:
 
 ## How it works
 
-Telemetry is opt-in. OpenViking only returns a top-level `telemetry` object when you request it.
+Telemetry is opt-in. AtomCtx only returns a top-level `telemetry` object when you request it.
 
 Typical response shape:
 
@@ -190,7 +190,7 @@ This group appears on resource ingestion operations such as `resources.add_resou
 
 ### `summary.queue`
 
-This group appears when OpenViking waits for queue-backed work to complete.
+This group appears when AtomCtx waits for queue-backed work to complete.
 
 | Field | Meaning |
 | --- | --- |
@@ -276,9 +276,9 @@ curl -X POST http://localhost:1933/api/v1/resources \
 ### Python SDK
 
 ```python
-from openviking import AsyncOpenVikingClient
+from atom_ctx import AsyncAtomCtxClient
 
-client = AsyncOpenVikingClient(config_path="/path/to/config.yaml")
+client = AsyncAtomCtxClient(config_path="/path/to/config.yaml")
 await client.initialize()
 
 result = await client.find("memory dedup", telemetry=True)
@@ -288,7 +288,7 @@ print(result["telemetry"]["summary"]["duration_ms"])
 
 ## Limitations and behavior
 
-- OpenViking currently exposes summary-only telemetry to users
+- AtomCtx currently exposes summary-only telemetry to users
 - `{"telemetry": {"events": true}}` is not a supported public request shape
 - event-stream style selection is not part of the public API
 - `session.commit` supports telemetry only when `wait=true`

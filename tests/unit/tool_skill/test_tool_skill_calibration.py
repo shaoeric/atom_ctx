@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for tool/skill name calibration in memory extraction."""
 
-from openviking.message.part import ToolPart
-from openviking.session.compressor import SessionCompressor
-from openviking.session.memory_extractor import MemoryCategory, ToolSkillCandidateMemory
+from atom_ctx.message.part import ToolPart
+from atom_ctx.session.compressor import SessionCompressor
+from atom_ctx.session.memory_extractor import MemoryCategory, ToolSkillCandidateMemory
 
 
 def _candidate(
@@ -27,7 +27,7 @@ class TestToolSkillCalibration:
         compressor = SessionCompressor.__new__(SessionCompressor)
         tool_parts = [
             ToolPart(tool_name="read_file", tool_status="completed"),
-            ToolPart(skill_uri="viking://agent/skills/weather", tool_status="completed"),
+            ToolPart(skill_uri="ctx://agent/skills/weather", tool_status="completed"),
             ToolPart(tool_name="weather", tool_status="error"),
         ]
         candidate = _candidate(MemoryCategory.TOOLS, tool_name="weather")
@@ -40,7 +40,7 @@ class TestToolSkillCalibration:
         compressor = SessionCompressor.__new__(SessionCompressor)
         tool_parts = [
             ToolPart(tool_name="read_file", tool_status="completed"),
-            ToolPart(skill_uri="viking://agent/skills/weather", tool_status="error"),
+            ToolPart(skill_uri="ctx://agent/skills/weather", tool_status="error"),
             ToolPart(tool_name="weather", tool_status="completed"),
         ]
         candidate = _candidate(MemoryCategory.SKILLS, skill_name="weather")
@@ -65,7 +65,7 @@ class TestToolSkillCalibration:
 
     def test_suffix_like_weather_usage_does_not_match_weather(self):
         compressor = SessionCompressor.__new__(SessionCompressor)
-        tool_parts = [ToolPart(skill_uri="viking://agent/skills/weather", tool_status="completed")]
+        tool_parts = [ToolPart(skill_uri="ctx://agent/skills/weather", tool_status="completed")]
         candidate = _candidate(MemoryCategory.SKILLS, skill_name="weather使用")
         tool_name, skill_name, status = compressor._get_tool_skill_info(candidate, tool_parts)
         assert (tool_name, skill_name, status) == ("", "weather", "completed")

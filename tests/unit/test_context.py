@@ -5,14 +5,14 @@
 
 from datetime import datetime, timezone
 
-from openviking.core.context import (
+from atom_ctx.core.context import (
     Context,
     ContextLevel,
     ContextType,
     ResourceContentType,
     Vectorize,
 )
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 class TestResourceContentType:
@@ -101,9 +101,9 @@ class TestContextInit:
 
     def test_minimal_init(self):
         """Test minimal initialization."""
-        ctx = Context(uri="viking://resources/test/")
+        ctx = Context(uri="ctx://resources/test/")
 
-        assert ctx.uri == "viking://resources/test/"
+        assert ctx.uri == "ctx://resources/test/"
         assert ctx.is_leaf is False
         assert ctx.abstract == ""
         assert ctx.context_type == "resource"
@@ -114,8 +114,8 @@ class TestContextInit:
         """Test full initialization."""
         now = datetime.now(timezone.utc)
         ctx = Context(
-            uri="viking://user/test/memories/profile/test.md",
-            parent_uri="viking://user/test/memories/profile/",
+            uri="ctx://user/test/memories/profile/test.md",
+            parent_uri="ctx://user/test/memories/profile/",
             is_leaf=True,
             abstract="Test abstract",
             context_type="memory",
@@ -123,13 +123,13 @@ class TestContextInit:
             created_at=now,
             updated_at=now,
             active_count=5,
-            related_uri=["viking://other/"],
+            related_uri=["ctx://other/"],
             meta={"key": "value"},
             level=1,
         )
 
-        assert ctx.uri == "viking://user/test/memories/profile/test.md"
-        assert ctx.parent_uri == "viking://user/test/memories/profile/"
+        assert ctx.uri == "ctx://user/test/memories/profile/test.md"
+        assert ctx.parent_uri == "ctx://user/test/memories/profile/"
         assert ctx.is_leaf is True
         assert ctx.abstract == "Test abstract"
         assert ctx.context_type == "memory"
@@ -137,26 +137,26 @@ class TestContextInit:
         assert ctx.created_at == now
         assert ctx.updated_at == now
         assert ctx.active_count == 5
-        assert ctx.related_uri == ["viking://other/"]
+        assert ctx.related_uri == ["ctx://other/"]
         assert ctx.meta == {"key": "value"}
         assert ctx.level == 1
 
     def test_auto_generated_id(self):
         """Test auto-generated ID."""
-        ctx = Context(uri="viking://test/")
+        ctx = Context(uri="ctx://test/")
 
         assert ctx.id is not None
         assert len(ctx.id) == 36  # UUID format
 
     def test_custom_id(self):
         """Test custom ID."""
-        ctx = Context(uri="viking://test/", id="custom-id-123")
+        ctx = Context(uri="ctx://test/", id="custom-id-123")
 
         assert ctx.id == "custom-id-123"
 
     def test_auto_timestamps(self):
         """Test auto-generated timestamps."""
-        ctx = Context(uri="viking://test/")
+        ctx = Context(uri="ctx://test/")
 
         assert ctx.created_at is not None
         assert ctx.updated_at is not None
@@ -164,7 +164,7 @@ class TestContextInit:
 
     def test_vectorize_initialized(self):
         """Test vectorize is initialized."""
-        ctx = Context(uri="viking://test/", abstract="Test")
+        ctx = Context(uri="ctx://test/", abstract="Test")
 
         assert ctx.vectorize is not None
         assert ctx.vectorize.text == "Test"
@@ -175,25 +175,25 @@ class TestContextDeriveContextType:
 
     def test_derive_skill(self):
         """Test deriving skill type from URI."""
-        ctx = Context(uri="viking://agent/test/skills/my-skill/")
+        ctx = Context(uri="ctx://agent/test/skills/my-skill/")
 
         assert ctx.context_type == "skill"
 
     def test_derive_memory(self):
         """Test deriving memory type from URI."""
-        ctx = Context(uri="viking://user/test/memories/preferences/test.md")
+        ctx = Context(uri="ctx://user/test/memories/preferences/test.md")
 
         assert ctx.context_type == "memory"
 
     def test_derive_resource_default(self):
         """Test deriving resource type (default)."""
-        ctx = Context(uri="viking://resources/docs/readme.md")
+        ctx = Context(uri="ctx://resources/docs/readme.md")
 
         assert ctx.context_type == "resource"
 
     def test_explicit_context_type_overrides(self):
         """Test explicit context_type overrides derivation."""
-        ctx = Context(uri="viking://resources/docs/readme.md", context_type="skill")
+        ctx = Context(uri="ctx://resources/docs/readme.md", context_type="skill")
 
         assert ctx.context_type == "skill"
 
@@ -203,49 +203,49 @@ class TestContextDeriveCategory:
 
     def test_derive_patterns(self):
         """Test deriving patterns category."""
-        ctx = Context(uri="viking://memories/patterns/test.md")
+        ctx = Context(uri="ctx://memories/patterns/test.md")
 
         assert ctx.category == "patterns"
 
     def test_derive_cases(self):
         """Test deriving cases category."""
-        ctx = Context(uri="viking://memories/cases/test.md")
+        ctx = Context(uri="ctx://memories/cases/test.md")
 
         assert ctx.category == "cases"
 
     def test_derive_profile(self):
         """Test deriving profile category."""
-        ctx = Context(uri="viking://memories/profile/test.md")
+        ctx = Context(uri="ctx://memories/profile/test.md")
 
         assert ctx.category == "profile"
 
     def test_derive_preferences(self):
         """Test deriving preferences category."""
-        ctx = Context(uri="viking://memories/preferences/test.md")
+        ctx = Context(uri="ctx://memories/preferences/test.md")
 
         assert ctx.category == "preferences"
 
     def test_derive_entities(self):
         """Test deriving entities category."""
-        ctx = Context(uri="viking://memories/entities/test.md")
+        ctx = Context(uri="ctx://memories/entities/test.md")
 
         assert ctx.category == "entities"
 
     def test_derive_events(self):
         """Test deriving events category."""
-        ctx = Context(uri="viking://memories/events/test.md")
+        ctx = Context(uri="ctx://memories/events/test.md")
 
         assert ctx.category == "events"
 
     def test_derive_empty_default(self):
         """Test deriving empty category (default)."""
-        ctx = Context(uri="viking://resources/docs/test.md")
+        ctx = Context(uri="ctx://resources/docs/test.md")
 
         assert ctx.category == ""
 
     def test_explicit_category_overrides(self):
         """Test explicit category overrides derivation."""
-        ctx = Context(uri="viking://resources/docs/test.md", category="custom")
+        ctx = Context(uri="ctx://resources/docs/test.md", category="custom")
 
         assert ctx.category == "custom"
 
@@ -255,13 +255,13 @@ class TestContextMethods:
 
     def test_get_context_type(self):
         """Test get_context_type method."""
-        ctx = Context(uri="viking://test/", context_type="skill")
+        ctx = Context(uri="ctx://test/", context_type="skill")
 
         assert ctx.get_context_type() == "skill"
 
     def test_set_vectorize(self):
         """Test set_vectorize method."""
-        ctx = Context(uri="viking://test/")
+        ctx = Context(uri="ctx://test/")
         v = Vectorize(text="New text")
         ctx.set_vectorize(v)
 
@@ -269,13 +269,13 @@ class TestContextMethods:
 
     def test_get_vectorization_text(self):
         """Test get_vectorization_text method."""
-        ctx = Context(uri="viking://test/", abstract="Test abstract")
+        ctx = Context(uri="ctx://test/", abstract="Test abstract")
 
         assert ctx.get_vectorization_text() == "Test abstract"
 
     def test_update_activity(self):
         """Test update_activity method."""
-        ctx = Context(uri="viking://test/", active_count=5)
+        ctx = Context(uri="ctx://test/", active_count=5)
         old_updated = ctx.updated_at
 
         ctx.update_activity()
@@ -290,14 +290,14 @@ class TestContextToDict:
     def test_to_dict_basic(self):
         """Test basic to_dict conversion."""
         ctx = Context(
-            uri="viking://test/",
+            uri="ctx://test/",
             is_leaf=True,
             abstract="Test abstract",
         )
 
         d = ctx.to_dict()
 
-        assert d["uri"] == "viking://test/"
+        assert d["uri"] == "ctx://test/"
         assert d["is_leaf"] is True
         assert d["abstract"] == "Test abstract"
         assert d["context_type"] == "resource"
@@ -308,10 +308,10 @@ class TestContextToDict:
     def test_to_dict_with_optional_fields(self):
         """Test to_dict with optional fields."""
         ctx = Context(
-            uri="viking://test/",
-            parent_uri="viking://parent/",
-            temp_uri="viking://temp/",
-            related_uri=["viking://related/"],
+            uri="ctx://test/",
+            parent_uri="ctx://parent/",
+            temp_uri="ctx://temp/",
+            related_uri=["ctx://related/"],
             meta={"key": "value"},
             level=1,
             session_id="session-123",
@@ -319,9 +319,9 @@ class TestContextToDict:
 
         d = ctx.to_dict()
 
-        assert d["parent_uri"] == "viking://parent/"
-        assert d["temp_uri"] == "viking://temp/"
-        assert d["related_uri"] == ["viking://related/"]
+        assert d["parent_uri"] == "ctx://parent/"
+        assert d["temp_uri"] == "ctx://temp/"
+        assert d["related_uri"] == ["ctx://related/"]
         assert d["meta"] == {"key": "value"}
         assert d["level"] == 1
         assert d["session_id"] == "session-123"
@@ -329,7 +329,7 @@ class TestContextToDict:
     def test_to_dict_skill_type(self):
         """Test to_dict adds skill-specific fields."""
         ctx = Context(
-            uri="viking://skills/test/",
+            uri="ctx://skills/test/",
             context_type="skill",
             meta={"name": "my-skill", "description": "A skill"},
         )
@@ -343,7 +343,7 @@ class TestContextToDict:
         """Test timestamps are formatted as ISO strings."""
         now = datetime(2026, 3, 26, 10, 30, 0, tzinfo=timezone.utc)
         ctx = Context(
-            uri="viking://test/",
+            uri="ctx://test/",
             created_at=now,
             updated_at=now,
         )
@@ -360,7 +360,7 @@ class TestContextFromDict:
     def test_from_dict_basic(self):
         """Test basic from_dict conversion."""
         d = {
-            "uri": "viking://test/",
+            "uri": "ctx://test/",
             "is_leaf": True,
             "abstract": "Test abstract",
             "context_type": "memory",
@@ -369,7 +369,7 @@ class TestContextFromDict:
 
         ctx = Context.from_dict(d)
 
-        assert ctx.uri == "viking://test/"
+        assert ctx.uri == "ctx://test/"
         assert ctx.is_leaf is True
         assert ctx.abstract == "Test abstract"
         assert ctx.context_type == "memory"
@@ -378,7 +378,7 @@ class TestContextFromDict:
     def test_from_dict_with_timestamps(self):
         """Test from_dict with ISO timestamps."""
         d = {
-            "uri": "viking://test/",
+            "uri": "ctx://test/",
             "created_at": "2026-03-26T10:30:00Z",
             "updated_at": "2026-03-26T11:30:00Z",
         }
@@ -393,7 +393,7 @@ class TestContextFromDict:
     def test_from_dict_with_level(self):
         """Test from_dict with level."""
         d = {
-            "uri": "viking://test/",
+            "uri": "ctx://test/",
             "level": 1,
         }
 
@@ -404,7 +404,7 @@ class TestContextFromDict:
     def test_from_dict_with_user(self):
         """Test from_dict with user."""
         d = {
-            "uri": "viking://test/",
+            "uri": "ctx://test/",
             "user": {
                 "account_id": "account-123",
                 "user_id": "user-123",
@@ -421,7 +421,7 @@ class TestContextFromDict:
     def test_from_dict_with_vector(self):
         """Test from_dict with vector."""
         d = {
-            "uri": "viking://test/",
+            "uri": "ctx://test/",
             "vector": [0.1, 0.2, 0.3],
         }
 
@@ -432,14 +432,14 @@ class TestContextFromDict:
     def test_roundtrip(self):
         """Test to_dict -> from_dict roundtrip."""
         original = Context(
-            uri="viking://test/",
-            parent_uri="viking://parent/",
+            uri="ctx://test/",
+            parent_uri="ctx://parent/",
             is_leaf=True,
             abstract="Test abstract",
             context_type="memory",
             category="profile",
             active_count=5,
-            related_uri=["viking://related/"],
+            related_uri=["ctx://related/"],
             meta={"key": "value"},
             level=1,
             session_id="session-123",
@@ -467,35 +467,35 @@ class TestContextWithUser:
     def test_user_account_id_inheritance(self):
         """Test account_id inherited from user."""
         user = UserIdentifier(account_id="account-123", user_id="user-123", agent_id="agent-456")
-        ctx = Context(uri="viking://test/", user=user)
+        ctx = Context(uri="ctx://test/", user=user)
 
         assert ctx.account_id == user.account_id
 
     def test_owner_space_agent(self):
         """Test owner_space for agent URI."""
         user = UserIdentifier(account_id="account-123", user_id="user-123", agent_id="agent-456")
-        ctx = Context(uri="viking://agent/test/skills/my-skill/", user=user)
+        ctx = Context(uri="ctx://agent/test/skills/my-skill/", user=user)
 
         assert ctx.owner_space == user.agent_space_name()
 
     def test_owner_space_user(self):
         """Test owner_space for user URI."""
         user = UserIdentifier(account_id="account-123", user_id="user-123", agent_id="agent-456")
-        ctx = Context(uri="viking://user/test/memories/test.md", user=user)
+        ctx = Context(uri="ctx://user/test/memories/test.md", user=user)
 
         assert ctx.owner_space == user.user_space_name()
 
     def test_owner_space_session(self):
         """Test owner_space for session URI."""
         user = UserIdentifier(account_id="account-123", user_id="user-123", agent_id="agent-456")
-        ctx = Context(uri="viking://session/test/msg/1.md", user=user)
+        ctx = Context(uri="ctx://session/test/msg/1.md", user=user)
 
         assert ctx.owner_space == user.user_space_name()
 
     def test_owner_space_resource_default(self):
         """Test owner_space default for resource URI."""
         user = UserIdentifier(account_id="account-123", user_id="user-123", agent_id="agent-456")
-        ctx = Context(uri="viking://resources/docs/test.md", user=user)
+        ctx = Context(uri="ctx://resources/docs/test.md", user=user)
 
         # Resource URIs don't match agent/user/session patterns
         assert ctx.owner_space == ""
@@ -507,25 +507,25 @@ class TestContextEdgeCases:
     def test_level_string_to_int(self):
         """Test level conversion from string to int."""
         # The code tries to convert level to int
-        ctx = Context(uri="viking://test/", level="1")
+        ctx = Context(uri="ctx://test/", level="1")
 
         assert ctx.level == 1
 
     def test_level_none(self):
         """Test level None."""
-        ctx = Context(uri="viking://test/", level=None)
+        ctx = Context(uri="ctx://test/", level=None)
 
         assert ctx.level is None
 
     def test_level_invalid_string(self):
         """Test invalid level string becomes None."""
-        ctx = Context(uri="viking://test/", level="invalid")
+        ctx = Context(uri="ctx://test/", level="invalid")
 
         assert ctx.level is None
 
     def test_empty_abstract(self):
         """Test empty abstract."""
-        ctx = Context(uri="viking://test/", abstract="")
+        ctx = Context(uri="ctx://test/", abstract="")
 
         assert ctx.abstract == ""
         assert ctx.get_vectorization_text() == ""
@@ -533,19 +533,19 @@ class TestContextEdgeCases:
     def test_long_abstract(self):
         """Test long abstract."""
         long_text = "x" * 10000
-        ctx = Context(uri="viking://test/", abstract=long_text)
+        ctx = Context(uri="ctx://test/", abstract=long_text)
 
         assert ctx.abstract == long_text
         assert ctx.get_vectorization_text() == long_text
 
     def test_unicode_in_abstract(self):
         """Test Unicode in abstract."""
-        ctx = Context(uri="viking://test/", abstract="你好世界 🌍")
+        ctx = Context(uri="ctx://test/", abstract="你好世界 🌍")
 
         assert ctx.abstract == "你好世界 🌍"
 
     def test_special_chars_in_uri(self):
         """Test special characters in URI."""
-        ctx = Context(uri="viking://test/path%20with%20spaces/")
+        ctx = Context(uri="ctx://test/path%20with%20spaces/")
 
-        assert ctx.uri == "viking://test/path%20with%20spaces/"
+        assert ctx.uri == "ctx://test/path%20with%20spaces/"

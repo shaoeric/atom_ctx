@@ -4,7 +4,7 @@
 """
 Resource Watch Feature Example
 
-This example demonstrates how to use the resource watch feature in OpenViking.
+This example demonstrates how to use the resource watch feature in AtomCtx.
 The watch feature allows you to automatically re-process resources at specified
 intervals.
 
@@ -18,12 +18,12 @@ Key features:
 import asyncio
 from pathlib import Path
 
-from openviking import AsyncOpenViking
-from openviking_cli.exceptions import ConflictError
+from atom_ctx import AsyncAtomCtx
+from atom_ctx_cli.exceptions import ConflictError
 
 
 async def example_basic_watch():
-    client = AsyncOpenViking(path="./data_watch_example")
+    client = AsyncAtomCtx(path="./data_watch_example")
     await client.initialize()
 
     try:
@@ -39,7 +39,7 @@ Version: 1.0
 """
         )
 
-        to_uri = "viking://resources/watched_resource"
+        to_uri = "ctx://resources/watched_resource"
 
         print("\nAdding resource with watch_interval=60.0 minutes...")
         result = await client.add_resource(
@@ -57,12 +57,12 @@ Version: 1.0
 
 
 async def example_update_watch_interval():
-    client = AsyncOpenViking(path="./data_watch_example")
+    client = AsyncAtomCtx(path="./data_watch_example")
     await client.initialize()
 
     try:
         test_file = Path("./test_resource.md")
-        to_uri = "viking://resources/watched_resource"
+        to_uri = "ctx://resources/watched_resource"
 
         print("\nUpdating watch interval by canceling then re-creating...")
         await client.add_resource(
@@ -82,12 +82,12 @@ async def example_update_watch_interval():
 
 
 async def example_cancel_watch():
-    client = AsyncOpenViking(path="./data_watch_example")
+    client = AsyncAtomCtx(path="./data_watch_example")
     await client.initialize()
 
     try:
         test_file = Path("./test_resource.md")
-        to_uri = "viking://resources/watched_resource"
+        to_uri = "ctx://resources/watched_resource"
 
         print("\nCancelling watch by setting interval to 0...")
         await client.add_resource(
@@ -101,12 +101,12 @@ async def example_cancel_watch():
 
 
 async def example_handle_conflict():
-    client = AsyncOpenViking(path="./data_watch_example")
+    client = AsyncAtomCtx(path="./data_watch_example")
     await client.initialize()
 
     try:
         test_file = Path("./test_resource.md")
-        to_uri = "viking://resources/conflict_example"
+        to_uri = "ctx://resources/conflict_example"
 
         print("\nCreating first watch task...")
         await client.add_resource(
@@ -133,7 +133,7 @@ async def example_handle_conflict():
 
 async def main():
     print("\n" + "=" * 60)
-    print("OpenViking Resource Watch Examples")
+    print("AtomCtx Resource Watch Examples")
     print("=" * 60)
 
     await example_basic_watch()

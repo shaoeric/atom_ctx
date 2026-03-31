@@ -1,106 +1,106 @@
 # Copyright (c) 2026 Beijing Volcano Engine Technology Co., Ltd.
 # SPDX-License-Identifier: Apache-2.0
-"""Tests for VikingURI short-format URI normalization.
+"""Tests for CtxURI short-format URI normalization.
 
-Verifies that VikingURI accepts short-format paths (e.g., '/resources',
-'user/memories') in addition to full-format URIs ('viking://resources').
+Verifies that CtxURI accepts short-format paths (e.g., '/resources',
+'user/memories') in addition to full-format URIs ('ctx://resources').
 
-Ref: https://github.com/volcengine/OpenViking/issues/259
+Ref: https://github.com/volcengine/atom-ctx/issues/259
 """
 
 import pytest
 
-from openviking_cli.utils.uri import VikingURI
+from atom_ctx_cli.utils.uri import CtxURI
 
 
-class TestVikingURIShortFormat:
-    """VikingURI should accept and auto-normalize short-format URIs."""
+class TestCtxURIShortFormat:
+    """CtxURI should accept and auto-normalize short-format URIs."""
 
     def test_slash_prefix_path(self):
-        """'/resources' should be normalized to 'viking://resources'."""
-        uri = VikingURI("/resources")
-        assert uri.uri == "viking://resources"
+        """'/resources' should be normalized to 'ctx://resources'."""
+        uri = CtxURI("/resources")
+        assert uri.uri == "ctx://resources"
         assert uri.scope == "resources"
 
     def test_bare_path(self):
-        """'resources' should be normalized to 'viking://resources'."""
-        uri = VikingURI("resources")
-        assert uri.uri == "viking://resources"
+        """'resources' should be normalized to 'ctx://resources'."""
+        uri = CtxURI("resources")
+        assert uri.uri == "ctx://resources"
         assert uri.scope == "resources"
 
     def test_slash_prefix_nested(self):
         """'/user/memories/preferences' should normalize correctly."""
-        uri = VikingURI("/user/memories/preferences")
-        assert uri.uri == "viking://user/memories/preferences"
+        uri = CtxURI("/user/memories/preferences")
+        assert uri.uri == "ctx://user/memories/preferences"
         assert uri.scope == "user"
 
     def test_bare_nested_path(self):
         """'agent/skills/pdf' should normalize correctly."""
-        uri = VikingURI("agent/skills/pdf")
-        assert uri.uri == "viking://agent/skills/pdf"
+        uri = CtxURI("agent/skills/pdf")
+        assert uri.uri == "ctx://agent/skills/pdf"
         assert uri.scope == "agent"
 
     def test_full_format_unchanged(self):
         """Full-format URIs should pass through unchanged."""
-        uri = VikingURI("viking://resources/my_project")
-        assert uri.uri == "viking://resources/my_project"
+        uri = CtxURI("ctx://resources/my_project")
+        assert uri.uri == "ctx://resources/my_project"
 
     def test_root_slash(self):
-        """'/' should normalize to 'viking://'."""
-        uri = VikingURI("/")
-        assert uri.uri == "viking://"
+        """'/' should normalize to 'ctx://'."""
+        uri = CtxURI("/")
+        assert uri.uri == "ctx://"
         assert uri.scope == ""
 
     def test_full_root(self):
-        """'viking://' should work as before."""
-        uri = VikingURI("viking://")
-        assert uri.uri == "viking://"
+        """'ctx://' should work as before."""
+        uri = CtxURI("ctx://")
+        assert uri.uri == "ctx://"
         assert uri.scope == ""
 
     def test_join_after_short_format(self):
         """join() should work on auto-normalized URIs."""
-        uri = VikingURI("/resources")
+        uri = CtxURI("/resources")
         joined = uri.join("my_project")
-        assert joined.uri == "viking://resources/my_project"
+        assert joined.uri == "ctx://resources/my_project"
 
     def test_parent_after_short_format(self):
         """parent should work on auto-normalized URIs."""
-        uri = VikingURI("/user/memories/preferences")
+        uri = CtxURI("/user/memories/preferences")
         parent = uri.parent
         assert parent is not None
-        assert parent.uri == "viking://user/memories"
+        assert parent.uri == "ctx://user/memories"
 
     def test_is_valid_short_format(self):
         """is_valid should accept short-format URIs after normalization."""
-        assert VikingURI.is_valid("/resources")
-        assert VikingURI.is_valid("user/memories")
+        assert CtxURI.is_valid("/resources")
+        assert CtxURI.is_valid("user/memories")
 
     def test_invalid_scope_still_rejected(self):
         """Invalid scopes should still raise ValueError."""
         with pytest.raises(ValueError, match="Invalid scope"):
-            VikingURI("/invalid_scope/foo")
+            CtxURI("/invalid_scope/foo")
 
     def test_normalize_idempotent(self):
         """Normalizing an already-normalized URI should be idempotent."""
-        original = "viking://resources/docs"
-        assert VikingURI.normalize(original) == original
+        original = "ctx://resources/docs"
+        assert CtxURI.normalize(original) == original
         assert (
-            VikingURI.normalize(VikingURI.normalize("/resources/docs")) == "viking://resources/docs"
+            CtxURI.normalize(CtxURI.normalize("/resources/docs")) == "ctx://resources/docs"
         )
 
     @pytest.mark.parametrize(
         "short,expected",
         [
-            ("/resources", "viking://resources"),
-            ("/user", "viking://user"),
-            ("/agent/skills", "viking://agent/skills"),
-            ("/session/abc123", "viking://session/abc123"),
-            ("/queue", "viking://queue"),
-            ("/temp", "viking://temp"),
-            ("resources/images", "viking://resources/images"),
+            ("/resources", "ctx://resources"),
+            ("/user", "ctx://user"),
+            ("/agent/skills", "ctx://agent/skills"),
+            ("/session/abc123", "ctx://session/abc123"),
+            ("/queue", "ctx://queue"),
+            ("/temp", "ctx://temp"),
+            ("resources/images", "ctx://resources/images"),
         ],
     )
     def test_all_scopes(self, short, expected):
         """All valid scopes should work with short format."""
-        uri = VikingURI(short)
+        uri = CtxURI(short)
         assert uri.uri == expected

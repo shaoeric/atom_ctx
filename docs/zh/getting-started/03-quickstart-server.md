@@ -1,25 +1,25 @@
 # 快速开始：服务端模式
 
-将 OpenViking 作为独立 HTTP 服务运行，并从任意客户端连接。
+将 AtomCtx 作为独立 HTTP 服务运行，并从任意客户端连接。
 
 ## 前置要求
 
-- 已安装 OpenViking（`pip install openviking --upgrade --force-reinstall`）
+- 已安装 AtomCtx（`pip install atom-ctx --upgrade --force-reinstall`）
 - 模型配置已就绪（参见 [快速开始](02-quickstart.md) 了解配置方法）
 
 ## 启动服务
 
-确保 `ov.conf` 已配置好存储路径和模型信息（参见 [快速开始](02-quickstart.md)），然后启动服务：
+确保 `ctx.conf` 已配置好存储路径和模型信息（参见 [快速开始](02-quickstart.md)），然后启动服务：
 
 ```bash
-# 配置文件在默认路径 ~/.openviking/ov.conf 时，直接启动
-openviking-server
+# 配置文件在默认路径 ~/.ctx/ctx.conf 时，直接启动
+ctx-server
 
 # 配置文件在其他位置时，通过 --config 指定
-openviking-server --config /path/to/ov.conf
+ctx-server --config /path/to/ctx.conf
 
 # 覆盖 host/port
-openviking-server --port 1933
+ctx-server --port 1933
 ```
 
 你应该看到：
@@ -38,23 +38,23 @@ curl http://localhost:1933/health
 ## 使用 Python SDK 连接
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(url="http://localhost:1933")
+client = ctx.SyncHTTPClient(url="http://localhost:1933")
 ```
 
 ### 启用认证
 
-服务端启用认证后，需要传入 `api_key`。OpenViking 使用两层 API Key 体系，请根据场景选择：
+服务端启用认证后，需要传入 `api_key`。AtomCtx 使用两层 API Key 体系，请根据场景选择：
 
 **常规数据访问：使用 `user_key`（推荐）**
 
 大多数场景应使用 `user_key`，可直接调用 `add_resource`、`find`、`ls` 等租户级 API：
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(
+client = ctx.SyncHTTPClient(
     url="http://localhost:1933",
     api_key="<user-key>",
     agent_id="my-agent",      # 可选
@@ -68,9 +68,9 @@ client = ov.SyncHTTPClient(
 `root_key` 适用于管理操作（创建账户、系统状态等）。如需用 `root_key` 访问租户级 API，**必须**同时传入 `account` 和 `user`，否则服务端会拒绝请求：
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(
+client = ctx.SyncHTTPClient(
     url="http://localhost:1933",
     api_key="<root-key>",
     account="acme",           # 必须：目标租户
@@ -79,23 +79,23 @@ client = ov.SyncHTTPClient(
 ```
 
 > ⚠️ 使用 `root_key` 调用 `add_resource`、`find` 等租户级 API 时，如果未提供 `account`/`user`，会收到：
-> `ROOT requests to tenant-scoped APIs must include X-OpenViking-Account and X-OpenViking-User headers`
+> `ROOT requests to tenant-scoped APIs must include X-AtomCtx-Account and X-AtomCtx-User headers`
 
 更多认证细节（trusted 模式、CLI 配置等）请参见 [认证文档](../../guides/04-authentication.md)。
 
 **完整示例（使用 `user_key`）：**
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(url="http://localhost:1933")
+client = ctx.SyncHTTPClient(url="http://localhost:1933")
 
 try:
     client.initialize()
 
     # Add a resource
     result = client.add_resource(
-        "https://raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md"
+        "https://raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md"
     )
     root_uri = result["root_uri"]
 
@@ -103,7 +103,7 @@ try:
     client.wait_processed()
 
     # Search
-    results = client.find("what is openviking", target_uri=root_uri)
+    results = client.find("what is atom_ctx", target_uri=root_uri)
     for r in results.resources:
         print(f"  {r.uri} (score: {r.score:.4f})")
 
@@ -113,7 +113,7 @@ finally:
 
 ## 使用 CLI 连接
 
-创建 CLI 连接配置文件 `~/.openviking/ovcli.conf`：
+创建 CLI 连接配置文件 `~/.ctx/ctx-cli.conf`：
 
 ```json
 {
@@ -126,22 +126,22 @@ finally:
 
 ```bash
 # Check system health
-openviking observer system
+atom_ctx observer system
 
 # Add a resource to memory
-openviking add-resource https://raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md
+atom_ctx add-resource https://raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md
 
 # List all synchronized resources
-openviking ls viking://resources
+atom_ctx ls ctx://resources
 
 # Query
-openviking find "what is openviking"
+atom_ctx find "what is atom_ctx"
 ```
 
 如果配置文件在其他位置，通过环境变量指定：
 
 ```bash
-export OPENVIKING_CLI_CONFIG_FILE=/path/to/ovcli.conf
+export CTX_CLI_CONFIG_FILE=/path/to/ctx-cli.conf
 ```
 
 ## 使用 curl 连接
@@ -152,15 +152,15 @@ export OPENVIKING_CLI_CONFIG_FILE=/path/to/ovcli.conf
 # Add a resource
 curl -X POST http://localhost:1933/api/v1/resources \
   -H "Content-Type: application/json" \
-  -d '{"path": "https://raw.githubusercontent.com/volcengine/OpenViking/refs/heads/main/README.md"}'
+  -d '{"path": "https://raw.githubusercontent.com/volcengine/AtomCtx/refs/heads/main/README.md"}'
 
 # List resources
-curl "http://localhost:1933/api/v1/fs/ls?uri=viking://resources/"
+curl "http://localhost:1933/api/v1/fs/ls?uri=ctx://resources/"
 
 # Semantic search
 curl -X POST http://localhost:1933/api/v1/search/find \
   -H "Content-Type: application/json" \
-  -d '{"query": "what is openviking"}'
+  -d '{"query": "what is atom_ctx"}'
 ```
 
 ## 推荐云端部署方案：火山引擎 ECS
@@ -202,7 +202,7 @@ else
 fi
 ```
 
-### 3. 安装依赖及OpenViking
+### 3. 安装依赖及AtomCtx
 
 ```
 yum install -y curl git tree
@@ -234,15 +234,15 @@ echo "Python path: $(which python)"
 echo "Python version: $(python --version)"
 ```
 
-- 安装 OpenViking：在激活的虚拟环境下安装工具：
+- 安装 AtomCtx：在激活的虚拟环境下安装工具：
 
 ```
-uv tool install openviking --upgrade
+uv tool install atom_ctx --upgrade
 ```
 
 接下来就可以准备配置了。
 
-### 4. OpenViking 服务端配置与启动
+### 4. AtomCtx 服务端配置与启动
 
 配置 AI 模型并让服务在后台常驻。
 
@@ -253,12 +253,12 @@ uv tool install openviking --upgrade
 **创建配置目录：**
 
 ```
-mkdir -p ~/.openviking
+mkdir -p ~/.ctx
 ```
 **创建并编辑配置文件：**
 
 ```
-vim ~/.openviking/ov.conf
+vim ~/.ctx/ctx.conf
 ```
 配置文件内容可参考
 ```
@@ -297,10 +297,10 @@ mkdir -p /data/log/
 ```
 - 后台启动并重定向输出：
 ```
-nohup openviking-server > /data/log/openviking.log 2>&1 &
+nohup ctx-server > /data/log/ctx-server.log 2>&1 &
 
 # 默认会以执行命令的路径下创建 ./data 存放数据
-# 如果后续希望杀死服务进程记得要清理两个后台服务：pkill openviking; pkill agfs
+# 如果后续希望杀死服务进程记得要清理两个后台服务：pkill atom_ctx; pkill agfs
 ```
 可以看到服务在后台常驻运行。当然如果希望重启自动恢复，建议采用 systemctl 启动，此处不赘述。
 服务启动后，可以在 /data 下看到数据文件、日志文件等。
@@ -309,20 +309,20 @@ nohup openviking-server > /data/log/openviking.log 2>&1 &
 
 - 检查进程： 输入以下命令查看程序是否在运行：
 ```
-ps aux | grep openviking-server
+ps aux | grep ctx-server
 ```
 
 - 查看日志： 如果进程在，看看有没有报错：
 ```
-tail -f /data/log/openviking.log # TODO 支持日志滚动
+tail -f /data/log/ctx-server.log # TODO 支持日志滚动
 ```
 **配置客户端并测试 (CLI)**
 
-本地注意也要先安装 openviking 才能使用 CLI 工具, 然后在 ovcli.conf 配置好服务端地址
+本地注意也要先安装 atom_ctx 才能使用 CLI 工具, 然后在 ctx-cli.conf 配置好服务端地址
 
 - 准备客户端配置：
 ```
-vim ~/.openviking/ovcli.conf
+vim ~/.ctx/ctx-cli.conf
 ```
 - 写入以下内容（注意 IP 换成您服务器的 IP地址）：
 ```
@@ -333,18 +333,18 @@ vim ~/.openviking/ovcli.conf
 ```
 - 执行系统观察命令，监控系统健康状态：
 ```
-openviking observer system
+atom_ctx observer system
 ```
 - 功能测试（上传与查找）
 ```
 # 上传测试文件
-openviking add-resource https://raw.githubusercontent.com/ZaynJarvis/doc-eval/refs/heads/main/text.md
+atom_ctx add-resource https://raw.githubusercontent.com/ZaynJarvis/doc-eval/refs/heads/main/text.md
 
 # 列出资源
-openviking ls viking://resources
+atom_ctx ls ctx://resources
 
 # 检索测试
-openviking find "who is Alice"
+atom_ctx find "who is Alice"
 ```
 
 

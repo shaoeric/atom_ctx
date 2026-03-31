@@ -5,10 +5,10 @@
 
 import pytest
 
-from openviking.retrieve.hierarchical_retriever import HierarchicalRetriever
-from openviking.server.identity import RequestContext, Role
-from openviking_cli.retrieve.types import ContextType, TypedQuery
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.retrieve.hierarchical_retriever import HierarchicalRetriever
+from atom_ctx.server.identity import RequestContext, Role
+from atom_ctx_cli.retrieve.types import ContextType, TypedQuery
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 class DummyStorage:
@@ -73,7 +73,7 @@ class DummyStorage:
 
 @pytest.mark.asyncio
 async def test_retrieve_honors_target_directories_scope_filter():
-    target_uri = "viking://resources/foo"
+    target_uri = "ctx://resources/foo"
     storage = DummyStorage()
     retriever = HierarchicalRetriever(storage=storage, embedder=None, rerank_config=None)
     ctx = RequestContext(user=UserIdentifier("acc1", "user1", "agent1"), role=Role.USER)

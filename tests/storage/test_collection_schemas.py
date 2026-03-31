@@ -7,13 +7,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from openviking.models.embedder.base import EmbedResult
-from openviking.storage.collection_schemas import (
+from atom_ctx.models.embedder.base import EmbedResult
+from atom_ctx.storage.collection_schemas import (
     CollectionSchemas,
     TextEmbeddingHandler,
     init_context_collection,
 )
-from openviking.storage.queuefs.embedding_msg import EmbeddingMsg
+from atom_ctx.storage.queuefs.embedding_msg import EmbeddingMsg
 
 
 class _DummyEmbedder:
@@ -39,7 +39,7 @@ def _build_queue_payload() -> dict:
         message="hello",
         context_data={
             "id": "id-1",
-            "uri": "viking://resources/sample",
+            "uri": "ctx://resources/sample",
             "account_id": "default",
             "abstract": "sample",
         },
@@ -57,7 +57,7 @@ async def test_embedding_handler_skip_all_work_when_manager_is_closing(monkeypat
 
     embedder = _DummyEmbedder()
     monkeypatch.setattr(
-        "openviking_cli.utils.config.get_openviking_config",
+        "atom_ctx_cli.utils.config.get_atom_ctx_config",
         lambda: _DummyConfig(embedder),
     )
 
@@ -90,7 +90,7 @@ async def test_embedding_handler_treats_shutdown_write_lock_as_success(monkeypat
 
     embedder = _DummyEmbedder()
     monkeypatch.setattr(
-        "openviking_cli.utils.config.get_openviking_config",
+        "atom_ctx_cli.utils.config.get_atom_ctx_config",
         lambda: _DummyConfig(embedder),
     )
 
@@ -125,21 +125,21 @@ async def test_embedding_handler_preserves_parent_uri_for_backend_upsert_logic(m
 
     embedder = _DummyEmbedder()
     monkeypatch.setattr(
-        "openviking_cli.utils.config.get_openviking_config",
+        "atom_ctx_cli.utils.config.get_atom_ctx_config",
         lambda: _DummyConfig(embedder),
     )
 
     handler = TextEmbeddingHandler(_CapturingVikingDB())
     payload = _build_queue_payload()
     queue_data = json.loads(payload["data"])
-    queue_data["context_data"]["parent_uri"] = "viking://resources"
+    queue_data["context_data"]["parent_uri"] = "ctx://resources"
     payload["data"] = json.dumps(queue_data)
 
     result = await handler.on_dequeue(payload)
 
     assert result is not None
     assert "data" in captured
-    assert captured["data"]["parent_uri"] == "viking://resources"
+    assert captured["data"]["parent_uri"] == "ctx://resources"
 
 
 def test_context_collection_excludes_parent_uri():
@@ -169,7 +169,7 @@ async def test_init_context_collection_uses_backend_specific_schema(monkeypatch)
 
     embedder = _DummyEmbedder()
     monkeypatch.setattr(
-        "openviking_cli.utils.config.get_openviking_config",
+        "atom_ctx_cli.utils.config.get_atom_ctx_config",
         lambda: _DummyConfig(embedder, backend="volcengine"),
     )
 
@@ -193,7 +193,7 @@ async def test_init_context_collection_excludes_parent_uri_for_local_backend(mon
 
     embedder = _DummyEmbedder()
     monkeypatch.setattr(
-        "openviking_cli.utils.config.get_openviking_config",
+        "atom_ctx_cli.utils.config.get_atom_ctx_config",
         lambda: _DummyConfig(embedder, backend="local"),
     )
 

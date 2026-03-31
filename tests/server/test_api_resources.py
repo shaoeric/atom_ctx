@@ -5,7 +5,7 @@
 
 import httpx
 
-from openviking.telemetry import get_current_telemetry
+from atom_ctx.telemetry import get_current_telemetry
 
 
 async def test_add_resource_success(
@@ -28,7 +28,7 @@ async def test_add_resource_success(
     assert "usage" not in body
     assert "telemetry" not in body
     assert "root_uri" in body["result"]
-    assert body["result"]["root_uri"].startswith("viking://")
+    assert body["result"]["root_uri"].startswith("ctx://")
 
 
 async def test_add_resource_with_wait(
@@ -101,7 +101,7 @@ async def test_add_resource_with_telemetry_includes_resource_breakdown(
         telemetry.set("resource.flags.watch_enabled", False)
         return {
             "status": "success",
-            "root_uri": "viking://resources/demo",
+            "root_uri": "ctx://resources/demo",
         }
 
     monkeypatch.setattr(service.resources, "add_resource", fake_add_resource)
@@ -197,7 +197,7 @@ async def test_add_resource_with_to(
         "/api/v1/resources",
         json={
             "temp_file_id": sample_markdown_file.name,
-            "to": "viking://resources/custom/sample",
+            "to": "ctx://resources/custom/sample",
             "reason": "test resource",
         },
     )
@@ -304,7 +304,7 @@ async def test_temp_upload_with_telemetry_returns_summary(
 async def test_add_resource_rejects_direct_local_path(client: httpx.AsyncClient):
     resp = await client.post(
         "/api/v1/resources",
-        json={"path": "/app/ov.conf", "reason": "security test"},
+        json={"path": "/app/ctx.conf", "reason": "security test"},
     )
     assert resp.status_code == 403
     body = resp.json()
@@ -329,7 +329,7 @@ async def test_add_resource_accepts_temp_uploaded_file(
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
-    assert body["result"]["root_uri"].startswith("viking://")
+    assert body["result"]["root_uri"].startswith("ctx://")
 
 
 async def test_add_resource_rejects_temp_file_id_directory(

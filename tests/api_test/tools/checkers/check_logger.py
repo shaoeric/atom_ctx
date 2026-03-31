@@ -1,4 +1,4 @@
-logger_path = "/usr/local/lib/python3.11/site-packages/openviking_cli/utils/logger.py"
+logger_path = "/usr/local/lib/python3.11/site-packages/atom_ctx_cli/utils/logger.py"
 print(f"Reading {logger_path}...")
 print("=" * 80)
 

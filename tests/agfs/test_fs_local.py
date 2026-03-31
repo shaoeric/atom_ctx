@@ -9,14 +9,14 @@ import uuid
 
 import pytest
 
-from openviking.agfs_manager import AGFSManager
-from openviking.storage.transaction import init_lock_manager, reset_lock_manager
-from openviking.storage.viking_fs import init_viking_fs
-from openviking_cli.utils.config.agfs_config import AGFSConfig
+from atom_ctx.agfs_manager import AGFSManager
+from atom_ctx.storage.transaction import init_lock_manager, reset_lock_manager
+from atom_ctx.storage.ctx_fs import init_ctx_fs
+from atom_ctx_cli.utils.config.agfs_config import AGFSConfig
 
 # 1. Direct configuration for testing
 AGFS_CONF = AGFSConfig(
-    path="/tmp/ov-test",
+    path="/tmp/ctx-test",
     backend="local",
     port=1833,
     mode="http-client",
@@ -30,9 +30,9 @@ if os.path.exists(AGFS_CONF.path):
 
 
 @pytest.fixture(scope="module")
-async def viking_fs_instance():
+async def ctx_fs_instance():
     """Initialize AGFS Manager and VikingFS singleton."""
-    from openviking.utils.agfs_utils import create_agfs_client
+    from atom_ctx.utils.agfs_utils import create_agfs_client
 
     manager = AGFSManager(config=AGFS_CONF)
     manager.start()
@@ -42,9 +42,9 @@ async def viking_fs_instance():
 
     # Initialize LockManager and VikingFS with client
     init_lock_manager(agfs=agfs_client)
-    vfs = init_viking_fs(agfs=agfs_client)
+    vfs = init_ctx_fs(agfs=agfs_client)
     # make sure default/temp directory exists
-    await vfs.mkdir("viking://temp/", exist_ok=True)
+    await vfs.mkdir("ctx://temp/", exist_ok=True)
 
     yield vfs
 
@@ -57,13 +57,13 @@ async def viking_fs_instance():
 class TestVikingFSLocal:
     """Test VikingFS operations with local backend."""
 
-    async def test_file_operations(self, viking_fs_instance):
+    async def test_file_operations(self, ctx_fs_instance):
         """Test VikingFS file operations: read, write, ls, stat."""
-        vfs = viking_fs_instance
+        vfs = ctx_fs_instance
 
         test_filename = f"local_file_{uuid.uuid4().hex}.txt"
         test_content = "Hello VikingFS Local! " + uuid.uuid4().hex
-        test_uri = f"viking://temp/{test_filename}"
+        test_uri = f"ctx://temp/{test_filename}"
 
         # 1. Write file
         await vfs.write(test_uri, test_content)
@@ -74,7 +74,7 @@ class TestVikingFSLocal:
         assert not stat_info["isDir"]
 
         # 3. List directory
-        entries = await vfs.ls("viking://temp/")
+        entries = await vfs.ls("ctx://temp/")
         assert any(e["name"] == test_filename for e in entries)
 
         # 4. Read file
@@ -84,11 +84,11 @@ class TestVikingFSLocal:
         # Cleanup
         await vfs.rm(test_uri)
 
-    async def test_directory_operations(self, viking_fs_instance):
+    async def test_directory_operations(self, ctx_fs_instance):
         """Test VikingFS directory operations: mkdir, rm, ls, stat."""
-        vfs = viking_fs_instance
+        vfs = ctx_fs_instance
         test_dir = f"local_dir_{uuid.uuid4().hex}"
-        test_dir_uri = f"viking://temp/{test_dir}/"
+        test_dir_uri = f"ctx://temp/{test_dir}/"
 
         # 1. Create directory
         await vfs.mkdir(test_dir_uri)
@@ -99,7 +99,7 @@ class TestVikingFSLocal:
         assert stat_info["isDir"]
 
         # 3. List root to see directory
-        root_entries = await vfs.ls("viking://temp/")
+        root_entries = await vfs.ls("ctx://temp/")
         assert any(e["name"] == test_dir and e["isDir"] for e in root_entries)
 
         # 4. Write a file inside
@@ -114,22 +114,22 @@ class TestVikingFSLocal:
         await vfs.rm(test_dir_uri, recursive=True)
 
         # 7. Verify deletion
-        root_entries = await vfs.ls("viking://temp/")
+        root_entries = await vfs.ls("ctx://temp/")
         assert not any(e["name"] == test_dir for e in root_entries)
 
-    async def test_ensure_dirs(self, viking_fs_instance):
+    async def test_ensure_dirs(self, ctx_fs_instance):
         """Test VikingFS ensure_dirs."""
-        vfs = viking_fs_instance
+        vfs = ctx_fs_instance
         base_dir = f"local_tree_test_{uuid.uuid4().hex}"
-        sub_dir = f"viking://temp/{base_dir}/a/b/"
+        sub_dir = f"ctx://temp/{base_dir}/a/b/"
         file_uri = f"{sub_dir}leaf.txt"
 
         await vfs.mkdir(sub_dir)
         await vfs.write(file_uri, "leaf content")
 
         # VikingFS.tree provides recursive listing
-        entries = await vfs.tree(f"viking://temp/{base_dir}/")
+        entries = await vfs.tree(f"ctx://temp/{base_dir}/")
         assert any("leaf.txt" in e["uri"] for e in entries)
 
         # Cleanup
-        await vfs.rm(f"viking://temp/{base_dir}/", recursive=True)
+        await vfs.rm(f"ctx://temp/{base_dir}/", recursive=True)

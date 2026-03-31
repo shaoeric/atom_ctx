@@ -1,6 +1,6 @@
-# OpenViking Memory Plugin for Claude Code
+# AtomCtx Memory Plugin for Claude Code
 
-Long-term semantic memory for Claude Code, powered by [OpenViking](https://github.com/volcengine/OpenViking).
+Long-term semantic memory for Claude Code, powered by [AtomCtx](https://github.com/volcengine/atom-ctx).
 
 > Ported from the [OpenClaw context-engine plugin](../openclaw-plugin/) and adapted for Claude Code's plugin architecture (MCP + hooks).
 
@@ -31,7 +31,7 @@ Long-term semantic memory for Claude Code, powered by [OpenViking](https://githu
   └──────┬──────────┘                  └────────┬─────────┘
          │                                      │
          │         ┌──────────────┐             │
-         └────────►│   OpenViking │◄────────────┘
+         └────────►│   AtomCtx │◄────────────┘
                    │   Server     │
     MCP tools ────►│   (Python)   │
                    └──────────────┘
@@ -47,7 +47,7 @@ Long-term semantic memory for Claude Code, powered by [OpenViking](https://githu
 ```
 
 On `SessionStart`, the plugin bootstraps its Node runtime into `${CLAUDE_PLUGIN_DATA}/runtime`
-when Claude exposes that variable. If not, it falls back to `~/.openviking/claude-code-memory-plugin/runtime`.
+when Claude exposes that variable. If not, it falls back to `~/.ctx/claude-code-memory-plugin/runtime`.
 That makes the MCP adapter self-healing across marketplace installs without checking `node_modules`
 into the plugin source tree.
 
@@ -66,7 +66,7 @@ into the plugin source tree.
 
 1. User submits a message → `UserPromptSubmit` hook fires
 2. `auto-recall.mjs` reads `user_prompt` from stdin
-3. Calls OpenViking `/api/v1/search/find` for both `viking://user/memories` and `viking://agent/memories`
+3. Calls AtomCtx `/api/v1/search/find` for both `ctx://user/memories` and `ctx://agent/memories`
 4. Ranks results with query-aware scoring (leaf boost, preference boost, temporal boost, lexical overlap)
 5. Reads full content for top-ranked leaf memories
 6. Returns via `systemMessage` → Claude sees `<relevant-memories>` context transparently
@@ -77,7 +77,7 @@ into the plugin source tree.
 2. `auto-capture.mjs` reads `transcript_path` from stdin
 3. Parses transcript and extracts recent turns, then keeps user turns only by default
 4. Runs capture decision logic (semantic mode or keyword triggers) on the selected user turns
-5. Creates OpenViking temp session → adds message → extracts memories
+5. Creates AtomCtx temp session → adds message → extracts memories
 6. Memories stored automatically, no Claude tool call needed
 
 ### MCP Tools (explicit, on-demand)
@@ -96,42 +96,42 @@ The MCP server provides tools for when Claude or the user needs explicit memory 
 | Auto-capture | `afterTurn` context-engine method | `Stop` command hook + transcript parsing |
 | Explicit tools | `api.registerTool()` | MCP server (stdio transport) |
 | Transparency | Both fully transparent | Both fully transparent — no extra Claude tool calls |
-| Process mgmt | Plugin manages local subprocess | User starts OpenViking separately |
+| Process mgmt | Plugin manages local subprocess | User starts AtomCtx separately |
 | Config | Plugin config schema with UI hints | Single JSON config file |
-| JS runtime deps | Bundled in plugin process | Installed on first `SessionStart` into `${CLAUDE_PLUGIN_DATA}` or `~/.openviking/claude-code-memory-plugin` |
+| JS runtime deps | Bundled in plugin process | Installed on first `SessionStart` into `${CLAUDE_PLUGIN_DATA}` or `~/.ctx/claude-code-memory-plugin` |
 
 ## Quick Start
 
-### 1. Install OpenViking
+### 1. Install AtomCtx
 
 ```bash
-pip install openviking
+pip install atom-ctx
 ```
 
 For mac
 ```bash
 brew install pipx
 pipx ensurepath
-pipx install openviking
+pipx install atom_ctx
 ```
 
 ### 2. Create Config
 
-If you don't already have `~/.openviking/ov.conf`, create it:
+If you don't already have `~/.ctx/ctx.conf`, create it:
 
 ```bash
-mkdir -p ~/.openviking
-# Edit ov.conf: set your embedding API key, model, etc.
-vim ~/.openviking/ov.conf
+mkdir -p ~/.ctx
+# Edit ctx.conf: set your embedding API key, model, etc.
+vim ~/.ctx/ctx.conf
 ```
 
-#### `~/.openviking/ov.conf` (Local Mode)
+#### `~/.ctx/ctx.conf` (Local Mode)
 
 ```json
 {
   "server": { "host": "127.0.0.1", "port": 1933 },
   "storage": {
-    "workspace": "/home/yourname/.openviking/data",
+    "workspace": "/home/yourname/.ctx/data",
     "vectordb": { "backend": "local" },
     "agfs": { "backend": "local", "port": 1833 }
   },
@@ -171,17 +171,17 @@ Optionally add a `claude_code` section for plugin-specific overrides:
 }
 ```
 
-### 3. Start OpenViking
+### 3. Start AtomCtx
 
 ```bash
-openviking-server
+ctx-server
 ```
 
 ### 4. Install Plugin
 
 ```bash
-/plugin marketplace add Castor6/openviking-plugins
-/plugin install claude-code-memory-plugin@openviking-plugin
+/plugin marketplace add Castor6/atom_ctx-plugins
+/plugin install claude-code-memory-plugin@atom_ctx-plugin
 ```
 
 ### 5. Start a New Claude Session
@@ -191,21 +191,21 @@ claude
 ```
 
 The first session automatically prepares the Node runtime for the MCP adapter. By default it uses
-`${CLAUDE_PLUGIN_DATA}/runtime`, and falls back to `~/.openviking/claude-code-memory-plugin/runtime`
+`${CLAUDE_PLUGIN_DATA}/runtime`, and falls back to `~/.ctx/claude-code-memory-plugin/runtime`
 if Claude does not inject `CLAUDE_PLUGIN_DATA`. No manual `npm install` is required after marketplace install.
 
 ## Configuration
 
-Uses the same `~/.openviking/ov.conf` as the OpenViking server and OpenClaw plugin.
+Uses the same `~/.ctx/ctx.conf` as the AtomCtx server and OpenClaw plugin.
 
 Override the path via environment variable:
 ```bash
-export OPENVIKING_CONFIG_FILE="~/custom/path/ov.conf"
+export CTX_CONFIG_FILE="~/custom/path/ctx.conf"
 ```
 
-**Connection info** is read from ov.conf's `server` section:
+**Connection info** is read from ctx.conf's `server` section:
 
-| ov.conf field | Used as | Description |
+| ctx.conf field | Used as | Description |
 |---------------|---------|-------------|
 | `server.host` + `server.port` | `baseUrl` | Derives `http://{host}:{port}` |
 | `server.root_api_key` | `apiKey` | API key for authentication |
@@ -241,7 +241,7 @@ Keep `claude_code.captureTimeoutMs` lower than the `Stop` hook timeout so the sc
 
 ## Debug Logging
 
-When `claude_code.debug` or `OPENVIKING_DEBUG=1` is enabled, hook logs are written to `~/.openviking/logs/cc-hooks.log`.
+When `claude_code.debug` or `ATOM_CTX_DEBUG=1` is enabled, hook logs are written to `~/.ctx/logs/cc-hooks.log`.
 
 - `auto-recall` now logs key stages plus a compact `ranking_summary` by default.
 - Set `claude_code.logRankingDetails=true` only when you need per-candidate scoring logs.
@@ -251,7 +251,7 @@ When `claude_code.debug` or `OPENVIKING_DEBUG=1` is enabled, hook logs are writt
 
 The plugin keeps its runtime npm dependencies in a dedicated runtime directory:
 
-- Prefers `${CLAUDE_PLUGIN_DATA}/runtime` and falls back to `~/.openviking/claude-code-memory-plugin/runtime`
+- Prefers `${CLAUDE_PLUGIN_DATA}/runtime` and falls back to `~/.ctx/claude-code-memory-plugin/runtime`
 - `SessionStart` installs or refreshes dependencies with `npm ci --omit=dev`
 - `install-state.json` records the active manifest and server hashes
 - MCP startup can also perform the same bootstrap itself, so first-run installs do not depend on hook ordering
@@ -286,7 +286,7 @@ claude-code-memory-plugin/
 
 Claude Code has a built-in auto-memory system using `MEMORY.md` files. This plugin **complements** that system:
 
-| Feature | Built-in Memory | OpenViking Plugin |
+| Feature | Built-in Memory | AtomCtx Plugin |
 |---------|----------------|-------------------|
 | Storage | Flat markdown files | Vector DB + structured extraction |
 | Search | Loaded into context entirely | Semantic similarity search |
@@ -298,13 +298,13 @@ Claude Code has a built-in auto-memory system using `MEMORY.md` files. This plug
 
 | Symptom | Cause | Solution |
 |---------|-------|----------|
-| No memories recalled | Server not running | Start OpenViking server |
-| Auto-capture extracts 0 | Wrong API key / model | Check `ov.conf` embedding config |
+| No memories recalled | Server not running | Start AtomCtx server |
+| Auto-capture extracts 0 | Wrong API key / model | Check `ctx.conf` embedding config |
 | MCP tools not available | First-run runtime install failed | Start a new Claude session to retry bootstrap and inspect SessionStart stderr for the npm failure |
 | Repeated auto-capture of old context | `Stop` hook timed out before incremental state was saved | Keep `captureAssistantTurns=false`, raise the `Stop` hook timeout, and keep `captureTimeoutMs` below that hook timeout |
-| Hook timeout | Server slow / unreachable | Increase the `Stop` hook timeout in `hooks/hooks.json` and tune `claude_code.captureTimeoutMs` in `ov.conf` |
+| Hook timeout | Server slow / unreachable | Increase the `Stop` hook timeout in `hooks/hooks.json` and tune `claude_code.captureTimeoutMs` in `ctx.conf` |
 | Logs too verbose | Detailed recall ranking logs are enabled | Leave `logRankingDetails=false` for normal use and use the debug scripts for one-off inspection |
 
 ## License
 
-Apache-2.0 — same as [OpenViking](https://github.com/volcengine/OpenViking).
+Apache-2.0 — same as [AtomCtx](https://github.com/volcengine/atom-ctx).

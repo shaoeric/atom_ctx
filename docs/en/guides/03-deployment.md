@@ -1,15 +1,15 @@
 # Server Deployment
 
-OpenViking can run as a standalone HTTP server, allowing multiple clients to connect over the network.
+AtomCtx can run as a standalone HTTP server, allowing multiple clients to connect over the network.
 
 ## Quick Start
 
 ```bash
-# Start server (reads ~/.openviking/ov.conf by default)
-openviking-server
+# Start server (reads ~/.ctx/ctx.conf by default)
+ctx-server
 
 # Or specify a custom config path
-openviking-server --config /path/to/ov.conf
+ctx-server --config /path/to/ctx.conf
 
 # Verify it's running
 curl http://localhost:1933/health
@@ -20,7 +20,7 @@ curl http://localhost:1933/health
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--config` | Path to ov.conf file | `~/.openviking/ov.conf` |
+| `--config` | Path to ctx.conf file | `~/.ctx/ctx.conf` |
 | `--host` | Host to bind to | `0.0.0.0` |
 | `--port` | Port to bind to | `1933` |
 
@@ -28,20 +28,20 @@ curl http://localhost:1933/health
 
 ```bash
 # With default config
-openviking-server
+ctx-server
 
 # With custom port
-openviking-server --port 8000
+ctx-server --port 8000
 
 # With custom config, host, and port
-openviking-server --config /path/to/ov.conf --host 127.0.0.1 --port 8000
+ctx-server --config /path/to/ctx.conf --host 127.0.0.1 --port 8000
 ```
 
 ## Configuration
 
-The server reads all configuration from `ov.conf`. See [Configuration Guide](./01-configuration.md) for full details on config file format.
+The server reads all configuration from `ctx.conf`. See [Configuration Guide](./01-configuration.md) for full details on config file format.
 
-The `server` section in `ov.conf` controls server behavior:
+The `server` section in `ctx.conf` controls server behavior:
 
 ```json
 {
@@ -63,7 +63,7 @@ The `server` section in `ov.conf` controls server behavior:
 
 ### Standalone (Embedded Storage)
 
-Server manages local AGFS and VectorDB. Configure the storage path in `ov.conf`:
+Server manages local AGFS and VectorDB. Configure the storage path in `ctx.conf`:
 
 ```json
 {
@@ -76,12 +76,12 @@ Server manages local AGFS and VectorDB. Configure the storage path in `ov.conf`:
 ```
 
 ```bash
-openviking-server
+ctx-server
 ```
 
 ### Hybrid (Remote Storage)
 
-Server connects to remote AGFS and VectorDB services. Configure remote URLs in `ov.conf`:
+Server connects to remote AGFS and VectorDB services. Configure remote URLs in `ctx.conf`:
 
 ```json
 {
@@ -93,32 +93,32 @@ Server connects to remote AGFS and VectorDB services. Configure remote URLs in `
 ```
 
 ```bash
-openviking-server
+ctx-server
 ```
 
 ## Deploying with Systemd (Recommended)
 
-For Linux systems, you can use Systemd to manage OpenViking as a service, enabling automatic restart and startup on boot. Firstly, you should tried to install and configure openviking on your own.
+For Linux systems, you can use Systemd to manage AtomCtx as a service, enabling automatic restart and startup on boot. Firstly, you should tried to install and configure atom_ctx on your own.
 
 ### Create Systemd Service File
 
-Create `/etc/systemd/system/openviking.service` file:
+Create `/etc/systemd/system/atom_ctx.service` file:
 
 ```ini
 [Unit]
-Description=OpenViking HTTP Server
+Description=AtomCtx HTTP Server
 After=network.target
 
 [Service]
 Type=simple
 # Replace with your working directory
-WorkingDirectory=/var/lib/openviking
+WorkingDirectory=/var/lib/atom_ctx
 # Choose one of the following start methods
-ExecStart=/usr/bin/openviking-server
+ExecStart=/usr/bin/ctx-server
 Restart=always
 RestartSec=5
 # Path to config file
-Environment="OPENVIKING_CONFIG_FILE=/etc/openviking/ov.conf"
+Environment="CTX_CONFIG_FILE=/etc/ctx/ctx.conf"
 
 [Install]
 WantedBy=multi-user.target
@@ -126,23 +126,23 @@ WantedBy=multi-user.target
 
 ### Manage the Service
 
-After creating the service file, use the following commands to manage the OpenViking service:
+After creating the service file, use the following commands to manage the AtomCtx service:
 
 ```bash
 # Reload systemd configuration
 sudo systemctl daemon-reload
 
 # Start the service
-sudo systemctl start openviking.service
+sudo systemctl start atom_ctx.service
 
 # Enable service on boot
-sudo systemctl enable openviking.service
+sudo systemctl enable atom_ctx.service
 
 # Check service status
-sudo systemctl status openviking.service
+sudo systemctl status atom_ctx.service
 
 # View service logs
-sudo journalctl -u openviking.service -f
+sudo journalctl -u atom_ctx.service -f
 ```
 
 ## Connecting Clients
@@ -150,18 +150,18 @@ sudo journalctl -u openviking.service -f
 ### Python SDK
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 
-client = ov.SyncHTTPClient(url="http://localhost:1933", api_key="your-key", agent_id="my-agent")
+client = ctx.SyncHTTPClient(url="http://localhost:1933", api_key="your-key", agent_id="my-agent")
 client.initialize()
 
-results = client.find("how to use openviking")
+results = client.find("how to use atom_ctx")
 client.close()
 ```
 
 ### CLI
 
-The CLI reads connection settings from `ovcli.conf`. Create `~/.openviking/ovcli.conf`:
+The CLI reads connection settings from `ctx-cli.conf`. Create `~/.ctx/ctx-cli.conf`:
 
 ```json
 {
@@ -173,19 +173,19 @@ The CLI reads connection settings from `ovcli.conf`. Create `~/.openviking/ovcli
 Or set the config path via environment variable:
 
 ```bash
-export OPENVIKING_CLI_CONFIG_FILE=/path/to/ovcli.conf
+export CTX_CLI_CONFIG_FILE=/path/to/ctx-cli.conf
 ```
 
 Then use the CLI:
 
 ```bash
-python -m openviking ls viking://resources/
+python -m atom_ctx ls ctx://resources/
 ```
 
 ### curl
 
 ```bash
-curl http://localhost:1933/api/v1/fs/ls?uri=viking:// \
+curl http://localhost:1933/api/v1/fs/ls?uri=ctx:// \
   -H "X-API-Key: your-key"
 ```
 
@@ -193,16 +193,16 @@ curl http://localhost:1933/api/v1/fs/ls?uri=viking:// \
 
 ### Docker
 
-OpenViking provides pre-built Docker images published to GitHub Container Registry:
+AtomCtx provides pre-built Docker images published to GitHub Container Registry:
 
 ```bash
 docker run -d \
-  --name openviking \
+  --name atom_ctx \
   -p 1933:1933 \
-  -v ~/.openviking/ov.conf:/app/ov.conf \
-  -v /var/lib/openviking/data:/app/data \
+  -v ~/.ctx/ctx.conf:/app/ctx.conf \
+  -v /var/lib/atom_ctx/data:/app/data \
   --restart unless-stopped \
-  ghcr.io/volcengine/openviking:main
+  ghcr.io/volcengine/atom_ctx:main
 ```
 
 You can also use Docker Compose with the `docker-compose.yml` provided in the project root:
@@ -211,16 +211,16 @@ You can also use Docker Compose with the `docker-compose.yml` provided in the pr
 docker compose up -d
 ```
 
-To build the image yourself: `docker build -t openviking:latest .`
+To build the image yourself: `docker build -t atom_ctx:latest .`
 
 ### Kubernetes + Helm
 
 The project provides a Helm chart located at `examples/k8s-helm/`:
 
 ```bash
-helm install openviking ./examples/k8s-helm \
-  --set openviking.config.embedding.dense.api_key="YOUR_API_KEY" \
-  --set openviking.config.vlm.api_key="YOUR_API_KEY"
+helm install atom_ctx ./examples/k8s-helm \
+  --set atom_ctx.config.embedding.dense.api_key="YOUR_API_KEY" \
+  --set atom_ctx.config.vlm.api_key="YOUR_API_KEY"
 ```
 
 For a detailed cloud deployment guide (including Volcengine TOS + VikingDB + Ark configuration), see the [Cloud Deployment Guide](../../../examples/cloud/GUIDE.md).

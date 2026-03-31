@@ -1,10 +1,10 @@
 # Encryption Guide
 
-This guide describes how to enable and use at-rest data encryption in OpenViking.
+This guide describes how to enable and use at-rest data encryption in AtomCtx.
 
 ## Overview
 
-OpenViking provides transparent at-rest data encryption to ensure data security and isolation in multi-tenant environments:
+AtomCtx provides transparent at-rest data encryption to ensure data security and isolation in multi-tenant environments:
 
 - ✅ **Transparent encryption**: No API changes, application layer unaware
 - ✅ **Multi-tenant isolation**: Different accounts use independent keys
@@ -18,12 +18,12 @@ See [Data Encryption](../concepts/10-encryption.md) for conceptual explanations.
 ### 1. Initialize Root Key (Local Mode)
 
 ```bash
-ov system crypto init-key --output ~/.openviking/master.key
+ctx system crypto init-key --output ~/.ctx/master.key
 ```
 
 ### 2. Configure Encryption
 
-Edit `~/.openviking/ov.conf`:
+Edit `~/.ctx/ctx.conf`:
 
 ```json
 {
@@ -31,7 +31,7 @@ Edit `~/.openviking/ov.conf`:
     "enabled": true,
     "provider": "local",
     "local": {
-      "key_file": "~/.openviking/master.key"
+      "key_file": "~/.ctx/master.key"
     }
   },
   "storage": {
@@ -43,12 +43,12 @@ Edit `~/.openviking/ov.conf`:
 ### 3. Verify
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 import asyncio
 
 
 async def test():
-    client = ov.AsyncOpenViking(path="./data")
+    client = ctx.AsyncAtomCtx(path="./data")
     await client.initialize()
 
     # Add resource (automatically encrypted)
@@ -82,16 +82,16 @@ Done! Now all written data is automatically encrypted.
 
 ```bash
 # Generate and save to specified path
-ov system crypto init-key --output ~/.openviking/master.key
+ctx system crypto init-key --output ~/.ctx/master.key
 
 # Or use short option
-ov system crypto init-key -o ~/.openviking/master.key
+ctx system crypto init-key -o ~/.ctx/master.key
 ```
 
 **Output example**:
 ```
 ✓ Root key generated successfully
-✓ Saved to: /Users/you/.openviking/master.key
+✓ Saved to: /Users/you/.ctx/master.key
 ```
 
 ### Security Tips
@@ -109,7 +109,7 @@ ov system crypto init-key -o ~/.openviking/master.key
     "enabled": true,
     "provider": "local",
     "local": {
-      "key_file": "~/.openviking/master.key"
+      "key_file": "~/.ctx/master.key"
     }
   }
 }
@@ -143,7 +143,7 @@ vault secrets enable -version=2 kv
 vault secrets enable kv
 ```
 
-3. Configure OpenViking:
+3. Configure AtomCtx:
 
 ```json
 {
@@ -156,8 +156,8 @@ vault secrets enable kv
       "mount_point": "transit",
       "kv_mount_point": "secret",
       "kv_version": 1,
-      "root_key_name": "openviking-root-key",
-      "encrypted_root_key_key": "openviking-encrypted-root-key"
+      "root_key_name": "atom_ctx-root-key",
+      "encrypted_root_key_key": "atom_ctx-encrypted-root-key"
     }
   }
 }
@@ -172,19 +172,19 @@ vault secrets enable kv
 | `mount_point` | Transit engine mount path | `"transit"` |
 | `kv_mount_point` | KV engine mount path | `"secret"` |
 | `kv_version` | KV engine version (1 or 2) | `1` |
-| `root_key_name` | Key name in Transit engine | `"openviking-root-key"` |
-| `encrypted_root_key_key` | Path to store encrypted root key in KV engine | `"openviking-encrypted-root-key"` |
+| `root_key_name` | Key name in Transit engine | `"atom_ctx-root-key"` |
+| `encrypted_root_key_key` | Path to store encrypted root key in KV engine | `"atom_ctx-encrypted-root-key"` |
 
 ### Vault Permission Recommendations
 
 Configure minimal permissions for the Token:
 
 ```hcl
-path "transit/encrypt/openviking-root" {
+path "transit/encrypt/atom_ctx-root" {
   capabilities = ["update"]
 }
 
-path "transit/decrypt/openviking-root" {
+path "transit/decrypt/atom_ctx-root" {
   capabilities = ["update"]
 }
 ```
@@ -206,7 +206,7 @@ path "transit/decrypt/openviking-root" {
 3. Select "Symmetric Key", algorithm `AES_256`
 4. Record the Key ID
 
-### Configure OpenViking
+### Configure AtomCtx
 
 ```json
 {
@@ -219,7 +219,7 @@ path "transit/decrypt/openviking-root" {
       "access_key": "AKLTxxxxxxxxxxxxxxxxxx",
       "secret_key": "Tmpxxxxxxxxxxxxxxxxxxxxxx",
       "endpoint": null,
-      "key_file": "~/.openviking/openviking-volcengine-root-key.enc"
+      "key_file": "~/.ctx/atom_ctx-volcengine-root-key.enc"
     }
   }
 }
@@ -234,7 +234,7 @@ path "transit/decrypt/openviking-root" {
 | `access_key` | Access Key | Required |
 | `secret_key` | Secret Key | Required |
 | `endpoint` | Custom KMS endpoint (optional) | `null` (use default endpoint) |
-| `key_file` | Local cache file path for encrypted root key | `"~/.openviking/openviking-volcengine-root-key.enc"` |
+| `key_file` | Local cache file path for encrypted root key | `"~/.ctx/atom_ctx-volcengine-root-key.enc"` |
 
 ### Permission Recommendations
 
@@ -308,12 +308,12 @@ except Exception as e:
 3. Re-import all resources:
 
 ```python
-import openviking as ov
+import atom_ctx as ctx
 import asyncio
 
 
 async def migrate():
-    client = ov.AsyncOpenViking(path="./data")
+    client = ctx.AsyncAtomCtx(path="./data")
     await client.initialize()
 
     # List all resources
@@ -347,7 +347,7 @@ asyncio.run(migrate())
 ### Key File Not Found
 
 ```
-Error: Key file not found: ~/.openviking/master.key
+Error: Key file not found: ~/.ctx/master.key
 ```
 
 **Solution**:
@@ -388,9 +388,9 @@ Error: KeyMismatchError
 
 ### Partial Read Returns Ciphertext
 
-If using encrypted files created with an older OpenViking version, partial reads may return ciphertext.
+If using encrypted files created with an older AtomCtx version, partial reads may return ciphertext.
 
-**Solution**: Upgrade to the latest OpenViking version.
+**Solution**: Upgrade to the latest AtomCtx version.
 
 ---
 

@@ -1,6 +1,6 @@
 # 上下文类型
 
-基于对人类认知模式的简化映射与工程化思考，OpenViking 将上下文抽象为 **资源、记忆、能力三种**基本类型，每种类型在 Agent 中有不同的用途。
+基于对人类认知模式的简化映射与工程化思考，AtomCtx 将上下文抽象为 **资源、记忆、能力三种**基本类型，每种类型在 Agent 中有不同的用途。
 
 ## 概览
 
@@ -38,7 +38,7 @@ client.add_resource(
 # 搜索资源
 results = client.find(
     "认证方法",
-    target_uri="viking://resources/"
+    target_uri="ctx://resources/"
 )
 ```
 
@@ -74,7 +74,7 @@ await session.commit()  # 提取偏好记忆
 # 搜索记忆
 results = await client.find(
     "用户界面偏好",
-    target_uri="viking://user/memories/"
+    target_uri="ctx://user/memories/"
 )
 ```
 
@@ -91,7 +91,7 @@ results = await client.find(
 ### 存储位置
 
 ```
-viking://agent/skills/{skill-name}/
+ctx://agent/skills/{skill-name}/
 ├── .abstract.md          # L0: 简短描述
 ├── SKILL.md   						# L1: 详细概览
 └── scripts           		# L2: 完整定义
@@ -111,7 +111,7 @@ await client.add_skill({
 # 搜索技能
 results = await client.find(
     "网络搜索",
-    target_uri="viking://agent/skills/"
+    target_uri="ctx://agent/skills/"
 )
 ```
 
@@ -135,5 +135,5 @@ for ctx in results.skills:
 
 - [架构概述](./01-architecture.md) - 系统整体架构
 - [上下文层级](./03-context-layers.md) - L0/L1/L2 模型
-- [Viking URI](./04-viking-uri.md) - URI 规范
+- [Ctx URI](./04-ctx-uri.md) - URI 规范
 - [会话管理](./08-session.md) - 记忆提取机制

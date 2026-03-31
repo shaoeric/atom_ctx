@@ -1,7 +1,7 @@
 /**
- * OpenViking Memory MCP Server for Claude Code
+ * AtomCtx Memory MCP Server for Claude Code
  *
- * Exposes OpenViking long-term memory as MCP tools:
+ * Exposes AtomCtx long-term memory as MCP tools:
  *   - memory_recall  : semantic search across memories
  *   - memory_store   : extract and persist new memories
  *   - memory_forget  : delete memories by URI or query
@@ -14,16 +14,16 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { createHash } from "node:crypto";
 // ---------------------------------------------------------------------------
-// Configuration — loaded from ov.conf (shared with OpenClaw plugin).
-// Env var: OPENVIKING_CONFIG_FILE (default: ~/.openviking/ov.conf)
+// Configuration — loaded from ctx.conf (shared with OpenClaw plugin).
+// Env var: CTX_CONFIG_FILE (default: ~/.ctx/ctx.conf)
 // Plugin-specific overrides go in the optional "claude_code" section.
 // ---------------------------------------------------------------------------
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve as resolvePath } from "node:path";
 function loadOvConf() {
-    const defaultPath = join(homedir(), ".openviking", "ov.conf");
-    const configPath = resolvePath((process.env.OPENVIKING_CONFIG_FILE || defaultPath).replace(/^~/, homedir()));
+    const defaultPath = join(homedir(), ".ctx", "ctx.conf");
+    const configPath = resolvePath((process.env.CTX_CONFIG_FILE || defaultPath).replace(/^~/, homedir()));
     try {
         return JSON.parse(readFileSync(configPath, "utf-8"));
     }
@@ -32,7 +32,7 @@ function loadOvConf() {
         const msg = code === "ENOENT"
             ? `Config file not found: ${configPath}`
             : `Failed to read config: ${configPath}`;
-        process.stderr.write(`[openviking-memory] ${msg}\n`);
+        process.stderr.write(`[atom_ctx-memory] ${msg}\n`);
         process.exit(1);
     }
 }
@@ -65,11 +65,11 @@ const config = {
     scoreThreshold: Math.min(1, Math.max(0, num(cc.scoreThreshold, 0.01))),
 };
 // ---------------------------------------------------------------------------
-// OpenViking HTTP Client (ported from openclaw-plugin/client.ts)
+// AtomCtx HTTP Client (ported from openclaw-plugin/client.ts)
 // ---------------------------------------------------------------------------
 const MEMORY_URI_PATTERNS = [
-    /^viking:\/\/user\/(?:[^/]+\/)?memories(?:\/|$)/,
-    /^viking:\/\/agent\/(?:[^/]+\/)?memories(?:\/|$)/,
+    /^ctx:\/\/user\/(?:[^/]+\/)?memories(?:\/|$)/,
+    /^ctx:\/\/agent\/(?:[^/]+\/)?memories(?:\/|$)/,
 ];
 const USER_STRUCTURE_DIRS = new Set(["memories"]);
 const AGENT_STRUCTURE_DIRS = new Set(["memories", "skills", "instructions", "workspaces"]);
@@ -79,7 +79,7 @@ function md5Short(input) {
 function isMemoryUri(uri) {
     return MEMORY_URI_PATTERNS.some((p) => p.test(uri));
 }
-class OpenVikingClient {
+class AtomCtxClient {
     baseUrl;
     apiKey;
     agentId;
@@ -100,7 +100,7 @@ class OpenVikingClient {
             if (this.apiKey)
                 headers.set("X-API-Key", this.apiKey);
             if (this.agentId)
-                headers.set("X-OpenViking-Agent", this.agentId);
+                headers.set("X-AtomCtx-Agent", this.agentId);
             if (init.body && !headers.has("Content-Type"))
                 headers.set("Content-Type", "application/json");
             const response = await fetch(`${this.baseUrl}${path}`, {
@@ -112,7 +112,7 @@ class OpenVikingClient {
             if (!response.ok || payload.status === "error") {
                 const code = payload.error?.code ? ` [${payload.error.code}]` : "";
                 const message = payload.error?.message ?? `HTTP ${response.status}`;
-                throw new Error(`OpenViking request failed${code}: ${message}`);
+                throw new Error(`AtomCtx request failed${code}: ${message}`);
             }
             return (payload.result ?? payload);
         }
@@ -155,7 +155,7 @@ class OpenVikingClient {
         const fallbackSpace = scope === "user" ? identity.userId : md5Short(`${identity.userId}:${identity.agentId}`);
         const reservedDirs = scope === "user" ? USER_STRUCTURE_DIRS : AGENT_STRUCTURE_DIRS;
         try {
-            const entries = await this.ls(`viking://${scope}`);
+            const entries = await this.ls(`ctx://${scope}`);
             const spaces = entries
                 .filter((e) => e?.isDir === true)
                 .map((e) => (typeof e.name === "string" ? e.name.trim() : ""))
@@ -181,7 +181,7 @@ class OpenVikingClient {
     }
     async normalizeTargetUri(targetUri) {
         const trimmed = targetUri.trim().replace(/\/+$/, "");
-        const match = trimmed.match(/^viking:\/\/(user|agent)(?:\/(.*))?$/);
+        const match = trimmed.match(/^ctx:\/\/(user|agent)(?:\/(.*))?$/);
         if (!match)
             return trimmed;
         const scope = match[1];
@@ -195,7 +195,7 @@ class OpenVikingClient {
         if (!reservedDirs.has(parts[0]))
             return trimmed;
         const space = await this.resolveScopeSpace(scope);
-        return `viking://${scope}/${space}/${parts.join("/")}`;
+        return `ctx://${scope}/${space}/${parts.join("/")}`;
     }
     async find(query, options) {
         const normalizedTargetUri = await this.normalizeTargetUri(options.targetUri);
@@ -367,8 +367,8 @@ function pickMemoriesForInjection(items, limit, queryText) {
 // ---------------------------------------------------------------------------
 async function searchBothScopes(client, query, limit) {
     const [userSettled, agentSettled] = await Promise.allSettled([
-        client.find(query, { targetUri: "viking://user/memories", limit, scoreThreshold: 0 }),
-        client.find(query, { targetUri: "viking://agent/memories", limit, scoreThreshold: 0 }),
+        client.find(query, { targetUri: "ctx://user/memories", limit, scoreThreshold: 0 }),
+        client.find(query, { targetUri: "ctx://agent/memories", limit, scoreThreshold: 0 }),
     ]);
     const userResult = userSettled.status === "fulfilled" ? userSettled.value : { memories: [] };
     const agentResult = agentSettled.status === "fulfilled" ? agentSettled.value : { memories: [] };
@@ -401,17 +401,17 @@ function markRecalledMemoriesUsed(client, contexts) {
 // ---------------------------------------------------------------------------
 // MCP Server
 // ---------------------------------------------------------------------------
-const client = new OpenVikingClient(config.baseUrl, config.apiKey, config.agentId, config.timeoutMs);
+const client = new AtomCtxClient(config.baseUrl, config.apiKey, config.agentId, config.timeoutMs);
 const server = new McpServer({
-    name: "openviking-memory",
+    name: "atom_ctx-memory",
     version: "0.1.0",
 });
 // -- Tool: memory_recall --------------------------------------------------
-server.tool("memory_recall", "Search long-term memories from OpenViking. Use when you need past user preferences, facts, decisions, or any previously stored information.", {
+server.tool("memory_recall", "Search long-term memories from AtomCtx. Use when you need past user preferences, facts, decisions, or any previously stored information.", {
     query: z.string().describe("Search query — describe what you want to recall"),
     limit: z.number().optional().describe("Max results to return (default: 6)"),
     score_threshold: z.number().optional().describe("Min relevance score 0-1 (default: 0.01)"),
-    target_uri: z.string().optional().describe("Search scope URI, e.g. viking://user/memories"),
+    target_uri: z.string().optional().describe("Search scope URI, e.g. ctx://user/memories"),
 }, async ({ query, limit, score_threshold, target_uri }) => {
     const recallLimit = limit ?? config.recallLimit;
     const threshold = score_threshold ?? config.scoreThreshold;
@@ -427,7 +427,7 @@ server.tool("memory_recall", "Search long-term memories from OpenViking. Use whe
     const processed = postProcessMemories(leafMemories, { limit: candidateLimit, scoreThreshold: threshold });
     const memories = pickMemoriesForInjection(processed, recallLimit, query);
     if (memories.length === 0) {
-        return { content: [{ type: "text", text: "No relevant memories found in OpenViking." }] };
+        return { content: [{ type: "text", text: "No relevant memories found in AtomCtx." }] };
     }
     markRecalledMemoriesUsed(client, memories.map((memory) => memory.uri));
     // Read full content for leaf memories
@@ -450,7 +450,7 @@ server.tool("memory_recall", "Search long-term memories from OpenViking. Use whe
     };
 });
 // -- Tool: memory_store ---------------------------------------------------
-server.tool("memory_store", "Store information into OpenViking long-term memory. Use when the user says 'remember this', shares preferences, important facts, decisions, or any information worth persisting across sessions.", {
+server.tool("memory_store", "Store information into AtomCtx long-term memory. Use when the user says 'remember this', shares preferences, important facts, decisions, or any information worth persisting across sessions.", {
     text: z.string().describe("The information to store as memory"),
     role: z.string().optional().describe("Message role: 'user' (default) or 'assistant'"),
 }, async ({ text, role }) => {
@@ -464,14 +464,14 @@ server.tool("memory_store", "Store information into OpenViking long-term memory.
             return {
                 content: [{
                         type: "text",
-                        text: "Memory stored but extraction returned 0 memories. The text may be too short or not contain extractable information. Check OpenViking server logs for details.",
+                        text: "Memory stored but extraction returned 0 memories. The text may be too short or not contain extractable information. Check AtomCtx server logs for details.",
                     }],
             };
         }
         return {
             content: [{
                     type: "text",
-                    text: `Successfully extracted ${extracted.length} memory/memories from the provided text and stored them in OpenViking.`,
+                    text: `Successfully extracted ${extracted.length} memory/memories from the provided text and stored them in AtomCtx.`,
                 }],
         };
     }
@@ -482,10 +482,10 @@ server.tool("memory_store", "Store information into OpenViking long-term memory.
     }
 });
 // -- Tool: memory_forget --------------------------------------------------
-server.tool("memory_forget", "Delete a memory from OpenViking. Provide an exact URI for direct deletion, or a search query to find and delete matching memories.", {
-    uri: z.string().optional().describe("Exact viking:// memory URI to delete"),
+server.tool("memory_forget", "Delete a memory from AtomCtx. Provide an exact URI for direct deletion, or a search query to find and delete matching memories.", {
+    uri: z.string().optional().describe("Exact ctx:// memory URI to delete"),
     query: z.string().optional().describe("Search query to find the memory to delete"),
-    target_uri: z.string().optional().describe("Search scope URI (default: viking://user/memories)"),
+    target_uri: z.string().optional().describe("Search scope URI (default: ctx://user/memories)"),
 }, async ({ uri, query, target_uri }) => {
     // Direct URI deletion
     if (uri) {
@@ -538,14 +538,14 @@ server.tool("memory_forget", "Delete a memory from OpenViking. Provide an exact 
     };
 });
 // -- Tool: memory_health --------------------------------------------------
-server.tool("memory_health", "Check whether the OpenViking memory server is reachable and healthy.", {}, async () => {
+server.tool("memory_health", "Check whether the AtomCtx memory server is reachable and healthy.", {}, async () => {
     const ok = await client.healthCheck();
     return {
         content: [{
                 type: "text",
                 text: ok
-                    ? `OpenViking is healthy (${config.baseUrl})`
-                    : `OpenViking is unreachable at ${config.baseUrl}. Please check if the server is running.`,
+                    ? `AtomCtx is healthy (${config.baseUrl})`
+                    : `AtomCtx is unreachable at ${config.baseUrl}. Please check if the server is running.`,
             }],
     };
 });

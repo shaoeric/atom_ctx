@@ -1,10 +1,10 @@
 # Copyright (c) 2026 Beijing Volcano Engine Technology Co., Ltd.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for identity types (openviking/server/identity.py)."""
+"""Tests for identity types (atom_ctx/server/identity.py)."""
 
-from openviking.server.identity import RequestContext, ResolvedIdentity, Role
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.server.identity import RequestContext, ResolvedIdentity, Role
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 def test_role_values():

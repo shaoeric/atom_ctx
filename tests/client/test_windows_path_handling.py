@@ -6,7 +6,7 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-from openviking_cli.client.http import AsyncHTTPClient
+from atom_ctx_cli.client.http import AsyncHTTPClient
 
 
 class TestZipCreationPathNormalization:
@@ -132,7 +132,7 @@ class TestDirectoryScanPathNormalization:
 
     def test_scan_directory_normalizes_windows_paths(self):
         """Directory scan should normalize Windows paths to forward slashes."""
-        from openviking.parse.directory_scan import _normalize_rel_path
+        from atom_ctx.parse.directory_scan import _normalize_rel_path
 
         # Test Windows-style paths
         assert _normalize_rel_path("subdir\\file.txt") == "subdir/file.txt"
@@ -151,7 +151,7 @@ class TestDirectoryScanPathNormalization:
         # where relative_to fails and we fall back to raw path
 
         # The fix should ensure normalization happens even in except block
-        from openviking.parse.directory_scan import _normalize_rel_path
+        from atom_ctx.parse.directory_scan import _normalize_rel_path
 
         # Simulate a path that might cause relative_to to fail
         raw_path = "some\\windows\\path.txt"

@@ -1,18 +1,18 @@
 # Copyright (c) 2026 Beijing Volcano Engine Technology Co., Ltd.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for APIKeyManager (openviking/server/api_keys.py)."""
+"""Tests for APIKeyManager (atom_ctx/server/api_keys.py)."""
 
 import uuid
 
 import pytest
 import pytest_asyncio
 
-from openviking.server.api_keys import APIKeyManager
-from openviking.server.identity import Role
-from openviking.service.core import OpenVikingService
-from openviking_cli.exceptions import AlreadyExistsError, NotFoundError, UnauthenticatedError
-from openviking_cli.session.user_id import UserIdentifier
+from atom_ctx.server.api_keys import APIKeyManager
+from atom_ctx.server.identity import Role
+from atom_ctx.service.core import AtomCtxService
+from atom_ctx_cli.exceptions import AlreadyExistsError, NotFoundError, UnauthenticatedError
+from atom_ctx_cli.session.user_id import UserIdentifier
 
 
 def _uid() -> str:
@@ -25,8 +25,8 @@ ROOT_KEY = "test-root-key-abcdef1234567890abcdef1234567890"
 
 @pytest_asyncio.fixture(scope="function")
 async def manager_service(temp_dir):
-    """OpenVikingService for APIKeyManager tests."""
-    svc = OpenVikingService(
+    """AtomCtxService for APIKeyManager tests."""
+    svc = AtomCtxService(
         path=str(temp_dir / "mgr_data"), user=UserIdentifier.the_default_user("mgr_user")
     )
     await svc.initialize()
@@ -37,7 +37,7 @@ async def manager_service(temp_dir):
 @pytest_asyncio.fixture(scope="function")
 async def manager(manager_service):
     """Fresh APIKeyManager instance, loaded."""
-    mgr = APIKeyManager(root_key=ROOT_KEY, viking_fs=manager_service.viking_fs)
+    mgr = APIKeyManager(root_key=ROOT_KEY, ctx_fs=manager_service.ctx_fs)
     await mgr.load()
     return mgr
 
@@ -207,14 +207,14 @@ async def test_get_users(manager: APIKeyManager):
 
 async def test_persistence_across_reload(manager_service):
     """Keys should survive manager reload from AGFS."""
-    mgr1 = APIKeyManager(root_key=ROOT_KEY, viking_fs=manager_service.viking_fs)
+    mgr1 = APIKeyManager(root_key=ROOT_KEY, ctx_fs=manager_service.ctx_fs)
     await mgr1.load()
 
     acct = _uid()
     key = await mgr1.create_account(acct, "alice")
 
     # Create new manager instance and reload
-    mgr2 = APIKeyManager(root_key=ROOT_KEY, viking_fs=manager_service.viking_fs)
+    mgr2 = APIKeyManager(root_key=ROOT_KEY, ctx_fs=manager_service.ctx_fs)
     await mgr2.load()
 
     identity = mgr2.resolve(key)
@@ -230,7 +230,7 @@ async def test_create_account_with_encryption_enabled(manager_service):
     """create_account with encryption_enabled=True should create hashed keys."""
     acct = _uid()
     mgr = APIKeyManager(
-        root_key=ROOT_KEY, viking_fs=manager_service.viking_fs, encryption_enabled=True
+        root_key=ROOT_KEY, ctx_fs=manager_service.ctx_fs, encryption_enabled=True
     )
     await mgr.load()
 
@@ -253,7 +253,7 @@ async def test_register_user_with_encryption_enabled(manager_service):
     """register_user with encryption_enabled=True should create hashed keys."""
     acct = _uid()
     mgr = APIKeyManager(
-        root_key=ROOT_KEY, viking_fs=manager_service.viking_fs, encryption_enabled=True
+        root_key=ROOT_KEY, ctx_fs=manager_service.ctx_fs, encryption_enabled=True
     )
     await mgr.load()
 
@@ -274,7 +274,7 @@ async def test_regenerate_key_with_encryption_enabled(manager_service):
     """regenerate_key with encryption_enabled=True should create new hashed key."""
     acct = _uid()
     mgr = APIKeyManager(
-        root_key=ROOT_KEY, viking_fs=manager_service.viking_fs, encryption_enabled=True
+        root_key=ROOT_KEY, ctx_fs=manager_service.ctx_fs, encryption_enabled=True
     )
     await mgr.load()
 
@@ -309,14 +309,14 @@ async def test_migrate_plaintext_keys_to_encrypted(manager_service):
 
     # First, create a key with encryption disabled
     mgr1 = APIKeyManager(
-        root_key=ROOT_KEY, viking_fs=manager_service.viking_fs, encryption_enabled=False
+        root_key=ROOT_KEY, ctx_fs=manager_service.ctx_fs, encryption_enabled=False
     )
     await mgr1.load()
     key = await mgr1.create_account(acct, "alice")
 
     # Now, reload with encryption enabled - should migrate the key
     mgr2 = APIKeyManager(
-        root_key=ROOT_KEY, viking_fs=manager_service.viking_fs, encryption_enabled=True
+        root_key=ROOT_KEY, ctx_fs=manager_service.ctx_fs, encryption_enabled=True
     )
     await mgr2.load()
 
@@ -329,7 +329,7 @@ async def test_migrate_plaintext_keys_to_encrypted(manager_service):
 async def test_persistence_with_encryption_enabled(manager_service):
     """Hashed keys should survive manager reload from AGFS."""
     mgr1 = APIKeyManager(
-        root_key=ROOT_KEY, viking_fs=manager_service.viking_fs, encryption_enabled=True
+        root_key=ROOT_KEY, ctx_fs=manager_service.ctx_fs, encryption_enabled=True
     )
     await mgr1.load()
 
@@ -342,7 +342,7 @@ async def test_persistence_with_encryption_enabled(manager_service):
 
     # Create new manager instance and reload
     mgr2 = APIKeyManager(
-        root_key=ROOT_KEY, viking_fs=manager_service.viking_fs, encryption_enabled=True
+        root_key=ROOT_KEY, ctx_fs=manager_service.ctx_fs, encryption_enabled=True
     )
     await mgr2.load()
 

@@ -1,7 +1,7 @@
 {
-  "name": "@openclaw/openviking",
+  "name": "@openclaw/atom_ctx",
   "version": "2026.3.25",
-  "description": "OpenClaw OpenViking-backed long-term memory plugin (install to ~/.openclaw/extensions)",
+  "description": "OpenClaw AtomCtx-backed long-term memory plugin (install to ~/.openclaw/extensions)",
   "type": "module",
   "scripts": {
     "test": "vitest run",

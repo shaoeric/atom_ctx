@@ -4,7 +4,7 @@
  * Auto-Recall Hook Script for Claude Code
  *
  * Triggered by UserPromptSubmit hook.
- * Reads user_prompt from stdin → searches OpenViking → returns recalled
+ * Reads user_prompt from stdin → searches AtomCtx → returns recalled
  * memories via systemMessage so Claude sees them transparently.
  *
  * Ported from openclaw-plugin/ auto-recall logic in index.ts + memory-ranking.ts.
@@ -36,7 +36,7 @@ async function fetchJSON(path, init = {}) {
   try {
     const headers = { "Content-Type": "application/json" };
     if (cfg.apiKey) headers["X-API-Key"] = cfg.apiKey;
-    if (cfg.agentId) headers["X-OpenViking-Agent"] = cfg.agentId;
+    if (cfg.agentId) headers["X-AtomCtx-Agent"] = cfg.agentId;
     const res = await fetch(`${cfg.baseUrl}${path}`, { ...init, headers, signal: controller.signal });
     const body = await res.json();
     if (!res.ok || body.status === "error") return null;
@@ -175,7 +175,7 @@ async function resolveScopeSpace(scope) {
 
   const reservedDirs = scope === "user" ? USER_RESERVED_DIRS : AGENT_RESERVED_DIRS;
   try {
-    const entries = await fetchJSON(`/api/v1/fs/ls?uri=${encodeURIComponent(`viking://${scope}`)}&output=original`);
+    const entries = await fetchJSON(`/api/v1/fs/ls?uri=${encodeURIComponent(`ctx://${scope}`)}&output=original`);
     if (Array.isArray(entries)) {
       const spaces = entries
         .filter(e => e?.isDir)
@@ -195,7 +195,7 @@ async function resolveScopeSpace(scope) {
 
 async function resolveTargetUri(targetUri) {
   const trimmed = targetUri.trim().replace(/\/+$/, "");
-  const m = trimmed.match(/^viking:\/\/(user|agent)(?:\/(.*))?$/);
+  const m = trimmed.match(/^ctx:\/\/(user|agent)(?:\/(.*))?$/);
   if (!m) return trimmed;
   const scope = m[1];
   const rawRest = (m[2] ?? "").trim();
@@ -205,7 +205,7 @@ async function resolveTargetUri(targetUri) {
   const reservedDirs = scope === "user" ? USER_RESERVED_DIRS : AGENT_RESERVED_DIRS;
   if (!reservedDirs.has(parts[0])) return trimmed;
   const space = await resolveScopeSpace(scope);
-  return `viking://${scope}/${space}/${parts.join("/")}`;
+  return `ctx://${scope}/${space}/${parts.join("/")}`;
 }
 
 function markRecalledMemoriesUsed(contexts) {
@@ -241,7 +241,7 @@ function markRecalledMemoriesUsed(contexts) {
 }
 
 // ---------------------------------------------------------------------------
-// Search OpenViking
+// Search AtomCtx
 // ---------------------------------------------------------------------------
 
 async function searchScope(query, targetUri, limit) {
@@ -255,8 +255,8 @@ async function searchScope(query, targetUri, limit) {
 
 async function searchBothScopes(query, limit) {
   const [userMems, agentMems] = await Promise.all([
-    searchScope(query, "viking://user/memories", limit),
-    searchScope(query, "viking://agent/memories", limit),
+    searchScope(query, "ctx://user/memories", limit),
+    searchScope(query, "ctx://agent/memories", limit),
   ]);
   log("search_complete", { scope: "user", rawCount: userMems.length, topScores: userMems.slice(0, 3).map(m => m.score) });
   log("search_complete", { scope: "agent", rawCount: agentMems.length, topScores: agentMems.slice(0, 3).map(m => m.score) });
@@ -378,7 +378,7 @@ async function main() {
 
   const memoryContext =
     "<relevant-memories>\n" +
-    "The following long-term memories from OpenViking may be relevant to this conversation:\n" +
+    "The following long-term memories from AtomCtx may be relevant to this conversation:\n" +
     lines.join("\n") + "\n" +
     "</relevant-memories>";
 

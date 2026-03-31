@@ -2,8 +2,8 @@
 """
 OpenClaw 记忆链路完整测试脚本
 
-验证 OpenViking 记忆插件重构后的端到端链路:
-1. afterTurn: 本轮消息无损写入 OpenViking session，sessionId 一致
+验证 AtomCtx 记忆插件重构后的端到端链路:
+1. afterTurn: 本轮消息无损写入 AtomCtx session，sessionId 一致
 2. commit: 归档消息 + 提取长期记忆 + .meta.json 写入
 3. assemble: 同用户继续对话时, 从 latest_archive_overview + active messages 重组上下文
 4. assemble budget trimming: 小 token budget 下 latest_archive_overview 被裁剪
@@ -12,19 +12,19 @@ OpenClaw 记忆链路完整测试脚本
 
 测试流程:
 Phase 1: 多轮对话 (12 轮) — afterTurn 写入
-Phase 2: afterTurn 验证 — 检查 OV session 内部状态
+Phase 2: afterTurn 验证 — 检查 CTX session 内部状态
 Phase 3: Commit 验证 — 触发 commit, 检查归档结构
 Phase 4: Assemble 验证 — 同用户继续对话, 验证上下文重组
 Phase 5: SessionId 一致性验证
 Phase 6: 新用户记忆召回
 
 前提:
-- OpenViking 服务已启动 (默认 http://127.0.0.1:8000)
-- OpenClaw Gateway 已启动并配置了 OpenViking 插件
+- AtomCtx 服务已启动 (默认 http://127.0.0.1:8000)
+- OpenClaw Gateway 已启动并配置了 AtomCtx 插件
 
 用法:
     python test-memory-chain.py
-    python test-memory-chain.py --gateway http://127.0.0.1:18790 --openviking http://127.0.0.1:8000
+    python test-memory-chain.py --gateway http://127.0.0.1:18790 --atom_ctx http://127.0.0.1:8000
     python test-memory-chain.py --phase chat
     python test-memory-chain.py --phase afterTurn
     python test-memory-chain.py --phase commit
@@ -56,7 +56,7 @@ from rich.tree import Tree
 USER_ID = f"test-chain-{uuid.uuid4().hex[:8]}"
 DISPLAY_NAME = "测试用户"
 DEFAULT_GATEWAY = "http://127.0.0.1:18790"
-DEFAULT_OPENVIKING = "http://127.0.0.1:8000"
+DEFAULT_ATOM_CTX = "http://127.0.0.1:8000"
 AGENT_ID = "openclaw"
 
 console = Console()
@@ -124,7 +124,7 @@ RECALL_QUESTIONS = [
 ]
 
 
-# ── Gateway / OpenViking API ─────────────────────────────────────────────
+# ── Gateway / AtomCtx API ─────────────────────────────────────────────
 
 
 def send_message(gateway_url: str, message: str, user_id: str) -> dict:
@@ -148,8 +148,8 @@ def extract_reply_text(data: dict) -> str:
     return "(无回复)"
 
 
-class OpenVikingInspector:
-    """OpenViking 内部状态检查器。"""
+class AtomCtxInspector:
+    """AtomCtx 内部状态检查器。"""
 
     def __init__(self, base_url: str, api_key: str = "", agent_id: str = AGENT_ID):
         self.base_url = base_url.rstrip("/")
@@ -161,7 +161,7 @@ class OpenVikingInspector:
         if self.api_key:
             h["X-API-Key"] = self.api_key
         if self.agent_id:
-            h["X-OpenViking-Agent"] = self.agent_id
+            h["X-AtomCtx-Agent"] = self.agent_id
         return h
 
     def _get(self, path: str, timeout: int = 10) -> dict | None:
@@ -239,7 +239,7 @@ class OpenVikingInspector:
         return result
 
     def search_memories(
-        self, query: str, target_uri: str = "viking://user/memories", limit: int = 10
+        self, query: str, target_uri: str = "ctx://user/memories", limit: int = 10
     ) -> list:
         result = self._post(
             "/api/v1/search/find",
@@ -338,24 +338,24 @@ def run_phase_chat(gateway_url: str, user_id: str, delay: float, verbose: bool) 
 # ── Phase 2: afterTurn 验证 ──────────────────────────────────────────────
 
 
-def run_phase_after_turn(openviking_url: str, user_id: str, verbose: bool) -> bool:
-    """Phase 2: afterTurn 验证 — 检查 OV session 内部状态确认消息已写入。"""
+def run_phase_after_turn(atom_ctx_url: str, user_id: str, verbose: bool) -> bool:
+    """Phase 2: afterTurn 验证 — 检查 CTX session 内部状态确认消息已写入。"""
     console.print()
-    console.rule("[bold]Phase 2: afterTurn 验证 — 检查 OV session 消息写入[/bold]")
+    console.rule("[bold]Phase 2: afterTurn 验证 — 检查 CTX session 消息写入[/bold]")
     console.print()
     console.print("[dim]验证点:[/dim]")
-    console.print("[dim]- afterTurn 应将每轮消息写入 OV session[/dim]")
+    console.print("[dim]- afterTurn 应将每轮消息写入 CTX session[/dim]")
     console.print("[dim]- session.message_count > 0[/dim]")
     console.print("[dim]- pending_tokens > 0 (消息尚未 commit)[/dim]")
     console.print("[dim]- sessionId 应为 OpenClaw 传入的 user_id[/dim]")
     console.print()
 
-    inspector = OpenVikingInspector(openviking_url)
+    inspector = AtomCtxInspector(atom_ctx_url)
 
     # 2.1 健康检查
-    console.print("[bold]2.1 OpenViking 健康检查[/bold]")
+    console.print("[bold]2.1 AtomCtx 健康检查[/bold]")
     healthy = inspector.health_check()
-    check("OpenViking 服务可达", healthy)
+    check("AtomCtx 服务可达", healthy)
     if not healthy:
         return False
 
@@ -437,7 +437,7 @@ def run_phase_after_turn(openviking_url: str, user_id: str, verbose: bool) -> bo
 # ── Phase 3: Commit 验证 ─────────────────────────────────────────────────
 
 
-def run_phase_commit(openviking_url: str, user_id: str, verbose: bool) -> bool:
+def run_phase_commit(atom_ctx_url: str, user_id: str, verbose: bool) -> bool:
     """Phase 3: Commit 验证 — 触发 commit, 检查归档结构和记忆提取。"""
     console.print()
     console.rule("[bold]Phase 3: Commit 验证 — 触发 session.commit()[/bold]")
@@ -449,7 +449,7 @@ def run_phase_commit(openviking_url: str, user_id: str, verbose: bool) -> bool:
     console.print("[dim]- 归档目录含 .overview.md 和 .meta.json[/dim]")
     console.print()
 
-    inspector = OpenVikingInspector(openviking_url)
+    inspector = AtomCtxInspector(atom_ctx_url)
 
     # 3.1 执行 commit
     console.print("[bold]3.1 执行 session.commit()[/bold]")
@@ -539,7 +539,7 @@ def run_phase_commit(openviking_url: str, user_id: str, verbose: bool) -> bool:
 
 
 def run_phase_assemble(
-    gateway_url: str, openviking_url: str, user_id: str, delay: float, verbose: bool
+    gateway_url: str, atom_ctx_url: str, user_id: str, delay: float, verbose: bool
 ) -> bool:
     """Phase 4: Assemble 验证 — 同用户继续对话，验证上下文从 latest archive overview 重组。"""
     console.print()
@@ -553,7 +553,7 @@ def run_phase_assemble(
     console.print("[dim]- context 应返回 latest_archive_overview (证明 assemble 有数据源)[/dim]")
     console.print()
 
-    inspector = OpenVikingInspector(openviking_url)
+    inspector = AtomCtxInspector(atom_ctx_url)
 
     # 4.1 确认 assemble 的数据源 (latest_archive_overview) 就绪
     console.print("[bold]4.1 确认 assemble 数据源[/bold]")
@@ -645,26 +645,26 @@ def run_phase_assemble(
 # ── Phase 5: SessionId 一致性验证 ────────────────────────────────────────
 
 
-def run_phase_session_id(openviking_url: str, user_id: str, verbose: bool) -> bool:
+def run_phase_session_id(atom_ctx_url: str, user_id: str, verbose: bool) -> bool:
     """Phase 5: SessionId 一致性验证 — 确认整条链路使用统一的 sessionId。"""
     console.print()
     console.rule("[bold]Phase 5: SessionId 一致性验证[/bold]")
     console.print()
     console.print("[dim]验证点:[/dim]")
     console.print("[dim]- 重构后 sessionId 统一为 OpenClaw 传入的 user_id[/dim]")
-    console.print("[dim]- OV session_id == user_id (无 sessionKey 前缀/后缀)[/dim]")
+    console.print("[dim]- CTX session_id == user_id (无 sessionKey 前缀/后缀)[/dim]")
     console.print("[dim]- context 用同一 sessionId 可查到数据[/dim]")
     console.print()
 
-    inspector = OpenVikingInspector(openviking_url)
+    inspector = AtomCtxInspector(atom_ctx_url)
 
     # 5.1 session_id 就是 user_id
     console.print("[bold]5.1 SessionId == UserId[/bold]")
     session = inspector.get_session(user_id)
     check(
-        f"OV session 以 user_id={user_id} 为 ID 可查到",
+        f"CTX session 以 user_id={user_id} 为 ID 可查到",
         session is not None,
-        "sessionId 统一: 插件直接用 user_id 作为 OV session_id",
+        "sessionId 统一: 插件直接用 user_id 作为 CTX session_id",
     )
 
     # 5.2 不存在以 sessionKey 变体为 ID 的 session
@@ -773,13 +773,13 @@ def run_phase_recall(gateway_url: str, user_id: str, delay: float, verbose: bool
 # ── 完整测试 ──────────────────────────────────────────────────────────────
 
 
-def run_full_test(gateway_url: str, openviking_url: str, user_id: str, delay: float, verbose: bool):
+def run_full_test(gateway_url: str, atom_ctx_url: str, user_id: str, delay: float, verbose: bool):
     console.print()
     console.print(
         Panel.fit(
             f"[bold]OpenClaw 记忆链路完整测试[/bold]\n\n"
             f"Gateway: {gateway_url}\n"
-            f"OpenViking: {openviking_url}\n"
+            f"AtomCtx: {atom_ctx_url}\n"
             f"User ID: {user_id}\n"
             f"时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             title="测试信息",
@@ -790,19 +790,19 @@ def run_full_test(gateway_url: str, openviking_url: str, user_id: str, delay: fl
     chat_ok, chat_fail = run_phase_chat(gateway_url, user_id, delay, verbose)
 
     # Phase 2: afterTurn
-    run_phase_after_turn(openviking_url, user_id, verbose)
+    run_phase_after_turn(atom_ctx_url, user_id, verbose)
 
     # Phase 3: Commit
-    run_phase_commit(openviking_url, user_id, verbose)
+    run_phase_commit(atom_ctx_url, user_id, verbose)
 
     console.print("\n[yellow]等待 10s 让记忆提取完成...[/yellow]")
     time.sleep(10)
 
     # Phase 4: Assemble (同用户继续)
-    run_phase_assemble(gateway_url, openviking_url, user_id, delay, verbose)
+    run_phase_assemble(gateway_url, atom_ctx_url, user_id, delay, verbose)
 
     # Phase 5: SessionId 一致性
-    run_phase_session_id(openviking_url, user_id, verbose)
+    run_phase_session_id(atom_ctx_url, user_id, verbose)
 
     # Phase 6: 新用户召回
     run_phase_recall(gateway_url, user_id, delay, verbose)
@@ -868,9 +868,9 @@ def main():
         help=f"OpenClaw Gateway 地址 (默认: {DEFAULT_GATEWAY})",
     )
     parser.add_argument(
-        "--openviking",
-        default=DEFAULT_OPENVIKING,
-        help=f"OpenViking 服务地址 (默认: {DEFAULT_OPENVIKING})",
+        "--atom_ctx",
+        default=DEFAULT_ATOM_CTX,
+        help=f"AtomCtx 服务地址 (默认: {DEFAULT_ATOM_CTX})",
     )
     parser.add_argument(
         "--user-id",
@@ -898,26 +898,26 @@ def main():
     args = parser.parse_args()
 
     gateway_url = args.gateway.rstrip("/")
-    openviking_url = args.openviking.rstrip("/")
+    atom_ctx_url = args.ctx.rstrip("/")
     user_id = args.user_id
 
     console.print("[bold]OpenClaw 记忆链路测试[/bold]")
     console.print(f"[yellow]Gateway:[/yellow] {gateway_url}")
-    console.print(f"[yellow]OpenViking:[/yellow] {openviking_url}")
+    console.print(f"[yellow]AtomCtx:[/yellow] {atom_ctx_url}")
     console.print(f"[yellow]User ID:[/yellow] {user_id}")
 
     if args.phase == "all":
-        run_full_test(gateway_url, openviking_url, user_id, args.delay, args.verbose)
+        run_full_test(gateway_url, atom_ctx_url, user_id, args.delay, args.verbose)
     elif args.phase == "chat":
         run_phase_chat(gateway_url, user_id, args.delay, args.verbose)
     elif args.phase == "afterTurn":
-        run_phase_after_turn(openviking_url, user_id, args.verbose)
+        run_phase_after_turn(atom_ctx_url, user_id, args.verbose)
     elif args.phase == "commit":
-        run_phase_commit(openviking_url, user_id, args.verbose)
+        run_phase_commit(atom_ctx_url, user_id, args.verbose)
     elif args.phase == "assemble":
-        run_phase_assemble(gateway_url, openviking_url, user_id, args.delay, args.verbose)
+        run_phase_assemble(gateway_url, atom_ctx_url, user_id, args.delay, args.verbose)
     elif args.phase == "session-id":
-        run_phase_session_id(openviking_url, user_id, args.verbose)
+        run_phase_session_id(atom_ctx_url, user_id, args.verbose)
     elif args.phase == "recall":
         run_phase_recall(gateway_url, user_id, args.delay, args.verbose)
 

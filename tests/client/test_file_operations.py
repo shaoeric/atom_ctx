@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from openviking import AsyncOpenViking
-from openviking.storage.transaction import release_all_locks
+from atom_ctx import AsyncAtomCtx
+from atom_ctx.storage.transaction import release_all_locks
 
 
 class TestRm:
     """Test rm delete operation"""
 
-    async def test_rm_file(self, client: AsyncOpenViking, sample_markdown_file: Path):
+    async def test_rm_file(self, client: AsyncAtomCtx, sample_markdown_file: Path):
         """Test deleting file"""
         # Add resource first
         print(f"Add resource: {sample_markdown_file}")
@@ -31,7 +31,7 @@ class TestRm:
                 with pytest.raises(Exception):  # noqa: B017
                     await client.read(data["uri"])
 
-    async def test_rm_directory_recursive(self, client: AsyncOpenViking, sample_directory: Path):
+    async def test_rm_directory_recursive(self, client: AsyncAtomCtx, sample_directory: Path):
         """Test recursive directory deletion"""
         # Add files from directory first
         for f in sample_directory.glob("**/*.txt"):
@@ -39,7 +39,7 @@ class TestRm:
 
         # Release lifecycle locks held by add_resource before rm
         await release_all_locks()
-        entries = await client.ls("viking://resources/")
+        entries = await client.ls("ctx://resources/")
         for data in entries:
             if data["isDir"]:
                 dir_uri = data["uri"]
@@ -51,7 +51,7 @@ class TestRm:
 class TestMv:
     """Test mv move operation"""
 
-    async def test_mv_file(self, client: AsyncOpenViking, sample_markdown_file: Path):
+    async def test_mv_file(self, client: AsyncAtomCtx, sample_markdown_file: Path):
         """Test moving file"""
         # Add resource first
         result = await client.add_resource(
@@ -59,7 +59,7 @@ class TestMv:
             reason="Test mv",
         )
         uri = result["root_uri"]
-        new_uri = "viking://resources/moved/"
+        new_uri = "ctx://resources/moved/"
         await release_all_locks()
         await client.mv(uri, new_uri)
         # Verify original location does not exist
@@ -121,7 +121,7 @@ class TestGlob:
         assert isinstance(result, dict)
         assert "matches" in result and result["count"] > 0
 
-    async def test_glob_txt_files(self, client: AsyncOpenViking, sample_text_file: Path):
+    async def test_glob_txt_files(self, client: AsyncAtomCtx, sample_text_file: Path):
         """Test matching txt files"""
         # Add txt file
         await client.add_resource(

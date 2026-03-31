@@ -3,7 +3,7 @@
 OpenClaw Plugin 演示脚本 — 用户: 小美（日常生活记录）
 
 通过 OpenClaw Gateway 的 Responses API (/v1/responses) 进行多轮对话，
-验证 OpenViking 记忆插件的端到端能力。消息经过完整 agent 流水线，
+验证 AtomCtx 记忆插件的端到端能力。消息经过完整 agent 流水线，
 插件的 before_prompt_build（记忆注入）和 afterTurn（记忆抽取）自动触发。
 
 前提: OpenClaw 配置中需开启 Responses API。在 openclaw.config.json 的 gateways 中添加:

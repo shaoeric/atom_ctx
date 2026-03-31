@@ -1,6 +1,6 @@
 # 系统与监控
 
-OpenViking 提供系统健康检查、可观测性和调试 API，用于监控各组件状态。
+AtomCtx 提供系统健康检查、可观测性和调试 API，用于监控各组件状态。
 
 ## API 参考
 
@@ -29,7 +29,7 @@ curl -X GET http://localhost:1933/health
 **CLI**
 
 ```bash
-openviking health
+atom_ctx health
 ```
 
 **响应**
@@ -66,7 +66,7 @@ curl -X GET http://localhost:1933/api/v1/system/status \
 **CLI**
 
 ```bash
-openviking status
+atom_ctx status
 ```
 
 **响应**
@@ -123,7 +123,7 @@ curl -X POST http://localhost:1933/api/v1/system/wait \
 **CLI**
 
 ```bash
-openviking wait [--timeout 60]
+atom_ctx wait [--timeout 60]
 ```
 
 **响应**
@@ -177,7 +177,7 @@ curl -X GET http://localhost:1933/api/v1/observer/queue \
 **CLI**
 
 ```bash
-openviking observer queue
+atom_ctx observer queue
 ```
 
 **响应**
@@ -230,7 +230,7 @@ curl -X GET http://localhost:1933/api/v1/observer/vikingdb \
 **CLI**
 
 ```bash
-openviking observer vikingdb
+atom_ctx observer vikingdb
 ```
 
 **响应**
@@ -279,7 +279,7 @@ curl -X GET http://localhost:1933/api/v1/observer/vlm \
 **CLI**
 
 ```bash
-openviking observer vlm
+atom_ctx observer vlm
 ```
 
 **响应**
@@ -334,7 +334,7 @@ curl -X GET http://localhost:1933/api/v1/observer/system \
 **CLI**
 
 ```bash
-openviking observer system
+atom_ctx observer system
 ```
 
 **响应**

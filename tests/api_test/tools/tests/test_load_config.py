@@ -1,6 +1,6 @@
 import os
 
-from openviking.server.config import load_server_config
+from atom_ctx.server.config import load_server_config
 
 print("Testing load_server_config directly...")
 print("=" * 80)
@@ -20,12 +20,12 @@ except Exception as e:
 
 print("\n" + "=" * 80)
 print("Checking environment variables...")
-print(f"OPENVIKING_CONFIG_FILE: {os.environ.get('OPENVIKING_CONFIG_FILE')}")
+print(f"CTX_CONFIG_FILE: {os.environ.get('CTX_CONFIG_FILE')}")
 
 print("\n" + "=" * 80)
 print("Checking config file directly...")
 try:
-    with open("/etc/openviking/ov.conf", "r") as f:
+    with open("/etc/ctx/ctx.conf", "r") as f:
         import json
 
         data = json.load(f)

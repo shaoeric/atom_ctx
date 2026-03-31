@@ -1,25 +1,25 @@
 #!/usr/bin/env node
 /**
- * OpenClaw + OpenViking cross-platform installer
+ * OpenClaw + AtomCtx cross-platform installer
  *
  * One-liner (after npm publish; use package name + bin name):
- *   npx -p openclaw-openviking-setup-helper ov-install [ -y ] [ --zh ] [ --workdir PATH ]
+ *   npx -p openclaw-atom_ctx-setup-helper ctx-install [ -y ] [ --zh ] [ --workdir PATH ]
  * Or install globally then run:
- *   npm i -g openclaw-openviking-setup-helper
- *   ov-install
- *   openclaw-openviking-install
+ *   npm i -g openclaw-atom_ctx-setup-helper
+ *   ctx-install
+ *   openclaw-atom_ctx-install
  *
  * Direct run:
  *   node install.js [ -y | --yes ] [ --zh ] [ --workdir PATH ] [ --upgrade-plugin ]
- *                   [ --plugin-version=TAG ] [ --openviking-version=V ] [ --repo=PATH ]
+ *                   [ --plugin-version=TAG ] [ --atom_ctx-version=V ] [ --repo=PATH ]
  *
  * Environment variables:
- *   REPO, PLUGIN_VERSION (or BRANCH), OPENVIKING_INSTALL_YES, SKIP_OPENCLAW, SKIP_OPENVIKING
- *   OPENVIKING_VERSION       Pip install openviking==VERSION (omit for latest)
- *   OPENVIKING_REPO          Repo path: source install (pip -e) + local plugin (default: off)
+ *   REPO, PLUGIN_VERSION (or BRANCH), ATOM_CTX_INSTALL_YES, SKIP_OPENCLAW, SKIP_ATOM_CTX
+ *   CTX_VERSION       Pip install atom-ctx==VERSION (omit for latest)
+ *   ATOM_CTX_REPO          Repo path: source install (pip -e) + local plugin (default: off)
  *   NPM_REGISTRY, PIP_INDEX_URL
- *   OPENVIKING_VLM_API_KEY, OPENVIKING_EMBEDDING_API_KEY, OPENVIKING_ARK_API_KEY
- *   OPENVIKING_ALLOW_BREAK_SYSTEM_PACKAGES (Linux)
+ *   ATOM_CTX_VLM_API_KEY, ATOM_CTX_EMBEDDING_API_KEY, ATOM_CTX_ARK_API_KEY
+ *   ATOM_CTX_ALLOW_BREAK_SYSTEM_PACKAGES (Linux)
  */
 
 import { spawn } from "node:child_process";
@@ -31,7 +31,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-let REPO = process.env.REPO || "volcengine/OpenViking";
+let REPO = process.env.REPO || "volcengine/AtomCtx";
 // PLUGIN_VERSION takes precedence over BRANCH (legacy). If omitted, resolve the latest tag from GitHub.
 const pluginVersionEnv = (process.env.PLUGIN_VERSION || process.env.BRANCH || "").trim();
 let PLUGIN_VERSION = pluginVersionEnv;
@@ -46,7 +46,7 @@ const DEFAULT_OPENCLAW_DIR = join(HOME, ".openclaw");
 let OPENCLAW_DIR = DEFAULT_OPENCLAW_DIR;
 let PLUGIN_DEST = "";  // Will be set after resolving plugin config
 
-const OPENVIKING_DIR = join(HOME, ".openviking");
+const ATOM_CTX_DIR = join(HOME, ".ctx");
 
 const DEFAULT_SERVER_PORT = 1933;
 const DEFAULT_AGFS_PORT = 1833;
@@ -56,7 +56,7 @@ const DEFAULT_EMBED_MODEL = "doubao-embedding-vision-251215";
 // Fallback configs for old versions without manifest
 const FALLBACK_LEGACY = {
   dir: "openclaw-memory-plugin",
-  id: "memory-openviking",
+  id: "memory-atom_ctx",
   kind: "memory",
   slot: "memory",
   required: ["index.ts", "config.ts", "openclaw.plugin.json", "package.json"],
@@ -66,7 +66,7 @@ const FALLBACK_LEGACY = {
 // Must match examples/openclaw-plugin/install-manifest.json (npm only installs package deps, not these .ts files).
 const FALLBACK_CURRENT = {
   dir: "openclaw-plugin",
-  id: "openviking",
+  id: "atom_ctx",
   kind: "context-engine",
   slot: "contextEngine",
   required: ["index.ts", "config.ts", "package.json"],
@@ -99,13 +99,13 @@ let resolvedFilesRequired = [];
 let resolvedFilesOptional = [];
 let resolvedNpmOmitDev = true;
 let resolvedMinOpenclawVersion = "";
-let resolvedMinOpenvikingVersion = "";
+let resolvedMinCtxVersion = "";
 let resolvedPluginReleaseId = "";
 
-let installYes = process.env.OPENVIKING_INSTALL_YES === "1";
+let installYes = process.env.ATOM_CTX_INSTALL_YES === "1";
 let langZh = false;
-let openvikingVersion = process.env.OPENVIKING_VERSION || "";
-let openvikingRepo = process.env.OPENVIKING_REPO || "";
+let atom_ctxVersion = process.env.CTX_VERSION || "";
+let atom_ctxRepo = process.env.ATOM_CTX_REPO || "";
 let workdirExplicit = false;
 let upgradePluginOnly = false;
 let rollbackLastUpgrade = false;
@@ -115,7 +115,7 @@ let selectedServerPort = DEFAULT_SERVER_PORT;
 let remoteBaseUrl = "http://127.0.0.1:1933";
 let remoteApiKey = "";
 let remoteAgentId = "";
-let openvikingPythonPath = "";
+let atom_ctxPythonPath = "";
 let upgradeRuntimeConfig = null;
 let installedUpgradeState = null;
 let upgradeAudit = null;
@@ -171,22 +171,22 @@ for (let i = 0; i < argv.length; i++) {
     i += 1;
     continue;
   }
-  if (arg.startsWith("--openviking-version=")) {
-    openvikingVersion = arg.slice("--openviking-version=".length).trim();
+  if (arg.startsWith("--atom_ctx-version=")) {
+    atom_ctxVersion = arg.slice("--atom_ctx-version=".length).trim();
     continue;
   }
-  if (arg === "--openviking-version") {
+  if (arg === "--atom_ctx-version") {
     const version = argv[i + 1]?.trim();
     if (!version) {
-      console.error("--openviking-version requires a value");
+      console.error("--atom_ctx-version requires a value");
       process.exit(1);
     }
-    openvikingVersion = version;
+    atom_ctxVersion = version;
     i += 1;
     continue;
   }
   if (arg.startsWith("--repo=")) {
-    openvikingRepo = arg.slice("--repo=".length).trim();
+    atom_ctxRepo = arg.slice("--repo=".length).trim();
     continue;
   }
   if (arg.startsWith("--github-repo=")) {
@@ -217,13 +217,13 @@ function printHelp() {
   console.log("Usage: node install.js [ OPTIONS ]");
   console.log("");
   console.log("Options:");
-  console.log("  --github-repo=OWNER/REPO GitHub repository (default: volcengine/OpenViking)");
+  console.log("  --github-repo=OWNER/REPO GitHub repository (default: volcengine/AtomCtx)");
   console.log("  --plugin-version=TAG     Plugin version (Git tag, e.g. v0.2.9, default: latest tag)");
-  console.log("  --openviking-version=V   OpenViking PyPI version (e.g. 0.2.9, default: latest)");
+  console.log("  --atom_ctx-version=V   AtomCtx PyPI version (e.g. 0.2.9, default: latest)");
   console.log("  --workdir PATH           OpenClaw config directory (default: ~/.openclaw)");
-  console.log("  --repo=PATH              Use local OpenViking repo at PATH (pip -e + local plugin)");
+  console.log("  --repo=PATH              Use local AtomCtx repo at PATH (pip -e + local plugin)");
   console.log("  --update, --upgrade-plugin");
-  console.log("                           Upgrade only the plugin to the requested --plugin-version; keep ov.conf and do not change the OpenViking service");
+  console.log("                           Upgrade only the plugin to the requested --plugin-version; keep ctx.conf and do not change the AtomCtx service");
   console.log("  --rollback, --rollback-last-upgrade");
   console.log("                           Roll back the last plugin upgrade using the saved audit/backup files");
   console.log("  -y, --yes                Non-interactive (use defaults)");
@@ -235,7 +235,7 @@ function printHelp() {
   console.log("  node install.js");
   console.log("");
   console.log("  # Install from a fork repository");
-  console.log("  node install.js --github-repo=yourname/OpenViking --plugin-version=dev-branch");
+  console.log("  node install.js --github-repo=yourname/AtomCtx --plugin-version=dev-branch");
   console.log("");
   console.log("  # Install specific plugin version");
   console.log("  node install.js --plugin-version=v0.2.8");
@@ -246,7 +246,7 @@ function printHelp() {
   console.log("  # Roll back the last plugin upgrade");
   console.log("  node install.js --rollback");
   console.log("");
-  console.log("Env: REPO, PLUGIN_VERSION, OPENVIKING_VERSION, SKIP_OPENCLAW, SKIP_OPENVIKING, NPM_REGISTRY, PIP_INDEX_URL");
+  console.log("Env: REPO, PLUGIN_VERSION, CTX_VERSION, SKIP_OPENCLAW, SKIP_ATOM_CTX, NPM_REGISTRY, PIP_INDEX_URL");
 }
 
 function formatCliArg(value) {
@@ -257,7 +257,7 @@ function formatCliArg(value) {
 }
 
 function getLegacyInstallCommandHint() {
-  const override = process.env.OPENVIKING_INSTALL_LEGACY_HINT?.trim();
+  const override = process.env.ATOM_CTX_INSTALL_LEGACY_HINT?.trim();
   if (override) {
     return override;
   }
@@ -267,7 +267,7 @@ function getLegacyInstallCommandHint() {
   if (workdirExplicit || OPENCLAW_DIR !== DEFAULT_OPENCLAW_DIR) {
     args.push("--workdir", formatCliArg(OPENCLAW_DIR));
   }
-  if (REPO !== "volcengine/OpenViking") {
+  if (REPO !== "volcengine/AtomCtx") {
     args.push("--github-repo", formatCliArg(REPO));
   }
   if (langZh) {
@@ -278,7 +278,7 @@ function getLegacyInstallCommandHint() {
     return `node install.js ${args.join(" ")}`;
   }
 
-  return `ov-install ${args.join(" ")}`;
+  return `ctx-install ${args.join(" ")}`;
 }
 
 function tr(en, zh) {
@@ -390,7 +390,7 @@ async function resolveAbsoluteCommand(cmd) {
 }
 
 async function checkPython() {
-  const raw = process.env.OPENVIKING_PYTHON || (IS_WIN ? "python" : "python3");
+  const raw = process.env.ATOM_CTX_PYTHON || (IS_WIN ? "python" : "python3");
   const py = await resolveAbsoluteCommand(raw);
   const result = await runCapture(py, ["-c", "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"]);
   if (result.code !== 0 || !result.out) {
@@ -472,13 +472,13 @@ async function selectMode() {
 
 async function collectRemoteConfig() {
   if (installYes) return;
-  remoteBaseUrl = await question(tr("OpenViking server URL", "OpenViking 服务器地址"), remoteBaseUrl);
+  remoteBaseUrl = await question(tr("AtomCtx server URL", "AtomCtx 服务器地址"), remoteBaseUrl);
   remoteApiKey = await question(tr("API Key (optional)", "API Key（可选）"), remoteApiKey);
   remoteAgentId = await question(tr("Agent ID (optional)", "Agent ID（可选）"), remoteAgentId);
 }
 
 async function validateEnvironment() {
-  info(tr("Checking OpenViking runtime environment...", "正在校验 OpenViking 运行环境..."));
+  info(tr("Checking AtomCtx runtime environment...", "正在校验 AtomCtx 运行环境..."));
   console.log("");
 
   const missing = [];
@@ -578,11 +578,11 @@ if (upgradePluginOnly && rollbackLastUpgrade) {
 }
 
 function ensurePluginOnlyOperationArgs() {
-  if ((upgradePluginOnly || rollbackLastUpgrade) && openvikingVersion) {
+  if ((upgradePluginOnly || rollbackLastUpgrade) && atom_ctxVersion) {
     err(
       tr(
-        "Plugin-only upgrade/rollback does not support --openviking-version. Use --plugin-version to choose the plugin release, and run a full install if you need to change the OpenViking service version.",
-        "仅插件升级或回滚不支持 --openviking-version。请使用 --plugin-version 指定插件版本；如果需要调整 OpenViking 服务版本，请执行完整安装流程。",
+        "Plugin-only upgrade/rollback does not support --atom_ctx-version. Use --plugin-version to choose the plugin release, and run a full install if you need to change the AtomCtx service version.",
+        "仅插件升级或回滚不支持 --atom_ctx-version。请使用 --plugin-version 指定插件版本；如果需要调整 AtomCtx 服务版本，请执行完整安装流程。",
       ),
     );
     process.exit(1);
@@ -679,7 +679,7 @@ async function resolveDefaultPluginVersion() {
     const response = await fetch(apiUrl, {
       headers: {
         Accept: "application/vnd.github+json",
-        "User-Agent": "openviking-setup-helper",
+        "User-Agent": "atom_ctx-setup-helper",
         "X-GitHub-Api-Version": "2022-11-28",
       },
       signal: controller.signal,
@@ -786,7 +786,7 @@ async function resolvePluginConfig() {
     resolvedPluginKind = manifestData.plugin?.kind || "";
     resolvedPluginSlot = manifestData.plugin?.slot || "";
     resolvedMinOpenclawVersion = manifestData.compatibility?.minOpenclawVersion || "";
-    resolvedMinOpenvikingVersion = manifestData.compatibility?.minOpenvikingVersion || "";
+    resolvedMinCtxVersion = manifestData.compatibility?.minCtxVersion || "";
     resolvedPluginReleaseId = manifestData.pluginVersion || manifestData.release?.id || "";
     resolvedNpmOmitDev = manifestData.npm?.omitDev !== false;
     resolvedFilesRequired = manifestData.files?.required || [];
@@ -802,7 +802,7 @@ async function resolvePluginConfig() {
         const pkg = JSON.parse(pkgJson);
         const pkgName = pkg.name || "";
         resolvedPluginReleaseId = pkg.version || "";
-        if (pkgName && pkgName !== "@openclaw/openviking") {
+        if (pkgName && pkgName !== "@openclaw/atom_ctx") {
           fallbackKey = "legacy";
           info(tr(`Detected legacy plugin by package name: ${pkgName}`, `通过 package.json 名称检测到旧版插件: ${pkgName}`));
         } else if (pkgName) {
@@ -840,7 +840,7 @@ async function resolvePluginConfig() {
     }
 
     resolvedMinOpenclawVersion = compatVer || "2026.3.7";
-    resolvedMinOpenvikingVersion = "";
+    resolvedMinCtxVersion = "";
   }
 
   // Set plugin destination
@@ -887,25 +887,25 @@ async function checkOpenClawCompatibility() {
   }
 }
 
-function checkRequestedOpenVikingCompatibility() {
-  if (!resolvedMinOpenvikingVersion || !openvikingVersion) return;
-  if (versionGte(openvikingVersion, resolvedMinOpenvikingVersion)) return;
+function checkRequestedAtomCtxCompatibility() {
+  if (!resolvedMinCtxVersion || !atom_ctxVersion) return;
+  if (versionGte(atom_ctxVersion, resolvedMinCtxVersion)) return;
 
   err(tr(
-    `OpenViking ${openvikingVersion} does not support this plugin (requires >= ${resolvedMinOpenvikingVersion})`,
-    `OpenViking ${openvikingVersion} 不支持此插件（需要 >= ${resolvedMinOpenvikingVersion}）`,
+    `AtomCtx ${atom_ctxVersion} does not support this plugin (requires >= ${resolvedMinCtxVersion})`,
+    `AtomCtx ${atom_ctxVersion} 不支持此插件（需要 >= ${resolvedMinCtxVersion}）`,
   ));
   console.log("");
   console.log(tr(
-    "Use a newer OpenViking version, or omit --openviking-version to install the latest release.",
-    "请使用更新版本的 OpenViking，或省略 --openviking-version 以安装最新版本。",
+    "Use a newer AtomCtx version, or omit --atom_ctx-version to install the latest release.",
+    "请使用更新版本的 AtomCtx，或省略 --atom_ctx-version 以安装最新版本。",
   ));
   process.exit(1);
 }
 
-async function installOpenViking() {
-  if (process.env.SKIP_OPENVIKING === "1") {
-    info(tr("Skipping OpenViking install (SKIP_OPENVIKING=1)", "跳过 OpenViking 安装 (SKIP_OPENVIKING=1)"));
+async function installAtomCtx() {
+  if (process.env.SKIP_ATOM_CTX === "1") {
+    info(tr("Skipping AtomCtx install (SKIP_ATOM_CTX=1)", "跳过 AtomCtx 安装 (SKIP_ATOM_CTX=1)"));
     return;
   }
 
@@ -923,21 +923,21 @@ async function installOpenViking() {
 
   const py = python.cmd;
 
-  if (openvikingRepo && existsSync(join(openvikingRepo, "pyproject.toml"))) {
-    info(tr(`Installing OpenViking from source (editable): ${openvikingRepo}`, `正在从源码安装 OpenViking（可编辑）: ${openvikingRepo}`));
+  if (atom_ctxRepo && existsSync(join(atom_ctxRepo, "pyproject.toml"))) {
+    info(tr(`Installing AtomCtx from source (editable): ${atom_ctxRepo}`, `正在从源码安装 AtomCtx（可编辑）: ${atom_ctxRepo}`));
     await run(py, ["-m", "pip", "install", "--upgrade", "pip", "-q", "-i", PIP_INDEX_URL], { silent: true });
-    await run(py, ["-m", "pip", "install", "-e", openvikingRepo]);
-    openvikingPythonPath = py;
-    info(tr("OpenViking installed ✓ (source)", "OpenViking 安装完成 ✓（源码）"));
+    await run(py, ["-m", "pip", "install", "-e", atom_ctxRepo]);
+    atom_ctxPythonPath = py;
+    info(tr("AtomCtx installed ✓ (source)", "AtomCtx 安装完成 ✓（源码）"));
     return;
   }
 
   // Determine package spec
-  const pkgSpec = openvikingVersion ? `openviking==${openvikingVersion}` : "openviking";
-  if (openvikingVersion) {
-    info(tr(`Installing OpenViking ${openvikingVersion} from PyPI...`, `正在安装 OpenViking ${openvikingVersion} (PyPI)...`));
+  const pkgSpec = atom_ctxVersion ? `atom-ctx==${atom_ctxVersion}` : "atom_ctx";
+  if (atom_ctxVersion) {
+    info(tr(`Installing AtomCtx ${atom_ctxVersion} from PyPI...`, `正在安装 AtomCtx ${atom_ctxVersion} (PyPI)...`));
   } else {
-    info(tr("Installing OpenViking (latest) from PyPI...", "正在安装 OpenViking (最新版) (PyPI)..."));
+    info(tr("Installing AtomCtx (latest) from PyPI...", "正在安装 AtomCtx (最新版) (PyPI)..."));
   }
   info(tr(`Using pip index: ${PIP_INDEX_URL}`, `使用 pip 镜像源: ${PIP_INDEX_URL}`));
 
@@ -949,32 +949,32 @@ async function installOpenViking() {
     { shell: false },
   );
   if (installResult.code === 0) {
-    openvikingPythonPath = py;
-    info(tr("OpenViking installed ✓", "OpenViking 安装完成 ✓"));
+    atom_ctxPythonPath = py;
+    info(tr("AtomCtx installed ✓", "AtomCtx 安装完成 ✓"));
     return;
   }
 
   const installOutput = `${installResult.out}\n${installResult.err}`;
   const shouldTryVenv = !IS_WIN && /externally-managed-environment|externally managed|No module named pip/i.test(installOutput);
   if (shouldTryVenv) {
-    const venvDir = join(OPENVIKING_DIR, "venv");
+    const venvDir = join(ATOM_CTX_DIR, "venv");
     const venvPy = IS_WIN ? join(venvDir, "Scripts", "python.exe") : join(venvDir, "bin", "python");
 
     if (existsSync(venvPy)) {
-      const reuseCheck = await runCapture(venvPy, ["-c", "import openviking"], { shell: false });
+      const reuseCheck = await runCapture(venvPy, ["-c", "import atom_ctx"], { shell: false });
       if (reuseCheck.code === 0) {
         await runLiveCapture(
           venvPy,
           ["-m", "pip", "install", "--progress-bar", "on", "-U", pkgSpec, "-i", PIP_INDEX_URL],
           { shell: false },
         );
-        openvikingPythonPath = venvPy;
-        info(tr("OpenViking installed ✓ (venv)", "OpenViking 安装完成 ✓（虚拟环境）"));
+        atom_ctxPythonPath = venvPy;
+        info(tr("AtomCtx installed ✓ (venv)", "AtomCtx 安装完成 ✓（虚拟环境）"));
         return;
       }
     }
 
-    await mkdir(OPENVIKING_DIR, { recursive: true });
+    await mkdir(ATOM_CTX_DIR, { recursive: true });
     const venvCreate = await runCapture(py, ["-m", "venv", venvDir], { shell: false });
     if (venvCreate.code !== 0) {
       console.log("");
@@ -994,7 +994,7 @@ async function installOpenViking() {
         "  Or force install into system Python (not recommended):",
         "  或强制安装到系统 Python（不推荐）："
       ));
-      console.log(`  OPENVIKING_ALLOW_BREAK_SYSTEM_PACKAGES=1 ov-install\n`);
+      console.log(`  ATOM_CTX_ALLOW_BREAK_SYSTEM_PACKAGES=1 ctx-install\n`);
       process.exit(1);
     }
 
@@ -1005,53 +1005,53 @@ async function installOpenViking() {
       { shell: false },
     );
     if (venvInstall.code === 0) {
-      openvikingPythonPath = venvPy;
-      info(tr("OpenViking installed ✓ (venv)", "OpenViking 安装完成 ✓（虚拟环境）"));
+      atom_ctxPythonPath = venvPy;
+      info(tr("AtomCtx installed ✓ (venv)", "AtomCtx 安装完成 ✓（虚拟环境）"));
       return;
     }
 
-    err(tr("OpenViking install failed in venv.", "在虚拟环境中安装 OpenViking 失败。"));
+    err(tr("AtomCtx install failed in venv.", "在虚拟环境中安装 AtomCtx 失败。"));
     console.log(venvInstall.err || venvInstall.out);
     process.exit(1);
   }
 
-  if (process.env.OPENVIKING_ALLOW_BREAK_SYSTEM_PACKAGES === "1") {
+  if (process.env.ATOM_CTX_ALLOW_BREAK_SYSTEM_PACKAGES === "1") {
     const systemInstall = await runLiveCapture(
       py,
       ["-m", "pip", "install", "--progress-bar", "on", "--break-system-packages", pkgSpec, "-i", PIP_INDEX_URL],
       { shell: false },
     );
     if (systemInstall.code === 0) {
-      openvikingPythonPath = py;
-      info(tr("OpenViking installed ✓ (system)", "OpenViking 安装完成 ✓（系统）"));
+      atom_ctxPythonPath = py;
+      info(tr("AtomCtx installed ✓ (system)", "AtomCtx 安装完成 ✓（系统）"));
       return;
     }
   }
 
-  err(tr("OpenViking install failed. Check Python >= 3.10 and pip.", "OpenViking 安装失败，请检查 Python >= 3.10 及 pip"));
+  err(tr("AtomCtx install failed. Check Python >= 3.10 and pip.", "AtomCtx 安装失败，请检查 Python >= 3.10 及 pip"));
   console.log(installResult.err || installResult.out);
   process.exit(1);
 }
 
 async function configureOvConf() {
-  await mkdir(OPENVIKING_DIR, { recursive: true });
+  await mkdir(ATOM_CTX_DIR, { recursive: true });
 
-  let workspace = join(OPENVIKING_DIR, "data");
+  let workspace = join(ATOM_CTX_DIR, "data");
   let serverPort = String(DEFAULT_SERVER_PORT);
   let agfsPort = String(DEFAULT_AGFS_PORT);
   let vlmModel = DEFAULT_VLM_MODEL;
   let embeddingModel = DEFAULT_EMBED_MODEL;
-  let vlmApiKey = process.env.OPENVIKING_VLM_API_KEY || process.env.OPENVIKING_ARK_API_KEY || "";
-  let embeddingApiKey = process.env.OPENVIKING_EMBEDDING_API_KEY || process.env.OPENVIKING_ARK_API_KEY || "";
+  let vlmApiKey = process.env.ATOM_CTX_VLM_API_KEY || process.env.ATOM_CTX_ARK_API_KEY || "";
+  let embeddingApiKey = process.env.ATOM_CTX_EMBEDDING_API_KEY || process.env.ATOM_CTX_ARK_API_KEY || "";
 
   if (!installYes) {
     console.log("");
-    workspace = await question(tr("OpenViking workspace path", "OpenViking 数据目录"), workspace);
-    serverPort = await question(tr("OpenViking HTTP port", "OpenViking HTTP 端口"), serverPort);
+    workspace = await question(tr("AtomCtx workspace path", "AtomCtx 数据目录"), workspace);
+    serverPort = await question(tr("AtomCtx HTTP port", "AtomCtx HTTP 端口"), serverPort);
     agfsPort = await question(tr("AGFS port", "AGFS 端口"), agfsPort);
     vlmModel = await question(tr("VLM model", "VLM 模型"), vlmModel);
     embeddingModel = await question(tr("Embedding model", "Embedding 模型"), embeddingModel);
-    console.log(tr("VLM and Embedding API keys can differ. Leave empty to edit ov.conf later.", "说明：VLM 与 Embedding 的 API Key 可分别填写，留空可稍后在 ov.conf 修改。"));
+    console.log(tr("VLM and Embedding API keys can differ. Leave empty to edit ctx.conf later.", "说明：VLM 与 Embedding 的 API Key 可分别填写，留空可稍后在 ctx.conf 修改。"));
     const vlmInput = await question(tr("VLM API key (optional)", "VLM API Key（可留空）"), "");
     const embInput = await question(tr("Embedding API key (optional)", "Embedding API Key（可留空）"), "");
     if (vlmInput) vlmApiKey = vlmInput;
@@ -1103,7 +1103,7 @@ async function configureOvConf() {
     },
   };
 
-  const configPath = join(OPENVIKING_DIR, "ov.conf");
+  const configPath = join(ATOM_CTX_DIR, "ctx.conf");
   await writeFile(configPath, JSON.stringify(config, null, 2) + "\n", "utf8");
   info(tr(`Config generated: ${configPath}`, `已生成配置: ${configPath}`));
 }
@@ -1126,11 +1126,11 @@ async function readJsonFileIfExists(filePath) {
 }
 
 function getInstallStatePathForPlugin(pluginId) {
-  return join(OPENCLAW_DIR, "extensions", pluginId, ".ov-install-state.json");
+  return join(OPENCLAW_DIR, "extensions", pluginId, ".ctx-install-state.json");
 }
 
 function getUpgradeAuditDir() {
-  return join(OPENCLAW_DIR, ".openviking-upgrade-backup");
+  return join(OPENCLAW_DIR, ".ctx-upgrade-backup");
 }
 
 function getUpgradeAuditPath() {
@@ -1220,7 +1220,7 @@ function formatInstalledStateLabel(installedState) {
 }
 
 function formatTargetVersionLabel() {
-  const base = `${resolvedPluginId || "openviking"}@${PLUGIN_VERSION}`;
+  const base = `${resolvedPluginId || "atom_ctx"}@${PLUGIN_VERSION}`;
   if (resolvedPluginReleaseId && resolvedPluginReleaseId !== PLUGIN_VERSION) {
     return `${base} (${resolvedPluginReleaseId})`;
   }
@@ -1259,7 +1259,7 @@ function extractRuntimeConfigFromPluginEntry(entryConfig) {
 }
 
 async function readPortFromOvConf(configPath) {
-  const filePath = configPath || join(OPENVIKING_DIR, "ov.conf");
+  const filePath = configPath || join(ATOM_CTX_DIR, "ctx.conf");
   if (!existsSync(filePath)) return null;
   try {
     const ovConf = await readJsonFileIfExists(filePath);
@@ -1284,10 +1284,10 @@ async function writeUpgradeAuditFile(data) {
 }
 
 async function writeInstallStateFile({ operation, fromVersion, configBackupPath, pluginBackups }) {
-  const installStatePath = getInstallStatePathForPlugin(resolvedPluginId || "openviking");
+  const installStatePath = getInstallStatePathForPlugin(resolvedPluginId || "atom_ctx");
   const state = {
-    pluginId: resolvedPluginId || "openviking",
-    generation: getPluginVariantById(resolvedPluginId || "openviking")?.generation || "unknown",
+    pluginId: resolvedPluginId || "atom_ctx",
+    generation: getPluginVariantById(resolvedPluginId || "atom_ctx")?.generation || "unknown",
     requestedRef: PLUGIN_VERSION,
     releaseId: resolvedPluginReleaseId || "",
     operation,
@@ -1426,7 +1426,7 @@ async function prepareUpgradeRuntimeConfig(installedState) {
     return runtime;
   }
 
-  runtime.configPath = runtime.configPath || join(OPENVIKING_DIR, "ov.conf");
+  runtime.configPath = runtime.configPath || join(ATOM_CTX_DIR, "ctx.conf");
   runtime.port = runtime.port || await readPortFromOvConf(runtime.configPath) || DEFAULT_SERVER_PORT;
   return runtime;
 }
@@ -1533,12 +1533,12 @@ async function cleanupInstalledPluginConfig(installedState) {
   }
 
   if (!changed) {
-    info(tr("No OpenViking plugin config changes were required", "无需修改 OpenViking 插件配置"));
+    info(tr("No AtomCtx plugin config changes were required", "无需修改 AtomCtx 插件配置"));
     return;
   }
 
   await writeFile(installedState.configPath, `${JSON.stringify(nextConfig, null, 2)}\n`, "utf8");
-  info(tr("Cleaned existing OpenViking plugin config only", "已仅清理 OpenViking 自身插件配置"));
+  info(tr("Cleaned existing AtomCtx plugin config only", "已仅清理 AtomCtx 自身插件配置"));
 }
 
 async function prepareStrongPluginUpgrade() {
@@ -1546,8 +1546,8 @@ async function prepareStrongPluginUpgrade() {
   if (installedState.generation === "none") {
     err(
       tr(
-        "Plugin upgrade mode requires an existing OpenViking plugin entry in openclaw.json.",
-        "插件升级模式要求 openclaw.json 中已经存在 OpenViking 插件记录。",
+        "Plugin upgrade mode requires an existing AtomCtx plugin entry in openclaw.json.",
+        "插件升级模式要求 openclaw.json 中已经存在 AtomCtx 插件记录。",
       ),
     );
     process.exit(1);
@@ -1560,8 +1560,8 @@ async function prepareStrongPluginUpgrade() {
   selectedMode = upgradeRuntimeConfig.mode;
   info(
     tr(
-      `Detected installed OpenViking plugin state: ${installedState.generation}`,
-      `检测到已安装 OpenViking 插件状态: ${installedState.generation}`,
+      `Detected installed AtomCtx plugin state: ${installedState.generation}`,
+      `检测到已安装 AtomCtx 插件状态: ${installedState.generation}`,
     ),
   );
   if (upgradeRuntimeConfig.mode === "remote") {
@@ -1599,8 +1599,8 @@ async function prepareStrongPluginUpgrade() {
 
   info(
     tr(
-      "Upgrade will keep the existing OpenViking runtime file and re-apply only the minimum plugin runtime settings.",
-      "升级将保留现有 OpenViking 运行时文件，并只回填最小插件运行配置。",
+      "Upgrade will keep the existing AtomCtx runtime file and re-apply only the minimum plugin runtime settings.",
+      "升级将保留现有 AtomCtx 运行时文件，并只回填最小插件运行配置。",
     ),
   );
   info(tr(`Upgrade audit file: ${getUpgradeAuditPath()}`, `升级审计文件: ${getUpgradeAuditPath()}`));
@@ -1729,7 +1729,7 @@ async function installPluginDependencies(destDir) {
 }
 
 async function createPluginStagingDir() {
-  const pluginId = resolvedPluginId || "openviking";
+  const pluginId = resolvedPluginId || "atom_ctx";
   const extensionsDir = join(OPENCLAW_DIR, "extensions");
   const stagingDir = join(extensionsDir, `.${pluginId}.staging-${process.pid}-${Date.now()}`);
   await mkdir(extensionsDir, { recursive: true });
@@ -1762,8 +1762,8 @@ async function deployPluginFromRemote() {
 
 /** Same as INSTALL*.md manual cleanup: stale entries block `plugins.slots.*` validation after reinstall. */
 function resolvedPluginSlotFallback() {
-  if (resolvedPluginId === "memory-openviking") return "none";
-  if (resolvedPluginId === "openviking") return "legacy";
+  if (resolvedPluginId === "memory-atom_ctx") return "none";
+  if (resolvedPluginId === "atom_ctx") return "legacy";
   return "none";
 }
 
@@ -1817,7 +1817,7 @@ async function scrubStaleOpenClawPluginRegistration() {
   }
   if (!changed) return;
   const out = JSON.stringify(cfg, null, 2) + "\n";
-  const tmp = `${configPath}.ov-install-tmp.${process.pid}`;
+  const tmp = `${configPath}.ctx-install-tmp.${process.pid}`;
   await writeFile(tmp, out, "utf8");
   await rename(tmp, configPath);
 }
@@ -1886,7 +1886,7 @@ async function configureOpenClawPlugin({
   const effectiveRuntimeConfig = runtimeConfig || (
     selectedMode === "remote"
       ? { mode: "remote", baseUrl: remoteBaseUrl, apiKey: remoteApiKey, agentId: remoteAgentId }
-      : { mode: "local", configPath: join(OPENVIKING_DIR, "ov.conf"), port: selectedServerPort }
+      : { mode: "local", configPath: join(ATOM_CTX_DIR, "ctx.conf"), port: selectedServerPort }
   );
 
   if (!skipGatewayMode) {
@@ -1895,7 +1895,7 @@ async function configureOpenClawPlugin({
 
   // Set plugin config for the selected mode
   if (effectiveRuntimeConfig.mode === "local") {
-    const ovConfPath = effectiveRuntimeConfig.configPath || join(OPENVIKING_DIR, "ov.conf");
+    const ovConfPath = effectiveRuntimeConfig.configPath || join(ATOM_CTX_DIR, "ctx.conf");
     await oc(["config", "set", `plugins.entries.${pluginId}.config.mode`, "local"]);
     await oc(["config", "set", `plugins.entries.${pluginId}.config.configPath`, ovConfPath]);
     await oc(["config", "set", `plugins.entries.${pluginId}.config.port`, String(effectiveRuntimeConfig.port || DEFAULT_SERVER_PORT)]);
@@ -1912,7 +1912,7 @@ async function configureOpenClawPlugin({
 
   // Legacy (memory) plugins need explicit targetUri/autoRecall/autoCapture (new version has defaults in config.ts)
   if (resolvedPluginKind === "memory") {
-    await oc(["config", "set", `plugins.entries.${pluginId}.config.targetUri`, "viking://user/memories"]);
+    await oc(["config", "set", `plugins.entries.${pluginId}.config.targetUri`, "ctx://user/memories"]);
     await oc(["config", "set", `plugins.entries.${pluginId}.config.autoRecall`, "true", "--json"]);
     await oc(["config", "set", `plugins.entries.${pluginId}.config.autoCapture`, "true", "--json"]);
   }
@@ -1920,7 +1920,7 @@ async function configureOpenClawPlugin({
   info(tr("OpenClaw plugin configured", "OpenClaw 插件配置完成"));
 }
 
-async function discoverOpenvikingPython(failedPy) {
+async function discoverCtxPython(failedPy) {
   const candidates = IS_WIN
     ? ["python3", "python", "py -3"]
     : ["python3.13", "python3.12", "python3.11", "python3.10", "python3", "python"];
@@ -1928,58 +1928,58 @@ async function discoverOpenvikingPython(failedPy) {
     if (candidate === failedPy) continue;
     const resolved = await resolveAbsoluteCommand(candidate);
     if (!resolved || resolved === candidate || resolved === failedPy) continue;
-    const check = await runCapture(resolved, ["-c", "import openviking"], { shell: false });
+    const check = await runCapture(resolved, ["-c", "import atom_ctx"], { shell: false });
     if (check.code === 0) return resolved;
   }
   return "";
 }
 
 async function resolvePythonPath() {
-  if (openvikingPythonPath) return openvikingPythonPath;
+  if (atom_ctxPythonPath) return atom_ctxPythonPath;
   const python = await checkPython();
   return python.cmd || "";
 }
 
-async function writeOpenvikingEnv({ includePython }) {
+async function writeCtxEnv({ includePython }) {
   const needStateDir = OPENCLAW_DIR !== DEFAULT_OPENCLAW_DIR;
   let pythonPath = "";
   if (includePython) {
     pythonPath = await resolvePythonPath();
     if (!pythonPath) {
-      pythonPath = (process.env.OPENVIKING_PYTHON || "").trim() || (IS_WIN ? "python" : "python3");
+      pythonPath = (process.env.ATOM_CTX_PYTHON || "").trim() || (IS_WIN ? "python" : "python3");
       warn(
         tr(
-          "Could not resolve absolute Python path; wrote fallback OPENVIKING_PYTHON to openviking.env. Edit that file if OpenViking fails to start.",
-          "未能解析 Python 绝对路径，已在 openviking.env 中写入后备值。若启动失败请手动修改为虚拟环境中的 python 可执行文件路径。",
+          "Could not resolve absolute Python path; wrote fallback ATOM_CTX_PYTHON to atom_ctx.env. Edit that file if AtomCtx fails to start.",
+          "未能解析 Python 绝对路径，已在 atom_ctx.env 中写入后备值。若启动失败请手动修改为虚拟环境中的 python 可执行文件路径。",
         ),
       );
     }
 
-    // Verify the resolved Python can actually import openviking
+    // Verify the resolved Python can actually import atom_ctx
     if (pythonPath) {
-      const verify = await runCapture(pythonPath, ["-c", "import openviking"], { shell: false });
+      const verify = await runCapture(pythonPath, ["-c", "import atom_ctx"], { shell: false });
       if (verify.code !== 0) {
         warn(
           tr(
-            `Resolved Python (${pythonPath}) cannot import openviking. The pip install target may differ from the runtime python3.`,
-            `解析到的 Python（${pythonPath}）无法 import openviking。pip 安装目标可能与运行时的 python3 不一致。`,
+            `Resolved Python (${pythonPath}) cannot import atom_ctx. The pip install target may differ from the runtime python3.`,
+            `解析到的 Python（${pythonPath}）无法 import atom_ctx。pip 安装目标可能与运行时的 python3 不一致。`,
           ),
         );
         // Try to discover the correct Python via pip show
-        const corrected = await discoverOpenvikingPython(pythonPath);
+        const corrected = await discoverCtxPython(pythonPath);
         if (corrected) {
           info(
             tr(
-              `Auto-corrected OPENVIKING_PYTHON to ${corrected}`,
-              `已自动修正 OPENVIKING_PYTHON 为 ${corrected}`,
+              `Auto-corrected ATOM_CTX_PYTHON to ${corrected}`,
+              `已自动修正 ATOM_CTX_PYTHON 为 ${corrected}`,
             ),
           );
           pythonPath = corrected;
         } else {
           warn(
             tr(
-              `Could not auto-detect the correct Python. Edit OPENVIKING_PYTHON in the env file manually.`,
-              `无法自动检测正确的 Python。请手动修改 env 文件中的 OPENVIKING_PYTHON。`,
+              `Could not auto-detect the correct Python. Edit ATOM_CTX_PYTHON in the env file manually.`,
+              `无法自动检测正确的 Python。请手动修改 env 文件中的 ATOM_CTX_PYTHON。`,
             ),
           );
         }
@@ -2001,12 +2001,12 @@ async function writeOpenvikingEnv({ includePython }) {
       psLines.push(`$env:OPENCLAW_STATE_DIR = "${OPENCLAW_DIR.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`);
     }
     if (pythonPath) {
-      batLines.push(`set "OPENVIKING_PYTHON=${pythonPath.replace(/"/g, '""')}"`);
-      psLines.push(`$env:OPENVIKING_PYTHON = "${pythonPath.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`);
+      batLines.push(`set "ATOM_CTX_PYTHON=${pythonPath.replace(/"/g, '""')}"`);
+      psLines.push(`$env:ATOM_CTX_PYTHON = "${pythonPath.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`);
     }
 
-    const batPath = join(OPENCLAW_DIR, "openviking.env.bat");
-    const ps1Path = join(OPENCLAW_DIR, "openviking.env.ps1");
+    const batPath = join(OPENCLAW_DIR, "atom_ctx.env.bat");
+    const ps1Path = join(OPENCLAW_DIR, "atom_ctx.env.ps1");
     await writeFile(batPath, `${batLines.join("\r\n")}\r\n`, "utf8");
     await writeFile(ps1Path, `${psLines.join("\n")}\n`, "utf8");
 
@@ -2019,10 +2019,10 @@ async function writeOpenvikingEnv({ includePython }) {
     lines.push(`export OPENCLAW_STATE_DIR='${OPENCLAW_DIR.replace(/'/g, "'\"'\"'")}'`);
   }
   if (pythonPath) {
-    lines.push(`export OPENVIKING_PYTHON='${pythonPath.replace(/'/g, "'\"'\"'")}'`);
+    lines.push(`export ATOM_CTX_PYTHON='${pythonPath.replace(/'/g, "'\"'\"'")}'`);
   }
 
-  const envPath = join(OPENCLAW_DIR, "openviking.env");
+  const envPath = join(OPENCLAW_DIR, "atom_ctx.env");
   await writeFile(envPath, `${lines.join("\n")}\n`, "utf8");
   info(tr(`Environment file generated: ${envPath}`, `已生成环境文件: ${envPath}`));
   return { shellPath: envPath };
@@ -2036,8 +2036,8 @@ function wrapCommand(command, envFiles) {
 
 function getExistingEnvFiles() {
   if (IS_WIN) {
-    const batPath = join(OPENCLAW_DIR, "openviking.env.bat");
-    const ps1Path = join(OPENCLAW_DIR, "openviking.env.ps1");
+    const batPath = join(OPENCLAW_DIR, "atom_ctx.env.bat");
+    const ps1Path = join(OPENCLAW_DIR, "atom_ctx.env.ps1");
     if (existsSync(batPath)) {
       return { shellPath: batPath, powershellPath: existsSync(ps1Path) ? ps1Path : undefined };
     }
@@ -2047,7 +2047,7 @@ function getExistingEnvFiles() {
     return null;
   }
 
-  const envPath = join(OPENCLAW_DIR, "openviking.env");
+  const envPath = join(OPENCLAW_DIR, "atom_ctx.env");
   return existsSync(envPath) ? { shellPath: envPath } : null;
 }
 
@@ -2065,7 +2065,7 @@ function ensureExistingPluginForUpgrade() {
 
 async function main() {
   console.log("");
-  bold(tr("🦣 OpenClaw + OpenViking Installer", "🦣 OpenClaw + OpenViking 一键安装"));
+  bold(tr("🦣 OpenClaw + AtomCtx Installer", "🦣 OpenClaw + AtomCtx 一键安装"));
   console.log("");
 
   ensurePluginOnlyOperationArgs();
@@ -2083,13 +2083,13 @@ async function main() {
   info(tr(`Target: ${OPENCLAW_DIR}`, `目标实例: ${OPENCLAW_DIR}`));
   info(tr(`Repository: ${REPO}`, `仓库: ${REPO}`));
   info(tr(`Plugin version: ${PLUGIN_VERSION}`, `插件版本: ${PLUGIN_VERSION}`));
-  if (openvikingVersion) {
-    info(tr(`OpenViking version: ${openvikingVersion}`, `OpenViking 版本: ${openvikingVersion}`));
+  if (atom_ctxVersion) {
+    info(tr(`AtomCtx version: ${atom_ctxVersion}`, `AtomCtx 版本: ${atom_ctxVersion}`));
   }
 
   if (upgradePluginOnly) {
     selectedMode = "local";
-    info("Mode: plugin upgrade only (backup old plugin, clean only OpenViking plugin config, keep ov.conf)");
+    info("Mode: plugin upgrade only (backup old plugin, clean only AtomCtx plugin config, keep ctx.conf)");
   } else {
     await selectMode();
   }
@@ -2106,8 +2106,8 @@ async function main() {
     // Resolve plugin config after OpenClaw is available (for version detection)
     await resolvePluginConfig();
     await checkOpenClawCompatibility();
-    checkRequestedOpenVikingCompatibility();
-    await installOpenViking();
+    checkRequestedAtomCtxCompatibility();
+    await installAtomCtx();
     await configureOvConf();
   } else {
     await checkOpenClaw();
@@ -2117,10 +2117,10 @@ async function main() {
   }
 
   let pluginPath;
-  const localPluginDir = openvikingRepo ? join(openvikingRepo, "examples", resolvedPluginDir || "openclaw-plugin") : "";
-  if (openvikingRepo && existsSync(join(localPluginDir, "index.ts"))) {
+  const localPluginDir = atom_ctxRepo ? join(atom_ctxRepo, "examples", resolvedPluginDir || "openclaw-plugin") : "";
+  if (atom_ctxRepo && existsSync(join(localPluginDir, "index.ts"))) {
     pluginPath = localPluginDir;
-    PLUGIN_DEST = join(OPENCLAW_DIR, "extensions", resolvedPluginId || "openviking");
+    PLUGIN_DEST = join(OPENCLAW_DIR, "extensions", resolvedPluginId || "atom_ctx");
     info(tr(`Using local plugin from repo: ${pluginPath}`, `使用仓库内插件: ${pluginPath}`));
     await deployPluginFromLocal(pluginPath);
       info(tr("Installing plugin npm dependencies...", "正在安装插件 npm 依赖..."));
@@ -2151,11 +2151,11 @@ async function main() {
   }
   let envFiles = getExistingEnvFiles();
   if (!upgradePluginOnly) {
-    envFiles = await writeOpenvikingEnv({
+    envFiles = await writeCtxEnv({
       includePython: selectedMode === "local",
     });
   } else if (!envFiles && OPENCLAW_DIR !== DEFAULT_OPENCLAW_DIR) {
-    envFiles = await writeOpenvikingEnv({ includePython: false });
+    envFiles = await writeCtxEnv({ includePython: false });
   }
 
   console.log("");
@@ -2175,7 +2175,7 @@ async function main() {
   }
 
   if (selectedMode === "local") {
-    info(tr("Run these commands to start OpenClaw + OpenViking:", "请按以下命令启动 OpenClaw + OpenViking："));
+    info(tr("Run these commands to start OpenClaw + AtomCtx:", "请按以下命令启动 OpenClaw + AtomCtx："));
   } else {
     info(tr("Run these commands to start OpenClaw:", "请按以下命令启动 OpenClaw："));
   }
@@ -2189,12 +2189,12 @@ async function main() {
     if (envFiles?.shellPath && !IS_WIN) {
       info(
         tr(
-          'If source fails, set: export OPENVIKING_PYTHON="$(command -v python3)"',
-          '若 source 失败，可执行: export OPENVIKING_PYTHON="$(command -v python3)"',
+          'If source fails, set: export ATOM_CTX_PYTHON="$(command -v python3)"',
+          '若 source 失败，可执行: export ATOM_CTX_PYTHON="$(command -v python3)"',
         ),
       );
     }
-    info(tr(`You can edit the config freely: ${OPENVIKING_DIR}/ov.conf`, `你可以按需自由修改配置文件: ${OPENVIKING_DIR}/ov.conf`));
+    info(tr(`You can edit the config freely: ${ATOM_CTX_DIR}/ctx.conf`, `你可以按需自由修改配置文件: ${ATOM_CTX_DIR}/ctx.conf`));
   } else {
     info(tr(`Remote server: ${remoteBaseUrl}`, `远程服务器: ${remoteBaseUrl}`));
   }

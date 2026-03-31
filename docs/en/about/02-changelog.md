@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to OpenViking will be documented in this file.
+All notable changes to AtomCtx will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial public release
 - Core context database functionality
 - Three-layer information model (L0/L1/L2)
-- Viking URI system
+- Ctx URI system
 - Session management with memory extraction
 - Multimodal resource support (images, video, audio)
 - Skill management with MCP tool conversion

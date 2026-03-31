@@ -4,7 +4,7 @@
 Unit tests for crypto exception classes.
 """
 
-from openviking.crypto.exceptions import (
+from atom_ctx.crypto.exceptions import (
     AuthenticationFailedError,
     ConfigError,
     CorruptedCiphertextError,

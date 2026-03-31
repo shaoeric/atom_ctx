@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openviking.models.vlm.backends.openai_vlm import OpenAIVLM
+from atom_ctx.models.vlm.backends.openai_vlm import OpenAIVLM
 
 
 class MockDelta:
@@ -42,7 +42,7 @@ class MockUsage:
 class TestVLMStreamConfig:
     """Test stream configuration is passed to OpenAI API calls."""
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.OpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.OpenAI")
     def test_stream_false_by_default(self, mock_openai_class):
         """stream should default to False."""
         mock_client = MagicMock()
@@ -65,7 +65,7 @@ class TestVLMStreamConfig:
         call_kwargs = mock_client.chat.completions.create.call_args[1]
         assert call_kwargs.get("stream") is False
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.OpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.OpenAI")
     def test_stream_true_passed_to_api(self, mock_openai_class):
         """stream=True should be passed to API call."""
         mock_client = MagicMock()
@@ -92,7 +92,7 @@ class TestVLMStreamConfig:
         assert call_kwargs.get("stream") is True
         assert result == "Hello world!"
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.OpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.OpenAI")
     def test_stream_false_uses_non_streaming_path(self, mock_openai_class):
         """stream=False should use non-streaming response handling."""
         mock_client = MagicMock()
@@ -117,7 +117,7 @@ class TestVLMStreamConfig:
         call_kwargs = mock_client.chat.completions.create.call_args[1]
         assert call_kwargs.get("stream") is False
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.AsyncOpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.AsyncOpenAI")
     async def test_async_stream_true(self, mock_async_openai_class):
         """stream=True should work with async methods."""
         mock_client = MagicMock()
@@ -151,7 +151,7 @@ class TestVLMStreamConfig:
         assert call_kwargs.get("stream") is True
         assert result == "Async result!"
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.AsyncOpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.AsyncOpenAI")
     async def test_async_stream_false(self, mock_async_openai_class):
         """stream=False should work with async methods."""
         mock_client = MagicMock()
@@ -178,7 +178,7 @@ class TestVLMStreamConfig:
 
         assert result == "Async non-streaming"
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.OpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.OpenAI")
     def test_vision_completion_stream_true(self, mock_openai_class):
         """stream=True should work with vision completion."""
         mock_client = MagicMock()
@@ -204,7 +204,7 @@ class TestVLMStreamConfig:
         assert call_kwargs.get("stream") is True
         assert result == "Image description."
 
-    @patch("openviking.models.vlm.backends.openai_vlm.openai.AsyncOpenAI")
+    @patch("atom_ctx.models.vlm.backends.openai_vlm.openai.AsyncOpenAI")
     async def test_vision_completion_async_stream_true(self, mock_async_openai_class):
         """stream=True should work with async vision completion."""
         mock_client = MagicMock()
@@ -301,7 +301,7 @@ class TestVLMConfigStream:
 
     def test_vlm_config_accepts_stream(self):
         """VLMConfig should accept stream field."""
-        from openviking_cli.utils.config.vlm_config import VLMConfig
+        from atom_ctx_cli.utils.config.vlm_config import VLMConfig
 
         config = VLMConfig(
             model="gpt-4o",
@@ -319,7 +319,7 @@ class TestVLMConfigStream:
 
     def test_vlm_config_stream_defaults_to_false(self):
         """VLMConfig should default stream to False."""
-        from openviking_cli.utils.config.vlm_config import VLMConfig
+        from atom_ctx_cli.utils.config.vlm_config import VLMConfig
 
         config = VLMConfig(
             model="gpt-4o",
@@ -335,7 +335,7 @@ class TestVLMConfigStream:
 
     def test_vlm_config_stream_passed_to_vlm_dict(self):
         """VLMConfig should pass stream to _build_vlm_config_dict."""
-        from openviking_cli.utils.config.vlm_config import VLMConfig
+        from atom_ctx_cli.utils.config.vlm_config import VLMConfig
 
         config = VLMConfig(
             model="gpt-4o",
@@ -353,7 +353,7 @@ class TestVLMConfigStream:
 
     def test_vlm_config_stream_migrated_to_providers(self):
         """VLMConfig should migrate stream to providers structure."""
-        from openviking_cli.utils.config.vlm_config import VLMConfig
+        from atom_ctx_cli.utils.config.vlm_config import VLMConfig
 
         config = VLMConfig(
             model="gpt-4o",
@@ -372,7 +372,7 @@ class TestVLMConfigStream:
 
     def test_vlm_config_stream_in_providers_takes_precedence(self):
         """stream in providers config should take precedence over flat config."""
-        from openviking_cli.utils.config.vlm_config import VLMConfig
+        from atom_ctx_cli.utils.config.vlm_config import VLMConfig
 
         config = VLMConfig(
             model="gpt-4o",

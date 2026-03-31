@@ -4,14 +4,14 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from api.client import OpenVikingAPIClient
+from api.client import AtomCtxAPIClient
 
 
 def check_endpoints():
-    client = OpenVikingAPIClient()
+    client = AtomCtxAPIClient()
 
     print("=" * 80)
-    print("Checking OpenViking API Endpoints")
+    print("Checking AtomCtx API Endpoints")
     print("=" * 80)
 
     # Check health first
@@ -25,7 +25,7 @@ def check_endpoints():
 
     # Check fs_ls
     try:
-        response = client.fs_ls("viking://")
+        response = client.fs_ls("ctx://")
         print(f"\n2. /api/v1/fs/ls: {response.status_code}")
         if response.status_code == 200:
             print(f"   Response: {response.json()}")
@@ -75,7 +75,7 @@ def check_endpoints():
     try:
         import uuid
 
-        test_uri = f"viking://user/test-{uuid.uuid4()[:8]}.md"
+        test_uri = f"ctx://user/test-{uuid.uuid4()[:8]}.md"
         response = client.fs_write(test_uri, "test content")
         print(f"\n7. /api/v1/content/write: {response.status_code}")
         if response.status_code == 200:

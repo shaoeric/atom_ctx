@@ -1,6 +1,6 @@
 # Retrieval Mechanism
 
-OpenViking uses two-stage retrieval: intent analysis + hierarchical retrieval + rerank.
+AtomCtx uses two-stage retrieval: intent analysis + hierarchical retrieval + rerank.
 
 ## Overview
 
@@ -26,7 +26,7 @@ Query → Intent Analysis → Hierarchical Retrieval → Rerank → Results
 # find(): Simple query
 results = await client.find(
     "OAuth authentication",
-    target_uri="viking://resources/"
+    target_uri="ctx://resources/"
 )
 
 # search(): Complex task (needs session context)
@@ -92,9 +92,9 @@ Step 5: Convert to MatchedContext
 
 | context_type | Root Directories |
 |--------------|------------------|
-| MEMORY | `viking://user/memories`, `viking://agent/memories` |
-| RESOURCE | `viking://resources` |
-| SKILL | `viking://agent/skills` |
+| MEMORY | `ctx://user/memories`, `ctx://agent/memories` |
+| RESOURCE | `ctx://resources` |
+| SKILL | `ctx://agent/skills` |
 
 ### Recursive Search Algorithm
 

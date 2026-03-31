@@ -5,7 +5,7 @@ Tests for memory tools.
 """
 
 
-from openviking.session.memory.tools import (
+from atom_ctx.session.memory.tools import (
     MemorySearchTool,
     MemoryLsTool,
     MemoryReadTool,

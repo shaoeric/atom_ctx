@@ -3,7 +3,7 @@
 
 """Search tests"""
 
-from openviking.message import TextPart
+from atom_ctx.message import TextPart
 
 
 class TestFind:

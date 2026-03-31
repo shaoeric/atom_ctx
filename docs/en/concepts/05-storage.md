@@ -1,6 +1,6 @@
 # Storage Architecture
 
-OpenViking uses a dual-layer storage architecture that separates content storage from index storage.
+AtomCtx uses a dual-layer storage architecture that separates content storage from index storage.
 
 ## Overview
 
@@ -40,9 +40,9 @@ VikingFS is the unified URI abstraction layer that hides underlying storage deta
 ### URI Mapping
 
 ```
-viking://resources/docs/auth  →  /local/resources/docs/auth
-viking://user/memories        →  /local/user/memories
-viking://agent/skills         →  /local/agent/skills
+ctx://resources/docs/auth  →  /local/resources/docs/auth
+ctx://user/memories        →  /local/user/memories
+ctx://agent/skills         →  /local/agent/skills
 ```
 
 ### Core API
@@ -65,14 +65,14 @@ VikingFS manages resource relations through `.relations.json`:
 
 ```python
 # Create relation
-viking_fs.link(
-    from_uri="viking://resources/docs/auth",
-    uris=["viking://resources/docs/security"],
+ctx_fs.link(
+    from_uri="ctx://resources/docs/auth",
+    uris=["ctx://resources/docs/security"],
     reason="Related security docs"
 )
 
 # Get relations
-relations = viking_fs.relations("viking://resources/docs/auth")
+relations = ctx_fs.relations("ctx://resources/docs/auth")
 ```
 
 ## AGFS Backend Storage
@@ -92,7 +92,7 @@ AGFS provides POSIX-style file operations with multiple backend support.
 Each context directory follows a unified structure:
 
 ```
-viking://resources/docs/auth/
+ctx://resources/docs/auth/
 ├── .abstract.md          # L0 abstract
 ├── .overview.md          # L1 overview
 ├── .relations.json       # Relations table
@@ -145,16 +145,16 @@ VikingFS automatically maintains consistency between vector index and AGFS.
 ### Delete Sync
 
 ```python
-viking_fs.rm("viking://resources/docs/auth", recursive=True)
+ctx_fs.rm("ctx://resources/docs/auth", recursive=True)
 # Automatically deletes all records with this URI prefix from vector index
 ```
 
 ### Move Sync
 
 ```python
-viking_fs.mv(
-    "viking://resources/docs/auth",
-    "viking://resources/docs/authentication"
+ctx_fs.mv(
+    "ctx://resources/docs/auth",
+    "ctx://resources/docs/authentication"
 )
 # Automatically updates uri and parent_uri fields in vector index
 ```
@@ -163,5 +163,5 @@ viking_fs.mv(
 
 - [Architecture Overview](./01-architecture.md) - System architecture
 - [Context Layers](./03-context-layers.md) - L0/L1/L2 model
-- [Viking URI](./04-viking-uri.md) - URI specification
+- [Ctx URI](./04-ctx-uri.md) - URI specification
 - [Retrieval Mechanism](./07-retrieval.md) - Retrieval process details

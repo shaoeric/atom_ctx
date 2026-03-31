@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Integration test for ov chat command."""
+"""Integration test for ctx chat command."""
 
 import subprocess
 import sys
@@ -14,7 +14,7 @@ def test_chat_command_exists():
     """Test that chat command is registered."""
     print("Testing chat command registration...")
     result = subprocess.run(
-        [sys.executable, "-m", "openviking_cli.cli.main", "--help"],
+        [sys.executable, "-m", "atom_ctx_cli.cli.main", "--help"],
         capture_output=True,
         text=True,
     )
@@ -38,7 +38,7 @@ def test_chat_help():
     """Test that chat --help shows correct parameters."""
     print("\n\nTesting chat --help...")
     result = subprocess.run(
-        [sys.executable, "-m", "openviking_cli.cli.main", "chat", "--help"],
+        [sys.executable, "-m", "atom_ctx_cli.cli.main", "chat", "--help"],
         capture_output=True,
         text=True,
     )
@@ -61,7 +61,7 @@ def test_chat_help():
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("Testing ov chat command integration")
+    print("Testing ctx chat command integration")
     print("=" * 60)
     print()
 
