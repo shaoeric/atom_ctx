@@ -601,17 +601,19 @@ class AsyncHTTPClient(BaseClient):
             target_uri = CtxURI.normalize(target_uri)
         actual_limit = node_limit if node_limit is not None else limit
         sid = session_id or (session.session_id if session else None)
+        payload = {
+            "query": query,
+            "session_id": sid,
+            "limit": actual_limit,
+            "score_threshold": score_threshold,
+            "filter": filter,
+            "telemetry": telemetry,
+        }
+        if target_uri is not None:
+            payload["target_uri"] = target_uri
         response = await self._http.post(
             "/api/v1/search/search",
-            json={
-                "query": query,
-                "target_uri": target_uri,
-                "session_id": sid,
-                "limit": actual_limit,
-                "score_threshold": score_threshold,
-                "filter": filter,
-                "telemetry": telemetry,
-            },
+            json=payload,
         )
         response_data = self._handle_response_data(response)
         return FindResult.from_dict(response_data.get("result") or {})
