@@ -6,9 +6,10 @@ Parser registry for AtomCtx.
 Provides automatic parser selection based on file type.
 """
 
+import importlib
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 from atom_ctx.parse.base import ParseResult
 from atom_ctx.parse.parsers.base_parser import BaseParser
@@ -275,17 +276,145 @@ class ParserRegistry:
         """List all supported file extensions."""
         return list(self._extension_map.keys())
 
+    def apply_custom_parsers(self, custom_parsers: Dict[str, Dict[str, Any]]) -> None:
+        """Load and register custom parsers from configuration.
+
+        Each entry in *custom_parsers* maps a parser name to a descriptor dict
+        with the following keys:
+
+        * ``class`` (required) – fully-qualified Python class path
+          (e.g. ``"my_pkg.parsers.MyPDFParser"``).  The class must be a
+          ``BaseParser`` subclass **or** implement ``CustomParserProtocol``.
+        * ``extensions`` (optional) – list of file extensions this parser
+          should handle (e.g. ``[".pdf"]``).  When provided, only these
+          extensions are mapped to the parser; otherwise the class's own
+          ``supported_extensions`` is used.
+        * ``kwargs`` (optional) – keyword arguments forwarded to the class
+          constructor.
+
+        Because ``register()`` overwrites the extension mapping, calling this
+        method *after* the built-in parsers are registered is enough to
+        replace the default parser for any extension – no priority mechanism
+        required.
+        """
+        for name, entry in custom_parsers.items():
+            class_path = entry.get("class")
+            if not class_path:
+                logger.warning("custom_parsers.%s: missing 'class', skipped", name)
+                continue
+
+            module_path, _, class_name = class_path.rpartition(".")
+            if not module_path:
+                logger.warning(
+                    "custom_parsers.%s: invalid class path '%s' "
+                    "(expected 'module.ClassName')",
+                    name,
+                    class_path,
+                )
+                continue
+
+            try:
+                mod = importlib.import_module(module_path)
+                cls_ = getattr(mod, class_name)
+            except (ImportError, AttributeError) as exc:
+                logger.error(
+                    "custom_parsers.%s: failed to import '%s': %s",
+                    name,
+                    class_path,
+                    exc,
+                )
+                continue
+
+            kwargs = entry.get("kwargs", {})
+            try:
+                parser_instance = cls_(**kwargs)
+            except Exception as exc:
+                logger.error(
+                    "custom_parsers.%s: failed to instantiate '%s': %s",
+                    name,
+                    class_path,
+                    exc,
+                )
+                continue
+
+            config_extensions: Optional[List[str]] = entry.get("extensions")
+
+            if config_extensions and isinstance(parser_instance, BaseParser):
+                wrapped = _ExtensionOverrideParser(parser_instance, config_extensions)
+                self.register(name, wrapped)
+            elif config_extensions:
+                from atom_ctx.parse.custom import CustomParserWrapper
+
+                wrapped = CustomParserWrapper(parser_instance, extensions=config_extensions)
+                self.register(name, wrapped)  # type: ignore[arg-type]
+            else:
+                self.register(name, parser_instance)
+
+            effective_exts = config_extensions or getattr(
+                parser_instance, "supported_extensions", []
+            )
+            logger.info(
+                "Registered custom parser '%s' (%s) for extensions %s",
+                name,
+                class_path,
+                effective_exts,
+            )
+
+
+class _ExtensionOverrideParser(BaseParser):
+    """Thin wrapper that delegates to another BaseParser but overrides
+    ``supported_extensions`` with a caller-supplied list."""
+
+    def __init__(self, delegate: BaseParser, extensions: List[str]) -> None:
+        self._delegate = delegate
+        self._extensions = extensions
+
+    @property
+    def supported_extensions(self) -> List[str]:
+        return self._extensions
+
+    async def parse(self, source, instruction: str = "", **kwargs):
+        return await self._delegate.parse(source, instruction=instruction, **kwargs)
+
+    async def parse_content(self, content, source_path=None, instruction: str = "", **kwargs):
+        return await self._delegate.parse_content(
+            content, source_path=source_path, instruction=instruction, **kwargs
+        )
+
 
 # Global registry instance
 _default_registry: Optional[ParserRegistry] = None
 
 
 def get_registry() -> ParserRegistry:
-    """Get the default parser registry."""
+    """Get the default parser registry.
+
+    On first call the registry is created with built-in parsers, then any
+    ``custom_parsers`` entries found in the loaded ``AtomCtxConfig`` are
+    applied (silently skipped if the config singleton is not yet initialised).
+    """
     global _default_registry
     if _default_registry is None:
         _default_registry = ParserRegistry()
+        _try_load_custom_parsers(_default_registry)
     return _default_registry
+
+
+def _try_load_custom_parsers(registry: ParserRegistry) -> None:
+    """Apply custom parsers from AtomCtxConfig if available.
+
+    Failures (config not loaded, import errors, etc.) are logged at debug
+    level and silently ignored so that the registry remains usable even
+    without a configuration file.
+    """
+    try:
+        from atom_ctx_cli.utils.config.ctx_config import AtomCtxConfigSingleton
+
+        config = AtomCtxConfigSingleton.get_instance()
+        if config.custom_parsers:
+            registry.apply_custom_parsers(config.custom_parsers)
+    except Exception:
+        logger.debug("custom_parsers: config not available, skipping", exc_info=True)
 
 
 async def parse(source: Union[str, Path], **kwargs) -> ParseResult:

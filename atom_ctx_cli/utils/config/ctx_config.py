@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 from threading import Lock
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -148,6 +148,15 @@ class AtomCtxConfig(BaseModel):
 
     memory: MemoryConfig = Field(
         default_factory=lambda: MemoryConfig(), description="Memory configuration"
+    )
+
+    custom_parsers: Dict[str, Dict[str, Any]] = Field(
+        default_factory=dict,
+        description=(
+            "Custom parser definitions loaded at startup. "
+            "Each key is a parser name; value is {class, extensions?, kwargs?}. "
+            "Parsers registered here replace built-in parsers for the same extensions."
+        ),
     )
 
     model_config = {"arbitrary_types_allowed": True, "extra": "forbid"}
