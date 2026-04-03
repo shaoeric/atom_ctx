@@ -1,0 +1,10 @@
+{
+  "inputs": {
+    "python-version": "3.12",
+    "version-override": "",
+    "clean": "true",
+    "upload-artifact": "false",
+    "publish": "false",
+    "publish-target": "testpypi"
+  }
+}

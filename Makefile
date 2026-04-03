@@ -29,13 +29,15 @@ CLEAN_DIRS := \
 	htmlcov/ \
 	**/__pycache__/
 
-.PHONY: all build clean help check-pip check-deps
+.PHONY: all build build-wheel publish-wheel clean help check-pip check-deps
 
 all: build
 
 help:
 	@echo "Available targets:"
 	@echo "  build       - Build AGFS, ctx CLI, and C++ extensions using setup.py"
+	@echo "  build-wheel - Build a distributable Python wheel via scripts/ci/build-wheel.sh"
+	@echo "  publish-wheel - Upload dist/*.whl to PyPI/TestPyPI via scripts/ci/publish-wheel.sh"
 	@echo "  clean       - Remove build artifacts and temporary files"
 	@echo "  check-deps  - Check if required dependencies (Go, Rust, CMake, etc.) are installed"
 	@echo "  help        - Show this help message"
@@ -100,6 +102,16 @@ build: check-deps check-pip
 		$(PYTHON) -m pip install -e .; \
 	fi
 	@echo "Build completed successfully."
+
+build-wheel: check-deps check-pip
+	@echo "Building wheel package..."
+	bash scripts/ci/build-wheel.sh --python "$(PYTHON)"
+	@echo "Wheel build completed successfully."
+
+publish-wheel: check-pip
+	@echo "Publishing wheel package..."
+	bash scripts/ci/publish-wheel.sh --python "$(PYTHON)"
+	@echo "Wheel publish completed successfully."
 
 clean:
 	@echo "Cleaning up build artifacts..."

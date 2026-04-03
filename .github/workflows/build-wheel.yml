@@ -1,0 +1,124 @@
+name: Build Python Wheel
+
+on:
+  workflow_dispatch:
+    inputs:
+      python-version:
+        description: Python version used to build the wheel
+        required: true
+        default: "3.12"
+        type: choice
+        options:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+      version-override:
+        description: Optional package version override
+        required: false
+        default: ""
+        type: string
+      clean:
+        description: Clean previous build outputs before packaging
+        required: true
+        default: true
+        type: boolean
+      upload-artifact:
+        description: Upload built wheels as a workflow artifact
+        required: true
+        default: true
+        type: boolean
+      publish:
+        description: Publish the built wheel after packaging
+        required: true
+        default: false
+        type: boolean
+      publish-target:
+        description: Target package index when publish is enabled
+        required: true
+        default: testpypi
+        type: choice
+        options:
+          - testpypi
+          - pypi
+
+permissions:
+  contents: read
+
+jobs:
+  build-wheel:
+    name: Build wheel on Ubuntu
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      PYTHONUNBUFFERED: "1"
+      FORCE_COLOR: "1"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: third_party/agfs/agfs-server/go.mod
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake pkg-config patchelf
+
+      - name: Build wheel
+        env:
+          VERSION_OVERRIDE: ${{ inputs.version-override }}
+        run: |
+          chmod +x scripts/ci/build-wheel.sh
+          if [[ "${{ inputs.clean }}" == "true" ]]; then
+            scripts/ci/build-wheel.sh --python "${{ steps.setup-python.outputs.python-path }}" --clean
+          else
+            scripts/ci/build-wheel.sh --python "${{ steps.setup-python.outputs.python-path }}"
+          fi
+
+      - name: Show built artifacts
+        run: ls -lah dist
+
+      - name: Publish wheel to TestPyPI
+        if: ${{ inputs.publish && inputs.publish-target == 'testpypi' }}
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        run: |
+          chmod +x scripts/ci/publish-wheel.sh
+          scripts/ci/publish-wheel.sh \
+            --python "${{ steps.setup-python.outputs.python-path }}" \
+            --repository testpypi
+
+      - name: Publish wheel to PyPI
+        if: ${{ inputs.publish && inputs.publish-target == 'pypi' }}
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          chmod +x scripts/ci/publish-wheel.sh
+          scripts/ci/publish-wheel.sh \
+            --python "${{ steps.setup-python.outputs.python-path }}" \
+            --repository pypi
+
+      - name: Upload wheel artifact
+        if: ${{ inputs.upload-artifact }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-wheel-${{ github.run_number }}
+          path: dist/*.whl
+          if-no-files-found: error

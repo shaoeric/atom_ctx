@@ -26,6 +26,9 @@ make build-wheel PYTHON=python3.12
 - `--out-dir <path>`: 指定 wheel 输出目录
 - `--skip-install-build-deps`: 跳过 Python 构建依赖安装
 - `--use-build-isolation`: 使用 PEP 517 build isolation
+- `--skip-repair-linux-wheel`: Linux 下跳过 `auditwheel repair`
+
+在 Linux 上，脚本会默认对二进制 wheel 执行 `auditwheel repair`，把平台标签从裸 `linux_x86_64` 修正为 PyPI 可接受的 `manylinux_*`。本地需要额外安装 `patchelf`。
 
 ## GitHub Actions 手动触发
 
