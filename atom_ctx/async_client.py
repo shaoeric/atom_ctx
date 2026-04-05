@@ -424,12 +424,14 @@ class AsyncAtomCtx:
         abs_limit = kwargs.get("abs_limit", 128)
         show_all_hidden = kwargs.get("show_all_hidden", True)
         node_limit = kwargs.get("node_limit", 1000)
+        level_limit = kwargs.get("level_limit", 3)
         return await self._client.tree(
             uri,
             output=output,
             abs_limit=abs_limit,
             show_all_hidden=show_all_hidden,
             node_limit=node_limit,
+            level_limit=level_limit,
         )
 
     async def mkdir(self, uri: str) -> None:

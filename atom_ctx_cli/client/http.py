@@ -464,6 +464,7 @@ class AsyncHTTPClient(BaseClient):
         abs_limit: int = 128,
         show_all_hidden: bool = False,
         node_limit: int = 1000,
+        level_limit: int = 3,
     ) -> List[Dict[str, Any]]:
         """Get directory tree."""
         uri = CtxURI.normalize(uri)
@@ -475,6 +476,7 @@ class AsyncHTTPClient(BaseClient):
                 "abs_limit": abs_limit,
                 "show_all_hidden": show_all_hidden,
                 "node_limit": node_limit,
+                "level_limit": level_limit,
             },
         )
         return self._handle_response(response)

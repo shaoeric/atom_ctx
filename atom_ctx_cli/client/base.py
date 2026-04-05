@@ -86,6 +86,7 @@ class BaseClient(ABC):
         abs_limit: int = 128,
         show_all_hidden: bool = False,
         node_limit: int = 1000,
+        level_limit: int = 3,
     ) -> List[Dict[str, Any]]:
         """Get directory tree."""
         ...

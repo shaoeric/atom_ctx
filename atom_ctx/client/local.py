@@ -180,6 +180,7 @@ class LocalClient(BaseClient):
         abs_limit: int = 128,
         show_all_hidden: bool = False,
         node_limit: int = 1000,
+        level_limit: int = 3,
     ) -> List[Dict[str, Any]]:
         """Get directory tree."""
         return await self._service.fs.tree(
@@ -189,6 +190,7 @@ class LocalClient(BaseClient):
             abs_limit=abs_limit,
             show_all_hidden=show_all_hidden,
             node_limit=node_limit,
+            level_limit=level_limit,
         )
 
     async def stat(self, uri: str) -> Dict[str, Any]:

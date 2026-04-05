@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent 消息可视化</title>
+  <link rel="stylesheet" href="/static/agentscope_recall.css">
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <h1>Agent 消息可视化</h1>
+      <p>text / thinking 流式展示，tool_use / tool_result 整块展示</p>
+    </header>
+
+    <section class="composer">
+      <textarea id="promptInput" rows="4" placeholder="输入问题..."></textarea>
+      <div class="actions">
+        <button id="sendBtn">发送</button>
+        <button id="stopBtn" class="ghost" disabled>停止</button>
+      </div>
+      <div id="statusText" class="status">空闲</div>
+    </section>
+
+    <section class="panel">
+      <h2>事件时间线</h2>
+      <div id="eventTimeline" class="timeline"></div>
+    </section>
+  </main>
+
+  <script src="/static/agentscope_recall.js"></script>
+</body>
+</html>
